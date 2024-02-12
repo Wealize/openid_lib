@@ -1,3 +1,4 @@
+export const ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME = 10 * 60 * 1000; // 10 m
 export const DEFAULT_PKCE_LENGTH = 10;
 export const DEFAULT_SCOPE = "openid";
 export const OPENID_CREDENTIAL_AUTHZ_DETAILS_TYPE = "openid_credential";

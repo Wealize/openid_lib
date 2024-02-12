@@ -1,20 +1,38 @@
 import { JWK, importJWK, jwtVerify } from "jose";
+import { v4 as uuidv4 } from 'uuid';
 import { AuthServerMetadata } from "common/interfaces/auth_server_metadata.interface";
 import { AuthzRequest, AuthzRequestWithJWT } from "common/interfaces/authz_request.interface";
 import { decodeToken } from "common/utils/jwt.utils";
 import { HolderMetadata, ServiceMetadata } from "common/interfaces/client_metadata.interface";
 import { AuthorizationDetails } from "common/interfaces/authz_details.interface";
-import { JWA_ALGS } from "common/constants";
+import { DEFAULT_SCOPE, ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME, JWA_ALGS } from "common/constants";
 import { VpFormatsSupported } from "common/types";
 import { JwtPayload } from "jsonwebtoken";
+import { AuthzResponseMode } from "common/formats";
+import { IdTokenRequest, IdTokenRequestParams } from "common/classes/id_token_request";
 
 // TODO: MOVE TO ANOTHER FILE TO BE USED BY MULTIPLES CLASSES
 export type VerificationResult = { valid: boolean, error?: string };
 
+export type IdTokenSignCallback = (
+  payload: JwtPayload,
+  supportedSignAlg?: JWA_ALGS[]
+) => Promise<string>;
+
 export type GetClientDefaultMetada = () => Promise<HolderMetadata>;
+
 export type VerifyBaseAuthzRequestOptionalParams = {
   authzDetailsVerifyCallback?: (authDetails: AuthorizationDetails) => Promise<VerificationResult>;
   scopeVerifyCallback?: (scope: string) => Promise<VerificationResult>;
+};
+
+export type CreateIdTokenRequestOptionalParams = {
+  responseMode?: AuthzResponseMode;
+  additionalPayload?: Record<string, any>;
+  state?: string;
+  nonce?: string;
+  expirationTime?: number;
+  scope?: string
 };
 
 interface VerifiedBaseAuthzRequest {
@@ -36,8 +54,40 @@ export class OpenIDReliyingParty {
 
   }
 
-  createIdTokenRequest() {
-
+  async createIdTokenRequest(
+    clientAuthorizationEndpoint: string,
+    audience: string,
+    redirectUri: string,
+    jwtSignCallback: IdTokenSignCallback,
+    additionalParameters?: CreateIdTokenRequestOptionalParams
+  ): Promise<IdTokenRequest> {
+    additionalParameters = {
+      ...{
+        responseMode: "direct_post",
+        state: uuidv4(),
+        scope: DEFAULT_SCOPE,
+        expirationTime: ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME
+      },
+      ...additionalParameters
+    };
+    const requestParams: IdTokenRequestParams = {
+      response_type: "id_token",
+      scope: additionalParameters.scope!,
+      redirect_uri: redirectUri,
+      response_mode: additionalParameters.responseMode,
+      state: additionalParameters.state,
+      nonce: additionalParameters.nonce
+    };
+    const idToken = await jwtSignCallback({
+      aud: audience,
+      iss: this.metadata.issuer,
+      exp: Date.now() + additionalParameters.expirationTime!,
+      ...requestParams,
+      ...additionalParameters.additionalPayload
+    },
+      this.metadata.id_token_signing_alg_values_supported
+    );
+    return new IdTokenRequest(requestParams, idToken, clientAuthorizationEndpoint);
   }
 
   createIdTokenRequestFromBaseAuthzRequest() {
@@ -45,7 +95,7 @@ export class OpenIDReliyingParty {
   }
 
   createVpTokenRequest() {
-
+    // TODO: PENDING
   }
 
   async verifyBaseAuthzRequest(
@@ -126,7 +176,7 @@ export class OpenIDReliyingParty {
   }
 
   verifyVpTokenResponse() {
-
+    // TODO: PENDING
   }
 
   createAuthzResponse() {
