@@ -15,3 +15,12 @@ export interface AuthzRequest {
   code_challenge_method?: string;
   client_metadata?: HolderMetadata | ServiceMetadata
 }
+
+export interface AuthzRequestWithJWT extends AuthzRequest {
+  request?: string
+};
+
+export enum AuthzRequestLocation {
+  PLAIN_REQUEST,
+  JWT_OBJECT,
+}

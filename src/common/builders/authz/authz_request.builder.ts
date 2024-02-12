@@ -4,7 +4,7 @@ import { AuthzRequest } from "common/interfaces/authz_request.interface";
 import { HolderMetadata, ServiceMetadata } from "common/interfaces/client_metadata.interface";
 import { AuthzResponseType } from "common/types";
 
-export class AuthzDetailsBuilder {
+export class AuthzRequestBuilder {
   private scope: string = DEFAULT_SCOPE;
   private issuer_state?: string;
   private state?: string;
@@ -30,7 +30,7 @@ export class AuthzDetailsBuilder {
     code_challenge_method: JWA_ALGS,
     issuer_state?: string,
   ) {
-    const builder = new AuthzDetailsBuilder(
+    const builder = new AuthzRequestBuilder(
       response_type,
       client_id,
       redirect_uri
@@ -50,7 +50,7 @@ export class AuthzDetailsBuilder {
     metadata: ServiceMetadata,
     issuer_state?: string,
   ) {
-    const builder = new AuthzDetailsBuilder(
+    const builder = new AuthzRequestBuilder(
       response_type,
       client_id,
       redirect_uri
@@ -62,18 +62,18 @@ export class AuthzDetailsBuilder {
     return builder;
   }
 
-  withMetadata(metadata: HolderMetadata | ServiceMetadata): AuthzDetailsBuilder {
+  withMetadata(metadata: HolderMetadata | ServiceMetadata): AuthzRequestBuilder {
     this.client_metadata = metadata;
     return this;
   }
 
-  withCodeChallenge(code_challenge: string, method: JWA_ALGS): AuthzDetailsBuilder {
+  withCodeChallenge(code_challenge: string, method: string): AuthzRequestBuilder {
     this.code_challenge = code_challenge;
     this.code_challenge_method = method;
     return this;
   }
 
-  withScope(scope: string): AuthzDetailsBuilder {
+  withScope(scope: string): AuthzRequestBuilder {
     if (this.imposeOpenIdScope && !scope.includes(DEFAULT_SCOPE)) {
       // TODO: Define error enum
       throw new Error(`Scope must contain ${DEFAULT_SCOPE}`);
@@ -82,22 +82,22 @@ export class AuthzDetailsBuilder {
     return this;
   }
 
-  withIssuerState(issuerState: string): AuthzDetailsBuilder {
+  withIssuerState(issuerState: string): AuthzRequestBuilder {
     this.issuer_state = issuerState;
     return this;
   }
 
-  withState(state: string): AuthzDetailsBuilder {
+  withState(state: string): AuthzRequestBuilder {
     this.state = state;
     return this;
   }
 
-  withNonce(nonce: string): AuthzDetailsBuilder {
+  withNonce(nonce: string): AuthzRequestBuilder {
     this.nonce = nonce;
     return this;
   }
 
-  addAuthzDetails(authorizationDetails: AuthorizationDetails): AuthzDetailsBuilder {
+  addAuthzDetails(authorizationDetails: AuthorizationDetails): AuthzRequestBuilder {
     if (!this.authorization_details) {
       this.authorization_details = [];
     }

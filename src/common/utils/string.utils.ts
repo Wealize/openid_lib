@@ -1,8 +1,8 @@
 export function generateRandomString(length: number) {
-  var caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  var resultado = '';
+  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var result = '';
   for (var i = 0; i < length; i++) {
-    resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
-  return resultado;
+  return result;
 }

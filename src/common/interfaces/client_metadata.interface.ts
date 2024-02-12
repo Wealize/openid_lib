@@ -1,4 +1,5 @@
 import { JWA_ALGS } from "common/constants";
+import { VpFormatsSupported } from "common/types";
 
 interface ClientMetadata {
   authorization_endpoint?: string;
@@ -7,14 +8,7 @@ interface ClientMetadata {
   subject_types_supported?: string[];
   id_token_signing_alg_values_supported?: JWA_ALGS[];
   request_object_signing_alg_values_supported?: JWA_ALGS[];
-  vp_formats_supported: {
-    jwt_vp: {
-      alg_values_supported: JWA_ALGS[]
-    },
-    jwt_vc: {
-      alg_values_supported: JWA_ALGS[]
-    }
-  };
+  vp_formats_supported: VpFormatsSupported;
   subject_syntax_types_supported: string[];
   id_token_types_supported: string[]
 }
