@@ -1,0 +1,1 @@
+export type AuthzResponseType = "code" | "token"; // RFC 6749 Section 3.1.1

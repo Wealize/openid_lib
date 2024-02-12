@@ -1,0 +1,1 @@
+export type W3CVerifiableCredentialFormats = "jwt_vc_json" | "jwt_vc_json-ld" | "ldp_vc";
