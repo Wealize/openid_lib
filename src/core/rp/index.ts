@@ -2,22 +2,34 @@ import { JWK, importJWK, jwtVerify } from "jose";
 import { v4 as uuidv4 } from 'uuid';
 import { AuthServerMetadata } from "common/interfaces/auth_server_metadata.interface";
 import { AuthzRequest, AuthzRequestWithJWT } from "common/interfaces/authz_request.interface";
-import { decodeToken } from "common/utils/jwt.utils";
+import { decodeToken, verifyJwtWithExpAndAudience } from "common/utils/jwt.utils";
 import { HolderMetadata, ServiceMetadata } from "common/interfaces/client_metadata.interface";
 import { AuthorizationDetails } from "common/interfaces/authz_details.interface";
-import { DEFAULT_SCOPE, ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME, JWA_ALGS } from "common/constants";
+import { ACCESS_TOKEN_EXPIRATION_TIME, C_NONCE_EXPIRATION_TIME, DEFAULT_SCOPE, ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME, JWA_ALGS } from "common/constants";
 import { VpFormatsSupported } from "common/types";
-import { JwtPayload } from "jsonwebtoken";
+import { JwtHeader, JwtPayload } from "jsonwebtoken";
 import { AuthzResponseMode } from "common/formats";
 import { IdTokenRequest, IdTokenRequestParams } from "common/classes/id_token_request";
+import { IdTokenResponse } from "common/interfaces/id_token_response";
+import { DIDDocument, DIDResolver, Resolvable, Resolver } from "did-resolver";
+import { AuthorizationResponse } from "common/classes/authz_response";
+import { TokenRequest } from "common/interfaces/token_request.interface";
+import { TokenResponse } from "common/interfaces/token_response.interface";
+import { getAuthentificationJWKKeys } from "common/utils/did_document";
 
 // TODO: MOVE TO ANOTHER FILE TO BE USED BY MULTIPLES CLASSES
 export type VerificationResult = { valid: boolean, error?: string };
 
-export type IdTokenSignCallback = (
+export type TokenSignCallback = (
   payload: JwtPayload,
   supportedSignAlg?: JWA_ALGS[]
 ) => Promise<string>;
+
+export type IdTokenVerifyCallback = (
+  header: JwtHeader,
+  payload: JwtPayload,
+  didDocument: DIDDocument
+) => Promise<VerificationResult>;
 
 export type GetClientDefaultMetada = () => Promise<HolderMetadata>;
 
@@ -25,6 +37,14 @@ export type VerifyBaseAuthzRequestOptionalParams = {
   authzDetailsVerifyCallback?: (authDetails: AuthorizationDetails) => Promise<VerificationResult>;
   scopeVerifyCallback?: (scope: string) => Promise<VerificationResult>;
 };
+
+export interface GenerateAccessTokenOptionalParameters {
+  authorizeCodeCallback?: (clientId: string, code: string) => Promise<VerificationResult>;
+  preAuthorizeCodeCallback?: (clientId: string, preCode: string, pin?: string) => Promise<VerificationResult>;
+  cNonceToEmploy?: string;
+  cNonceExp?: number;
+  accessTokenExp?: number;
+}
 
 export type CreateIdTokenRequestOptionalParams = {
   responseMode?: AuthzResponseMode;
@@ -40,25 +60,41 @@ interface VerifiedBaseAuthzRequest {
   authzRequest: AuthzRequest
 }
 
+interface VerifiedIdTokenResponse {
+  didDocument: DIDDocument;
+  token: string
+}
+
 export interface ValidatedClientMetadata {
   responseTypesSupported: string[]
   idTokenAlg: JWA_ALGS[];
   vpFormats: VpFormatsSupported;
 };
 
+// TODO: Maybe we need a build to support multiples resolver, or move that responsability to the user
 export class OpenIDReliyingParty {
   constructor(
     private defaultMetadataCallback: GetClientDefaultMetada,
-    private metadata: AuthServerMetadata
+    private metadata: AuthServerMetadata,
+    private didResolver: Resolver
   ) {
 
+  }
+
+  addDidMethod(methodName: string, resolver: Resolvable) {
+    const tmp = {} as Record<string, Resolvable>;
+    tmp[methodName] = resolver;
+    this.didResolver = new Resolver({
+      ...this.didResolver,
+      ...tmp
+    });
   }
 
   async createIdTokenRequest(
     clientAuthorizationEndpoint: string,
     audience: string,
     redirectUri: string,
-    jwtSignCallback: IdTokenSignCallback,
+    jwtSignCallback: TokenSignCallback,
     additionalParameters?: CreateIdTokenRequestOptionalParams
   ): Promise<IdTokenRequest> {
     additionalParameters = {
@@ -116,14 +152,7 @@ export class OpenIDReliyingParty {
         !this.metadata.request_object_signing_alg_values_supported.includes(header.alg as JWA_ALGS)) {
         throw new Error("Unssuported request signing alg");
       }
-      const payloadJWT = payload as JwtPayload;
-      if (!payloadJWT.exp || payloadJWT.exp < Date.now()) {
-        throw new Error("JWT is expired or does not have exp parameter");
-      }
-      if (!payloadJWT.aud || payloadJWT.aud !== this.metadata.issuer) {
-        throw new Error("JWT audience is invalid or is not defined");
-      }
-      params = payloadJWT as AuthzRequest;
+      params = payload as AuthzRequest;
       if (!params.client_metadata || "jwks_uri" in params.client_metadata === false) {
         // TODO: Define error type
         throw new Error("Expected client metadata with jwks_uri");
@@ -133,8 +162,7 @@ export class OpenIDReliyingParty {
         throw new Error("No kid specify in JWT header");
       }
       const jwk = selectJwkFromSet(keys, header.kid);
-      const publicKey = await importJWK(jwk);
-      await jwtVerify(request.request, publicKey);
+      await verifyJwtWithExpAndAudience(request.request, jwk, this.metadata.issuer);
     }
     params.client_metadata = await this.resolveClientMetadata(params.client_metadata);
     const validatedClientMetadata = this.validateClientMetadata(params.client_metadata);
@@ -171,16 +199,145 @@ export class OpenIDReliyingParty {
     }
   }
 
-  verifyIdTokenResponse() {
-
+  async verifyIdTokenResponse(
+    idTokenResponse: IdTokenResponse,
+    verifyCallback: IdTokenVerifyCallback
+  ): Promise<VerifiedIdTokenResponse> {
+    // Usamos jwebtoken para obtener header y payload
+    const { header, payload } = decodeToken(idTokenResponse.id_token);
+    const jwtPayload = payload as JwtPayload;
+    if (!jwtPayload.iss) {
+      // TODO: Define error type
+      throw new Error("Id Token must contain iss atribute");
+    }
+    if (!header.kid) {
+      throw new Error("No kid paramater found in ID Token");
+    }
+    if (this.metadata.id_token_signing_alg_values_supported
+      && !this.metadata.id_token_signing_alg_values_supported.includes(header.alg as JWA_ALGS)) {
+      throw new Error("Unssuported signing alg for ID Token");
+    }
+    const didResolution = await this.didResolver.resolve(jwtPayload.iss);
+    if (didResolution.didResolutionMetadata.error) {
+      throw new Error(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error
+        }: ${didResolution.didResolutionMetadata.message}`);
+    }
+    const didDocument = didResolution.didDocument!;
+    const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
+    await verifyJwtWithExpAndAudience(idTokenResponse.id_token, publicKeyJwk, this.metadata.issuer);
+    const verificationResult = await verifyCallback(header, jwtPayload, didDocument);
+    if (!verificationResult.valid) {
+      throw new Error(`ID Token verification failed ${verificationResult.error}`);
+    }
+    return {
+      token: idTokenResponse.id_token,
+      didDocument
+    }
   }
 
   verifyVpTokenResponse() {
     // TODO: PENDING
   }
 
-  createAuthzResponse() {
+  createAuthzResponse(
+    redirect_uri: string,
+    code: string,
+    state?: string
+  ) {
+    // TODO: Maybe this method should be erased. For now, the user defined the code format and content.
+    return new AuthorizationResponse(redirect_uri, code, state);
+  }
 
+  async generateAccessToken(
+    tokenRequest: TokenRequest,
+    codeVerifierCallback: (clientId: string, codeVerifier?: string) => Promise<VerificationResult>,
+    generateIdToken: boolean,
+    tokenSignCallback: TokenSignCallback,
+    audience: string,
+    optionalParamaters?: GenerateAccessTokenOptionalParameters
+  ) {
+    if (this.metadata.grant_types_supported
+      && !this.metadata.grant_types_supported.includes(tokenRequest.grant_type)) {
+      throw new Error("Unssuported grant type");
+    }
+    switch (tokenRequest.grant_type) {
+      case "authorization_code":
+        if (!tokenRequest.code) {
+          throw new Error(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
+        }
+        if (!optionalParamaters || !optionalParamaters.authorizeCodeCallback) {
+          throw new Error(`No verification callback was provided for "${tokenRequest.grant_type}" grant type`);
+        }
+        const verificationResult = await optionalParamaters.authorizeCodeCallback(
+          tokenRequest.client_id, tokenRequest.code!
+        );
+        if (!verificationResult.valid) {
+          throw new Error(`Invalid "${tokenRequest.grant_type}" provided${verificationResult.error ?
+            ": " + verificationResult.error : '.'}`
+          );
+        }
+        break;
+      case "pre-authorised_code":
+        if (!tokenRequest["pre-authorised_code"]) {
+          throw new Error(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
+        }
+        if (!optionalParamaters || !optionalParamaters.preAuthorizeCodeCallback) {
+          throw new Error(`No verification callback was provided for "${tokenRequest.grant_type}" grant type`);
+        }
+        const verificationResultPre = await optionalParamaters.preAuthorizeCodeCallback(
+          tokenRequest.client_id, tokenRequest["pre-authorised_code"]!, tokenRequest.user_pin
+        );
+        if (!verificationResultPre.valid) {
+          throw new Error(`Invalid "${tokenRequest.grant_type}" provided${verificationResultPre.error ?
+            ": " + verificationResultPre.error : '.'}`
+          );
+        }
+        break;
+      case "vp_token":
+        // TODO: PENDING OF VP VERIFICATION METHOD
+        if (!tokenRequest.vp_token) {
+          throw new Error(`Grant type "vp_token" requires the "vp_token" parameter`);
+        }
+        throw new Error("Uninplemented");
+        break;
+    }
+    const verificationResult = await codeVerifierCallback(tokenRequest.client_id, tokenRequest.code_verifier);
+    if (!verificationResult.valid) {
+      throw new Error(`Invalid code_verifier provided${verificationResult.error ?
+        ": " + verificationResult.error : '.'}`
+      );
+    }
+    const cNonce = (optionalParamaters &&
+      optionalParamaters.cNonceToEmploy) ? optionalParamaters.cNonceToEmploy : uuidv4();
+    const nonceExp = (optionalParamaters &&
+      optionalParamaters.cNonceExp) ? optionalParamaters.cNonceExp : C_NONCE_EXPIRATION_TIME;
+    const tokenExp = (optionalParamaters &&
+      optionalParamaters.accessTokenExp) ? optionalParamaters.accessTokenExp : ACCESS_TOKEN_EXPIRATION_TIME;
+    const now = Date.now();
+    const token = await tokenSignCallback({
+      aud: audience,
+      iss: this.metadata.issuer,
+      sub: tokenRequest.client_id,
+      exp: now + tokenExp * 1000,
+      nonce: cNonce,
+    });
+    const result: TokenResponse = {
+      access_token: token,
+      token_type: "bearer",
+      expires_in: tokenExp,
+      c_nonce: cNonce,
+      c_nonce_expires_in: nonceExp
+    };
+    if (generateIdToken) {
+      result.id_token = await tokenSignCallback({
+        iss: this.metadata.issuer,
+        sub: tokenRequest.client_id,
+        exp: now + tokenExp * 1000,
+      },
+        this.metadata.id_token_signing_alg_values_supported
+      );
+    }
+    return result;
   }
 
   private validateClientMetadata(clientMetadata: HolderMetadata): ValidatedClientMetadata {

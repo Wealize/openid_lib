@@ -1,5 +1,5 @@
 import { JWA_ALGS } from "common/constants";
-import { VpFormatsSupported } from "common/types";
+import { GrantType, VpFormatsSupported } from "common/types";
 
 export interface AuthServerMetadata {
   issuer: string;
@@ -11,7 +11,7 @@ export interface AuthServerMetadata {
   scopes_supported?: string[];
   response_types_supported: string[];
   response_modes_supported?: string[];
-  grant_types_supported?: string[];
+  grant_types_supported?: GrantType[];
   subject_types_supported?: string[];
   id_token_signing_alg_values_supported?: JWA_ALGS[];
   request_object_signing_alg_values_supported?: JWA_ALGS[];

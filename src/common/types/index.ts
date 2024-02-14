@@ -6,7 +6,8 @@ import { W3CVerifiableCredentialFormats, W3CVerifiablePresentationFormats } from
 // OID4VP Section 5.4
 // TODO: Maybe we should not give support for the "token" response type
 export type AuthzResponseType = "code" | "token" | "id_token" | "vp_token";
-
+export type GrantType = "authorization_code" | "pre-authorised_code" | "vp_token";
+export type ControlProofType = "jwt";
 export type VpFormatsSupported = {
   [key in W3CVerifiableCredentialFormats | W3CVerifiablePresentationFormats]?: { alg_values_supported: JWA_ALGS[]; };
 };
