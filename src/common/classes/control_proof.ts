@@ -5,6 +5,7 @@ import { decodeToken, obtainDid } from "common/utils/jwt.utils";
 import { Resolvable } from "did-resolver";
 import { importJWK, jwtVerify } from "jose";
 import { JwtPayload } from "jsonwebtoken";
+import { InvalidProof } from "./error";
 
 export abstract class ControlProof {
   format: ControlProofType;
@@ -24,15 +25,15 @@ export abstract class ControlProof {
 
   static fromJSON(data: Record<string, any>): ControlProof {
     if (!data.format) {
-      throw new Error(`The "format" parameter is required in a control proof`);
+      throw new InvalidProof(`The "format" parameter is required in a control proof`);
     }
     if (data.format === "jwt") {
       if (!data.jwt) {
-        throw new Error(`Proof of format "jwt" needs a "jwt" paramater`);
+        throw new InvalidProof(`Proof of format "jwt" needs a "jwt" paramater`);
       }
       return ControlProof.jwtProof(data.jwt);
     } else {
-      throw new Error("Invalid format specified");
+      throw new InvalidProof("Invalid format specified");
     }
   }
 
@@ -59,7 +60,7 @@ class JwtControlProof extends ControlProof {
     if (!this.clientIdentifier) {
       const { header, payload } = decodeToken(this.jwt);
       if (!header.kid) {
-        throw new Error(`"kid" parameter must be specified`);
+        throw new InvalidProof(`"kid" parameter must be specified`);
       }
       this.clientIdentifier = obtainDid(header.kid, (payload as JwtPayload).iss);
     }
@@ -74,31 +75,36 @@ class JwtControlProof extends ControlProof {
     const { header, payload } = decodeToken(this.jwt);
     const jwtPayload = payload as JwtPayload;
     if (!header.typ || header.typ !== "penid4vci-proof+jwt") {
-      throw new Error(`Invalid "typ" paramater in proof header`);
+      throw new InvalidProof(`Invalid "typ" paramater in proof header`);
     }
     if (header.alg as JWA_ALGS === "none") {
-      throw new Error(`The value of "alg" parameter can't be none`);
+      throw new InvalidProof(`The value of "alg" parameter can't be none`);
     }
     if (!header.kid) {
-      throw new Error(`"kid" parameter must be specified`);
+      throw new InvalidProof(`"kid" parameter must be specified`);
     }
     if (!jwtPayload.aud || jwtPayload.aud !== audience) {
-      throw new Error(`"aud" parameter is not specified or is invalid`);
+      throw new InvalidProof(`"aud" parameter is not specified or is invalid`);
     }
     if (!jwtPayload.iat) {
-      throw new Error(`"iat" parameter must be specified`);
+      throw new InvalidProof(`"iat" parameter must be specified`);
     }
     if (!jwtPayload.nonce || jwtPayload.nonce !== cNonce) {
-      throw new Error(`"nonce" parameter is not specified or is invalid`);
+      throw new InvalidProof(`"nonce" parameter is not specified or is invalid`);
     }
     const did = this.clientIdentifier ?? obtainDid(header.kid, jwtPayload.iss);
     const didResolution = await didResolver.resolve(did);
     if (didResolution.didResolutionMetadata.error) {
-      throw new Error(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error
+      throw new InvalidProof(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error
         }: ${didResolution.didResolutionMetadata.message}`);
     }
     const didDocument = didResolution.didDocument!;
-    const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
+    let publicKeyJwk;
+    try {
+      publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
+    } catch (error: any) {
+      throw new InvalidProof(error.message);
+    }
     const publicKey = await importJWK(publicKeyJwk);
     await jwtVerify(this.jwt, publicKey);
   }

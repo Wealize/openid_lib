@@ -1,21 +1,20 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Resolver } from "did-resolver";
 import { JWK } from "jose";
-import { Jwt, JwtHeader, JwtPayload } from "jsonwebtoken";
+import { Jwt, JwtPayload } from "jsonwebtoken";
 import { ControlProof } from "common/classes/control_proof";
 import { CONTEXT_VC_DATA_MODEL_2, C_NONCE_EXPIRATION_TIME } from "common/constants";
 import { W3CVerifiableCredentialFormats } from "common/formats";
 import { CredentialRequest } from "common/interfaces/credential_request.interface";
 import { IssuerMetadata } from "common/interfaces/issuer_metadata.interface";
 import {
-  W3CCredentialStatus,
   W3CVcSchemaDefinition,
-  W3CVerifiableCredential
 } from "common/interfaces/w3c_verifiable_credential.interface";
 import { decodeToken, verifyJwtWithExpAndAudience } from "common/utils/jwt.utils";
 import { VcFormatter } from './formatters';
 import { CredentialResponse } from 'common/interfaces/credential_response.interface';
 import * as VcIssuerTypes from "./types";
+import { InsufficienteParamaters, InternalError, InvalidCredentialRequest, InvalidToken } from 'common/classes';
 
 export class W3CVcIssuer {
   constructor(
@@ -37,7 +36,7 @@ export class W3CVcIssuer {
     const jwt = decodeToken(token);
     const verificationResult = await tokenVerifyCallback(jwt.header, jwt.payload as JwtPayload);
     if (!verificationResult.valid) {
-      throw new Error(
+      throw new InvalidToken(
         `Invalid access token provided${verificationResult.error ? ": " + verificationResult.error : '.'}`
       );
     }
@@ -51,7 +50,7 @@ export class W3CVcIssuer {
   ): Promise<CredentialResponse> {
     if (typeof acessToken === "string") {
       if (!optionalParamaters || !optionalParamaters.tokenVerification) {
-        throw new Error(`"tokenVerification" optional parameter must be set when acessToken is in string format`);
+        throw new InsufficienteParamaters(`"tokenVerification" optional parameter must be set when acessToken is in string format`);
       }
       acessToken = await this.verifyAccessToken(
         acessToken,
@@ -64,7 +63,9 @@ export class W3CVcIssuer {
     const proofAssociatedClient = controlProof.getAssociatedIdentifier();
     const jwtPayload = acessToken.payload as JwtPayload;
     if (proofAssociatedClient !== jwtPayload.sub) {
-      throw new Error("Access Token was issued for a different identifier that the one that sign the proof");
+      throw new InvalidToken(
+        "Access Token was issued for a different identifier that the one that sign the proof"
+      );
     }
     const cNonce = await this.cNonceRetrieval(jwtPayload.sub);
     await controlProof.verifyProof(cNonce,
@@ -89,7 +90,7 @@ export class W3CVcIssuer {
         optionalParamaters
       );
     } else {
-      throw new Error("No credential data or deferred code received");
+      throw new InternalError("No credential data or deferred code received");
     }
   }
 
@@ -143,7 +144,7 @@ export class W3CVcIssuer {
   ): Promise<CredentialResponse> {
     const exchangeResult = await deferredExchangeCallback(acceptanceToken);
     if ("error" in exchangeResult) {
-      throw new Error(`Invalid acceptance token: ${exchangeResult.error}`);
+      throw new InvalidToken(`Invalid acceptance token: ${exchangeResult.error}`);
     }
     if (exchangeResult.deferredCode) {
       return { acceptance_token: exchangeResult.deferredCode };
@@ -166,6 +167,6 @@ export class W3CVcIssuer {
         return;
       }
     }
-    throw new Error("Unsuported combination of credential types and format");
+    throw new InvalidCredentialRequest("Unsuported combination of credential types and format");
   }
 }

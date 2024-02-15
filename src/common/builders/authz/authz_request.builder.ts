@@ -1,3 +1,4 @@
+import { InvalidDataProvided } from "common/classes";
 import { DEFAULT_SCOPE, JWA_ALGS } from "common/constants";
 import { AuthorizationDetails } from "common/interfaces/authz_details.interface";
 import { AuthzRequest } from "common/interfaces/authz_request.interface";
@@ -76,7 +77,7 @@ export class AuthzRequestBuilder {
   withScope(scope: string): AuthzRequestBuilder {
     if (this.imposeOpenIdScope && !scope.includes(DEFAULT_SCOPE)) {
       // TODO: Define error enum
-      throw new Error(`Scope must contain ${DEFAULT_SCOPE}`);
+      throw new InvalidDataProvided(`Scope must contain ${DEFAULT_SCOPE}`);
     }
     this.scope = scope;
     return this;

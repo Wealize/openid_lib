@@ -5,6 +5,8 @@ import {
   IssuerMetadata,
   VerifiableCredentialDisplay
 } from 'common/interfaces/issuer_metadata.interface';
+import { isHttps } from 'common/utils';
+import { InternalError } from 'common/classes';
 
 export class IssuerMetadataBuilder {
   private authorization_server?: string;
@@ -19,11 +21,11 @@ export class IssuerMetadataBuilder {
     if (imposeHttps) {
       if (!isHttps(credential_issuer)) {
         // TODO: Define error enum
-        throw new Error("Is not https");
+        throw new InternalError("Is not https");
       }
       if (!isHttps(credential_endpoint)) {
         // TODO: Define error enum
-        throw new Error("Is not https");
+        throw new InternalError("Is not https");
       }
     }
   }
@@ -32,7 +34,7 @@ export class IssuerMetadataBuilder {
     if (this.imposeHttps) {
       if (!isHttps(url)) {
         // TODO: Define error enum
-        throw new Error(`${assertedParameter} is not https`);
+        throw new InternalError(`${assertedParameter} is not https`);
       }
     }
   }
@@ -62,7 +64,7 @@ export class IssuerMetadataBuilder {
     } else {
       if (this.credentials_supported.get(supportedCredential.id)) {
         // TODO: Define error enum
-        throw new Error("Credential supported already defined");
+        throw new InternalError("Credential supported already defined");
       }
       id = supportedCredential.id;
     }

@@ -1,3 +1,4 @@
+import { InternalError } from "common/classes";
 import { W3CVerifiableCredentialFormats } from "common/formats";
 import { W3CVerifiableCredential } from "common/interfaces/w3c_verifiable_credential.interface";
 import { JwtPayload } from "jsonwebtoken";
@@ -10,10 +11,9 @@ export abstract class VcFormatter {
       return new JwtVcFormatter();
     } else if (format === "jwt_vc_json-ld" || format === "ldp_vc") {
       // TODO:
-      throw new Error("Unimplemented");
+      throw new InternalError("Unimplemented");
     } else {
-      throw new Error("Unsupported format");
-
+      throw new InternalError("Unsupported format");
     }
   }
 

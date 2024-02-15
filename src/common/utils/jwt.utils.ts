@@ -1,13 +1,13 @@
 import { JWK, importJWK, jwtVerify } from "jose";
 import * as jwt from "jsonwebtoken";
+import { InvalidToken } from "common/classes";
 
 export function decodeToken(
   jsonWebtoken: string,
 ): jwt.Jwt {
   const result = jwt.decode(jsonWebtoken, { complete: true });
   if (!result) {
-    throw new Error("Invalid JWT for decoding");
-
+    throw new InvalidToken("Invalid JWT for decoding");
   }
   return result;
 }
@@ -20,11 +20,11 @@ export async function verifyJwtWithExpAndAudience(
   const { payload } = decodeToken(token);
   const jwtPayload = payload as jwt.JwtPayload;
   if (!jwtPayload.exp || jwtPayload.exp < Date.now()) {
-    throw new Error("JWT is expired or does not have exp parameter");
+    throw new InvalidToken("JWT is expired or does not have exp parameter");
   }
   if (audience) {
     if (!jwtPayload.aud || jwtPayload.aud !== audience) {
-      throw new Error("JWT audience is invalid or is not defined");
+      throw new InvalidToken("JWT audience is invalid or is not defined");
     }
   }
   const publicKey = await importJWK(publicKeyJWK);
@@ -36,7 +36,7 @@ export function obtainDid(kid: string, iss?: string): string {
     return iss;
   }
   if (!kid.startsWith("did")) {
-    throw new Error(`Can't extract did from "kid" parameter`);
+    throw new InvalidToken(`Can't extract did from "kid" parameter`);
   }
   return kid.trim().split("#")[0]
 }

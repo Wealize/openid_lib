@@ -1,9 +1,20 @@
 import { JWK } from "jose";
 import { v4 as uuidv4 } from 'uuid';
-import { AuthServerMetadata } from "common/interfaces/auth_server_metadata.interface";
-import { AuthzRequest, AuthzRequestWithJWT } from "common/interfaces/authz_request.interface";
-import { decodeToken, verifyJwtWithExpAndAudience } from "common/utils/jwt.utils";
-import { HolderMetadata, ServiceMetadata } from "common/interfaces/client_metadata.interface";
+import {
+  AuthServerMetadata
+} from "common/interfaces/auth_server_metadata.interface";
+import {
+  AuthzRequest,
+  AuthzRequestWithJWT
+} from "common/interfaces/authz_request.interface";
+import {
+  decodeToken,
+  verifyJwtWithExpAndAudience
+} from "common/utils/jwt.utils";
+import {
+  HolderMetadata,
+  ServiceMetadata
+} from "common/interfaces/client_metadata.interface";
 import {
   ACCESS_TOKEN_EXPIRATION_TIME,
   C_NONCE_EXPIRATION_TIME,
@@ -13,7 +24,10 @@ import {
 } from "common/constants";
 import { VerificationResult, VpFormatsSupported } from "common/types";
 import { JwtPayload } from "jsonwebtoken";
-import { IdTokenRequest, IdTokenRequestParams } from "common/classes/id_token_request";
+import {
+  IdTokenRequest,
+  IdTokenRequestParams
+} from "common/classes/id_token_request";
 import { IdTokenResponse } from "common/interfaces/id_token_response";
 import { DIDDocument, Resolvable, Resolver } from "did-resolver";
 import { AuthorizationResponse } from "common/classes/authz_response";
@@ -21,6 +35,16 @@ import { TokenRequest } from "common/interfaces/token_request.interface";
 import { TokenResponse } from "common/interfaces/token_response.interface";
 import { getAuthentificationJWKKeys } from "common/utils/did_document";
 import * as RpTypes from "./types";
+import {
+  AccessDenied,
+  InsufficienteParamaters,
+  InternalError,
+  InvalidGrant,
+  InvalidRequest,
+  InvalidScope,
+  UnauthorizedClient,
+  UnsupportedGrantType
+} from "common/classes";
 
 interface VerifiedBaseAuthzRequest {
   validatedClientMetadata: RpTypes.ValidatedClientMetadata;
@@ -106,24 +130,27 @@ export class OpenIDReliyingParty {
     } else {
       // TODO: ADD REQUEST_URI PARAMETER
       if (this.metadata.request_parameter_supported === false) {
-        throw new Error("Unsuported request parameter");
+        throw new InvalidRequest("Unsuported request parameter");
       }
       const { header, payload } = decodeToken(request.request);
       if (this.metadata.request_object_signing_alg_values_supported &&
         !this.metadata.request_object_signing_alg_values_supported.includes(header.alg as JWA_ALGS)) {
-        throw new Error("Unsuported request signing alg");
+        throw new InvalidRequest("Unsuported request signing alg");
       }
       params = payload as AuthzRequest;
       if (!params.client_metadata || "jwks_uri" in params.client_metadata === false) {
-        // TODO: Define error type
-        throw new Error("Expected client metadata with jwks_uri");
+        throw new InvalidRequest("Expected client metadata with jwks_uri");
       }
       const keys = await fetchJWKs(params.client_metadata.jwks_uri);
       if (!header.kid) {
-        throw new Error("No kid specify in JWT header");
+        throw new InvalidRequest("No kid specify in JWT header");
       }
       const jwk = selectJwkFromSet(keys, header.kid);
-      await verifyJwtWithExpAndAudience(request.request, jwk, this.metadata.issuer);
+      try {
+        await verifyJwtWithExpAndAudience(request.request, jwk, this.metadata.issuer);
+      } catch (error: any) {
+        throw new InvalidRequest(error.message);
+      }
     }
     params.client_metadata = await this.resolveClientMetadata(params.client_metadata);
     const validatedClientMetadata = this.validateClientMetadata(params.client_metadata);
@@ -131,7 +158,7 @@ export class OpenIDReliyingParty {
       if (additionalParameters.scopeVerifyCallback) {
         const scopeVerificationResult = await additionalParameters.scopeVerifyCallback(params.scope);
         if (!scopeVerificationResult.valid) {
-          throw new Error(
+          throw new InvalidScope(
             `Invalid scope specified` +
             `${scopeVerificationResult.error ? ": " + scopeVerificationResult.error : '.'}`
           );
@@ -140,12 +167,12 @@ export class OpenIDReliyingParty {
       if (params.authorization_details) {
         for (const details of params.authorization_details) {
           if (details.locations && !details.locations.includes(this.metadata.issuer)) {
-            throw new Error("Location must contains Issuer client id value");
+            throw new InvalidRequest("Location must contains Issuer client id value");
           }
           if (additionalParameters.authzDetailsVerifyCallback) {
             const authDetailsVerificationResult = await additionalParameters.authzDetailsVerifyCallback(details);
             if (!authDetailsVerificationResult.valid) {
-              throw new Error(
+              throw new InvalidRequest(
                 `Invalid authorization details specified` +
                 `${authDetailsVerificationResult.error ? ": " + authDetailsVerificationResult.error : '.'}`
               );
@@ -168,27 +195,36 @@ export class OpenIDReliyingParty {
     const { header, payload } = decodeToken(idTokenResponse.id_token);
     const jwtPayload = payload as JwtPayload;
     if (!jwtPayload.iss) {
-      // TODO: Define error type
-      throw new Error("Id Token must contain iss atribute");
+      throw new InvalidRequest("Id Token must contain iss atribute");
     }
     if (!header.kid) {
-      throw new Error("No kid paramater found in ID Token");
+      throw new InvalidRequest("No kid paramater found in ID Token");
     }
     if (this.metadata.id_token_signing_alg_values_supported
       && !this.metadata.id_token_signing_alg_values_supported.includes(header.alg as JWA_ALGS)) {
-      throw new Error("Unsuported signing alg for ID Token");
+      throw new InvalidRequest("Unsuported signing alg for ID Token");
     }
     const didResolution = await this.didResolver.resolve(jwtPayload.iss);
     if (didResolution.didResolutionMetadata.error) {
-      throw new Error(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error
-        }: ${didResolution.didResolutionMetadata.message}`);
+      throw new UnauthorizedClient(
+        `Did resolution failed. Error ${didResolution.didResolutionMetadata.error
+        }: ${didResolution.didResolutionMetadata.message}`
+      );
     }
     const didDocument = didResolution.didDocument!;
     const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
-    await verifyJwtWithExpAndAudience(idTokenResponse.id_token, publicKeyJwk, this.metadata.issuer);
+    try {
+      await verifyJwtWithExpAndAudience(
+        idTokenResponse.id_token,
+        publicKeyJwk,
+        this.metadata.issuer
+      );
+    } catch (error: any) {
+      throw new AccessDenied(error.message);
+    }
     const verificationResult = await verifyCallback(header, jwtPayload, didDocument);
     if (!verificationResult.valid) {
-      throw new Error(`ID Token verification failed ${verificationResult.error}`);
+      throw new InvalidRequest(`ID Token verification failed ${verificationResult.error}`);
     }
     return {
       token: idTokenResponse.id_token,
@@ -211,7 +247,10 @@ export class OpenIDReliyingParty {
 
   async generateAccessToken(
     tokenRequest: TokenRequest,
-    codeVerifierCallback: (clientId: string, codeVerifier?: string) => Promise<VerificationResult>,
+    codeVerifierCallback: (
+      clientId: string,
+      codeVerifier?: string
+    ) => Promise<VerificationResult>,
     generateIdToken: boolean,
     tokenSignCallback: RpTypes.TokenSignCallback,
     audience: string,
@@ -219,59 +258,74 @@ export class OpenIDReliyingParty {
   ) {
     if (this.metadata.grant_types_supported
       && !this.metadata.grant_types_supported.includes(tokenRequest.grant_type)) {
-      throw new Error("Unsuported grant type");
+      throw new UnsupportedGrantType(
+        `Grant type "${tokenRequest.grant_type}" not supported`
+      );
     }
     switch (tokenRequest.grant_type) {
       case "authorization_code":
         if (!tokenRequest.code) {
-          throw new Error(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
+          throw new InvalidGrant(
+            `Grant type "${tokenRequest.grant_type}" invalid parameters`
+          );
         }
         if (!optionalParamaters || !optionalParamaters.authorizeCodeCallback) {
-          throw new Error(`No verification callback was provided for "${tokenRequest.grant_type}" grant type`);
+          throw new InsufficienteParamaters(
+            `No verification callback was provided for "${tokenRequest.grant_type}" grant type`
+          );
         }
         const verificationResult = await optionalParamaters.authorizeCodeCallback(
           tokenRequest.client_id, tokenRequest.code!
         );
         if (!verificationResult.valid) {
-          throw new Error(`Invalid "${tokenRequest.grant_type}" provided${verificationResult.error ?
-            ": " + verificationResult.error : '.'}`
+          throw new InvalidGrant(
+            `Invalid "${tokenRequest.grant_type}" provided${verificationResult.error ?
+              ": " + verificationResult.error : '.'}`
           );
         }
         break;
       case "pre-authorised_code":
         if (!tokenRequest["pre-authorised_code"]) {
-          throw new Error(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
+          throw new InvalidGrant(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
         }
         if (!optionalParamaters || !optionalParamaters.preAuthorizeCodeCallback) {
-          throw new Error(`No verification callback was provided for "${tokenRequest.grant_type}" grant type`);
+          throw new InsufficienteParamaters(
+            `No verification callback was provided for "${tokenRequest.grant_type}" grant type`
+          );
         }
         const verificationResultPre = await optionalParamaters.preAuthorizeCodeCallback(
           tokenRequest.client_id, tokenRequest["pre-authorised_code"]!, tokenRequest.user_pin
         );
         if (!verificationResultPre.valid) {
-          throw new Error(`Invalid "${tokenRequest.grant_type}" provided${verificationResultPre.error ?
-            ": " + verificationResultPre.error : '.'}`
+          throw new InvalidGrant(
+            `Invalid "${tokenRequest.grant_type}" provided${verificationResultPre.error ?
+              ": " + verificationResultPre.error : '.'}`
           );
         }
         break;
       case "vp_token":
         // TODO: PENDING OF VP VERIFICATION METHOD
         if (!tokenRequest.vp_token) {
-          throw new Error(`Grant type "vp_token" requires the "vp_token" parameter`);
+          throw new InsufficienteParamaters(`Grant type "vp_token" requires the "vp_token" parameter`);
         }
-        throw new Error("Uninplemented");
+        throw new InternalError("Uninplemented");
         break;
     }
-    const verificationResult = await codeVerifierCallback(tokenRequest.client_id, tokenRequest.code_verifier);
+    const verificationResult = await codeVerifierCallback(
+      tokenRequest.client_id,
+      tokenRequest.code_verifier
+    );
     if (!verificationResult.valid) {
-      throw new Error(`Invalid code_verifier provided${verificationResult.error ?
+      throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
         ": " + verificationResult.error : '.'}`
       );
     }
     const cNonce = (optionalParamaters &&
-      optionalParamaters.cNonceToEmploy) ? optionalParamaters.cNonceToEmploy : uuidv4();
+      optionalParamaters.cNonceToEmploy) ?
+      optionalParamaters.cNonceToEmploy : uuidv4();
     const tokenExp = (optionalParamaters &&
-      optionalParamaters.accessTokenExp) ? optionalParamaters.accessTokenExp : ACCESS_TOKEN_EXPIRATION_TIME;
+      optionalParamaters.accessTokenExp) ?
+      optionalParamaters.accessTokenExp : ACCESS_TOKEN_EXPIRATION_TIME;
     const now = Date.now();
     const token = await tokenSignCallback({
       aud: audience,
@@ -321,8 +375,10 @@ export class OpenIDReliyingParty {
       for (const format in clientMetadata!.vp_formats_supported) {
         if (this.metadata.vp_formats_supported![format as keyof VpFormatsSupported]) {
           const intersectArray: JWA_ALGS[] = [];
-          for (const alg of clientMetadata!.vp_formats_supported[format as keyof VpFormatsSupported]?.alg_values_supported!) {
-            if (this.metadata.vp_formats_supported![format as keyof VpFormatsSupported]?.alg_values_supported.includes(alg)) {
+          for (const alg of clientMetadata!.vp_formats_supported[
+            format as keyof VpFormatsSupported]?.alg_values_supported!) {
+            if (this.metadata.vp_formats_supported![
+              format as keyof VpFormatsSupported]?.alg_values_supported.includes(alg)) {
               intersectArray.push(alg);
             }
           }
@@ -341,7 +397,7 @@ export class OpenIDReliyingParty {
     metadata?: Record<string, any>
   ): Promise<HolderMetadata | ServiceMetadata> {
     const defaultMetadata = await this.defaultMetadataCallback();
-    return metadata ? { ...await this.defaultMetadataCallback(), ...metadata } : defaultMetadata;
+    return metadata ? { ...defaultMetadata, ...metadata } : defaultMetadata;
   }
 }
 
@@ -350,21 +406,18 @@ async function fetchJWKs(url: string): Promise<JWK[]> {
     const response = await fetch(url);
     const jwks = await response.json();
     if (jwks.keys) {
-      // TODO: Define error type
-      throw new Error("No 'keys' paramater found");
+      throw new InvalidRequest("No 'keys' paramater found");
     }
     return jwks['keys'];
   } catch (e: any) {
-    // TODO: Define error type
-    throw new Error(`Can't recover credential issuer JWKs: ${e}`);
+    throw new InternalError(`Can't recover credential issuer JWKs: ${e}`);
   }
 }
 
 function selectJwkFromSet(jwks: JWK[], kid: string): JWK {
   const jwk = jwks.find((jwk) => jwk.kid === kid);
   if (!jwk) {
-    // TODO: Define error type
-    throw new Error(`No JWK found with kid ${kid}`);
+    throw new InvalidRequest(`No JWK found with kid ${kid}`);
   }
   return jwk;
 }
