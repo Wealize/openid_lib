@@ -1,62 +1,29 @@
-import { JWK, importJWK, jwtVerify } from "jose";
+import { JWK } from "jose";
 import { v4 as uuidv4 } from 'uuid';
 import { AuthServerMetadata } from "common/interfaces/auth_server_metadata.interface";
 import { AuthzRequest, AuthzRequestWithJWT } from "common/interfaces/authz_request.interface";
 import { decodeToken, verifyJwtWithExpAndAudience } from "common/utils/jwt.utils";
 import { HolderMetadata, ServiceMetadata } from "common/interfaces/client_metadata.interface";
-import { AuthorizationDetails } from "common/interfaces/authz_details.interface";
-import { ACCESS_TOKEN_EXPIRATION_TIME, C_NONCE_EXPIRATION_TIME, DEFAULT_SCOPE, ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME, JWA_ALGS } from "common/constants";
-import { VpFormatsSupported } from "common/types";
-import { JwtHeader, JwtPayload } from "jsonwebtoken";
-import { AuthzResponseMode } from "common/formats";
+import {
+  ACCESS_TOKEN_EXPIRATION_TIME,
+  C_NONCE_EXPIRATION_TIME,
+  DEFAULT_SCOPE,
+  ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
+  JWA_ALGS
+} from "common/constants";
+import { VerificationResult, VpFormatsSupported } from "common/types";
+import { JwtPayload } from "jsonwebtoken";
 import { IdTokenRequest, IdTokenRequestParams } from "common/classes/id_token_request";
 import { IdTokenResponse } from "common/interfaces/id_token_response";
-import { DIDDocument, DIDResolver, Resolvable, Resolver } from "did-resolver";
+import { DIDDocument, Resolvable, Resolver } from "did-resolver";
 import { AuthorizationResponse } from "common/classes/authz_response";
 import { TokenRequest } from "common/interfaces/token_request.interface";
 import { TokenResponse } from "common/interfaces/token_response.interface";
 import { getAuthentificationJWKKeys } from "common/utils/did_document";
-
-// TODO: MOVE TO ANOTHER FILE TO BE USED BY MULTIPLES CLASSES
-export type VerificationResult = { valid: boolean, error?: string };
-
-export type TokenSignCallback = (
-  payload: JwtPayload,
-  supportedSignAlg?: JWA_ALGS[]
-) => Promise<string>;
-
-export type IdTokenVerifyCallback = (
-  header: JwtHeader,
-  payload: JwtPayload,
-  didDocument: DIDDocument
-) => Promise<VerificationResult>;
-
-export type GetClientDefaultMetada = () => Promise<HolderMetadata>;
-
-export type VerifyBaseAuthzRequestOptionalParams = {
-  authzDetailsVerifyCallback?: (authDetails: AuthorizationDetails) => Promise<VerificationResult>;
-  scopeVerifyCallback?: (scope: string) => Promise<VerificationResult>;
-};
-
-export interface GenerateAccessTokenOptionalParameters {
-  authorizeCodeCallback?: (clientId: string, code: string) => Promise<VerificationResult>;
-  preAuthorizeCodeCallback?: (clientId: string, preCode: string, pin?: string) => Promise<VerificationResult>;
-  cNonceToEmploy?: string;
-  cNonceExp?: number;
-  accessTokenExp?: number;
-}
-
-export type CreateIdTokenRequestOptionalParams = {
-  responseMode?: AuthzResponseMode;
-  additionalPayload?: Record<string, any>;
-  state?: string;
-  nonce?: string;
-  expirationTime?: number;
-  scope?: string
-};
+import * as RpTypes from "./types";
 
 interface VerifiedBaseAuthzRequest {
-  validatedClientMetadata: ValidatedClientMetadata;
+  validatedClientMetadata: RpTypes.ValidatedClientMetadata;
   authzRequest: AuthzRequest
 }
 
@@ -65,16 +32,10 @@ interface VerifiedIdTokenResponse {
   token: string
 }
 
-export interface ValidatedClientMetadata {
-  responseTypesSupported: string[]
-  idTokenAlg: JWA_ALGS[];
-  vpFormats: VpFormatsSupported;
-};
-
 // TODO: Maybe we need a build to support multiples resolver, or move that responsability to the user
 export class OpenIDReliyingParty {
   constructor(
-    private defaultMetadataCallback: GetClientDefaultMetada,
+    private defaultMetadataCallback: RpTypes.GetClientDefaultMetada,
     private metadata: AuthServerMetadata,
     private didResolver: Resolver
   ) {
@@ -94,8 +55,8 @@ export class OpenIDReliyingParty {
     clientAuthorizationEndpoint: string,
     audience: string,
     redirectUri: string,
-    jwtSignCallback: TokenSignCallback,
-    additionalParameters?: CreateIdTokenRequestOptionalParams
+    jwtSignCallback: RpTypes.TokenSignCallback,
+    additionalParameters?: RpTypes.CreateIdTokenRequestOptionalParams
   ): Promise<IdTokenRequest> {
     additionalParameters = {
       ...{
@@ -136,7 +97,7 @@ export class OpenIDReliyingParty {
 
   async verifyBaseAuthzRequest(
     request: AuthzRequestWithJWT,
-    additionalParameters?: VerifyBaseAuthzRequestOptionalParams
+    additionalParameters?: RpTypes.VerifyBaseAuthzRequestOptionalParams
   ): Promise<VerifiedBaseAuthzRequest> {
     // TODO: RESPONSE MODE SHOULD BE CHECKED
     let params: AuthzRequest;
@@ -145,12 +106,12 @@ export class OpenIDReliyingParty {
     } else {
       // TODO: ADD REQUEST_URI PARAMETER
       if (this.metadata.request_parameter_supported === false) {
-        throw new Error("Unssuported request parameter");
+        throw new Error("Unsuported request parameter");
       }
       const { header, payload } = decodeToken(request.request);
       if (this.metadata.request_object_signing_alg_values_supported &&
         !this.metadata.request_object_signing_alg_values_supported.includes(header.alg as JWA_ALGS)) {
-        throw new Error("Unssuported request signing alg");
+        throw new Error("Unsuported request signing alg");
       }
       params = payload as AuthzRequest;
       if (!params.client_metadata || "jwks_uri" in params.client_metadata === false) {
@@ -201,7 +162,7 @@ export class OpenIDReliyingParty {
 
   async verifyIdTokenResponse(
     idTokenResponse: IdTokenResponse,
-    verifyCallback: IdTokenVerifyCallback
+    verifyCallback: RpTypes.IdTokenVerifyCallback
   ): Promise<VerifiedIdTokenResponse> {
     // Usamos jwebtoken para obtener header y payload
     const { header, payload } = decodeToken(idTokenResponse.id_token);
@@ -215,7 +176,7 @@ export class OpenIDReliyingParty {
     }
     if (this.metadata.id_token_signing_alg_values_supported
       && !this.metadata.id_token_signing_alg_values_supported.includes(header.alg as JWA_ALGS)) {
-      throw new Error("Unssuported signing alg for ID Token");
+      throw new Error("Unsuported signing alg for ID Token");
     }
     const didResolution = await this.didResolver.resolve(jwtPayload.iss);
     if (didResolution.didResolutionMetadata.error) {
@@ -252,13 +213,13 @@ export class OpenIDReliyingParty {
     tokenRequest: TokenRequest,
     codeVerifierCallback: (clientId: string, codeVerifier?: string) => Promise<VerificationResult>,
     generateIdToken: boolean,
-    tokenSignCallback: TokenSignCallback,
+    tokenSignCallback: RpTypes.TokenSignCallback,
     audience: string,
-    optionalParamaters?: GenerateAccessTokenOptionalParameters
+    optionalParamaters?: RpTypes.GenerateAccessTokenOptionalParameters
   ) {
     if (this.metadata.grant_types_supported
       && !this.metadata.grant_types_supported.includes(tokenRequest.grant_type)) {
-      throw new Error("Unssuported grant type");
+      throw new Error("Unsuported grant type");
     }
     switch (tokenRequest.grant_type) {
       case "authorization_code":
@@ -309,8 +270,6 @@ export class OpenIDReliyingParty {
     }
     const cNonce = (optionalParamaters &&
       optionalParamaters.cNonceToEmploy) ? optionalParamaters.cNonceToEmploy : uuidv4();
-    const nonceExp = (optionalParamaters &&
-      optionalParamaters.cNonceExp) ? optionalParamaters.cNonceExp : C_NONCE_EXPIRATION_TIME;
     const tokenExp = (optionalParamaters &&
       optionalParamaters.accessTokenExp) ? optionalParamaters.accessTokenExp : ACCESS_TOKEN_EXPIRATION_TIME;
     const now = Date.now();
@@ -326,7 +285,8 @@ export class OpenIDReliyingParty {
       token_type: "bearer",
       expires_in: tokenExp,
       c_nonce: cNonce,
-      c_nonce_expires_in: nonceExp
+      c_nonce_expires_in: (optionalParamaters &&
+        optionalParamaters.cNonceExp) ? optionalParamaters.cNonceExp : C_NONCE_EXPIRATION_TIME
     };
     if (generateIdToken) {
       result.id_token = await tokenSignCallback({
@@ -340,7 +300,7 @@ export class OpenIDReliyingParty {
     return result;
   }
 
-  private validateClientMetadata(clientMetadata: HolderMetadata): ValidatedClientMetadata {
+  private validateClientMetadata(clientMetadata: HolderMetadata): RpTypes.ValidatedClientMetadata {
     const responseTypesSupported = [];
     const idTokenAlg: JWA_ALGS[] = [];
     const vpFormats: VpFormatsSupported = {}
@@ -408,3 +368,5 @@ function selectJwkFromSet(jwks: JWK[], kid: string): JWK {
   }
   return jwk;
 }
+
+export * from "./types";

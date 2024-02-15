@@ -38,5 +38,5 @@ export function obtainDid(kid: string, iss?: string): string {
   if (!kid.startsWith("did")) {
     throw new Error(`Can't extract did from "kid" parameter`);
   }
-  return kid.split("#")[0]
+  return kid.trim().split("#")[0]
 }

@@ -11,3 +11,6 @@ export type ControlProofType = "jwt";
 export type VpFormatsSupported = {
   [key in W3CVerifiableCredentialFormats | W3CVerifiablePresentationFormats]?: { alg_values_supported: JWA_ALGS[]; };
 };
+export type CompactVc = string;
+
+export type VerificationResult = { valid: boolean, error?: string };

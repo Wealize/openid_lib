@@ -1,3 +1,5 @@
+// Based on VCDM 2.0
+// TODO: Think if support for VCDM 1.0 should be given
 export interface W3CVerifiableCredential {
   '@context': string[];
   type: string[];
@@ -8,7 +10,7 @@ export interface W3CVerifiableCredential {
   id?: string;
   credentialStatus?: W3CCredentialStatus;
   description?: string;
-  credentialSubject: W3CCredentialSubject;
+  credentialSubject: W3CSingleCredentialSubject;
   proof?: EmbeddedProof;
   [x: string]: any
 }
@@ -23,8 +25,6 @@ export interface W3CCredentialStatus {
   type: string;
   [key: string]: any
 }
-
-export type W3CCredentialSubject = W3CSingleCredentialSubject | W3CSingleCredentialSubject[];
 
 export interface W3CSingleCredentialSubject {
   id?: string;

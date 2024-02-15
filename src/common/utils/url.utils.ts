@@ -1,3 +1,3 @@
-function isHttps(url: string) {
+export function isHttps(url: string) {
   return url.startsWith("https://");
 }
