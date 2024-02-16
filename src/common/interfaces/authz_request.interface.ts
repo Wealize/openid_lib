@@ -1,6 +1,6 @@
-import { AuthzResponseType } from "common/types";
-import { AuthorizationDetails } from "./authz_details.interface";
-import { HolderMetadata, ServiceMetadata } from "./client_metadata.interface";
+import { AuthzResponseType } from "../types/index.js";
+import { AuthorizationDetails } from "./authz_details.interface.js";
+import { HolderMetadata, ServiceMetadata } from "./client_metadata.interface.js";
 
 export interface AuthzRequest {
   response_type: AuthzResponseType;

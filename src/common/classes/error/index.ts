@@ -1,2 +1,2 @@
-export * from "./internal.error";
-export * from "./openid.error";
+export * from "./internal.error.js";
+export * from "./openid.error.js";

@@ -1,4 +1,6 @@
-import { AuthServerMetadata } from "common/interfaces/auth_server_metadata.interface";
+import {
+  AuthServerMetadata
+} from "../interfaces/auth_server_metadata.interface.js";
 
 export function generateDefaultAuthorisationServerMetadata(issuer: string): AuthServerMetadata {
   return {

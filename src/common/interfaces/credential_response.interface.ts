@@ -1,6 +1,6 @@
-import { W3CVerifiableCredentialFormats } from "common/formats";
-import { W3CVerifiableCredential } from "./w3c_verifiable_credential.interface";
-import { CompactVc } from "common/types";
+import { W3CVerifiableCredentialFormats } from "../formats/index.js";
+import { W3CVerifiableCredential } from "./w3c_verifiable_credential.interface.js";
+import { CompactVc } from "../types/index.js";
 
 export interface CredentialResponse {
   format?: W3CVerifiableCredentialFormats;

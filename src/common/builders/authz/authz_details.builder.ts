@@ -1,6 +1,6 @@
-import { OPENID_CREDENTIAL_AUTHZ_DETAILS_TYPE } from "common/constants";
-import { W3CVerifiableCredentialFormats } from "common/formats";
-import { AuthorizationDetails } from "common/interfaces/authz_details.interface";
+import { OPENID_CREDENTIAL_AUTHZ_DETAILS_TYPE } from "../../constants/index.js";
+import { W3CVerifiableCredentialFormats } from "../../formats/index.js";
+import { AuthorizationDetails } from "../../interfaces/authz_details.interface.js";
 
 export class AuthzDetailsBuilder {
   private types: string[] = [];

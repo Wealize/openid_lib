@@ -1,4 +1,4 @@
-import { GrantType } from "common/types";
+import { GrantType } from "../types/index.js";
 
 export interface TokenRequest {
   grant_type: GrantType;

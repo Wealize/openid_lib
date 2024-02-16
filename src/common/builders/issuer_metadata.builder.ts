@@ -1,12 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
-import { W3CVerifiableCredentialFormats } from "common/formats";
+import { W3CVerifiableCredentialFormats } from "../formats/index.js";
 import {
   CredentialSupported,
   IssuerMetadata,
   VerifiableCredentialDisplay
-} from 'common/interfaces/issuer_metadata.interface';
-import { isHttps } from 'common/utils';
-import { InternalError } from 'common/classes';
+} from '../interfaces/issuer_metadata.interface.js';
+import { isHttps } from '../utils/index.js';
+import { InternalError } from '../classes/index.js';
 
 export class IssuerMetadataBuilder {
   private authorization_server?: string;

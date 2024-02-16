@@ -1,11 +1,11 @@
-import { JWA_ALGS } from "common/constants";
-import { ControlProofType } from "common/types";
-import { getAuthentificationJWKKeys } from "common/utils/did_document";
-import { decodeToken, obtainDid } from "common/utils/jwt.utils";
+import { JWA_ALGS } from "../constants/index.js";
+import { ControlProofType } from "../types/index.js";
+import { getAuthentificationJWKKeys } from "../utils/did_document.js";
+import { decodeToken, obtainDid } from "../utils/jwt.utils.js";
 import { Resolvable } from "did-resolver";
 import { importJWK, jwtVerify } from "jose";
 import { JwtPayload } from "jsonwebtoken";
-import { InvalidProof } from "./error";
+import { InvalidProof } from "./error/index.js";
 
 export abstract class ControlProof {
   format: ControlProofType;
@@ -24,10 +24,10 @@ export abstract class ControlProof {
   ): Promise<void>;
 
   static fromJSON(data: Record<string, any>): ControlProof {
-    if (!data.format) {
+    if (!data.proof_type) {
       throw new InvalidProof(`The "format" parameter is required in a control proof`);
     }
-    if (data.format === "jwt") {
+    if (data.proof_type === "jwt") {
       if (!data.jwt) {
         throw new InvalidProof(`Proof of format "jwt" needs a "jwt" paramater`);
       }
@@ -74,7 +74,7 @@ class JwtControlProof extends ControlProof {
   ): Promise<void> {
     const { header, payload } = decodeToken(this.jwt);
     const jwtPayload = payload as JwtPayload;
-    if (!header.typ || header.typ !== "penid4vci-proof+jwt") {
+    if (!header.typ || header.typ !== "openid4vci-proof+jwt") {
       throw new InvalidProof(`Invalid "typ" paramater in proof header`);
     }
     if (header.alg as JWA_ALGS === "none") {

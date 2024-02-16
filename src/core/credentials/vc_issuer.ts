@@ -2,19 +2,24 @@ import { v4 as uuidv4 } from 'uuid';
 import { Resolver } from "did-resolver";
 import { JWK } from "jose";
 import { Jwt, JwtPayload } from "jsonwebtoken";
-import { ControlProof } from "common/classes/control_proof";
-import { CONTEXT_VC_DATA_MODEL_2, C_NONCE_EXPIRATION_TIME } from "common/constants";
-import { W3CVerifiableCredentialFormats } from "common/formats";
-import { CredentialRequest } from "common/interfaces/credential_request.interface";
-import { IssuerMetadata } from "common/interfaces/issuer_metadata.interface";
+import { ControlProof } from "../../common/classes/control_proof.js";
+import { CONTEXT_VC_DATA_MODEL_2, C_NONCE_EXPIRATION_TIME } from "../../common/constants/index.js";
+import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
+import { CredentialRequest } from "../../common/interfaces/credential_request.interface.js";
+import { IssuerMetadata } from "../../common/interfaces/issuer_metadata.interface.js";
 import {
   W3CVcSchemaDefinition,
-} from "common/interfaces/w3c_verifiable_credential.interface";
-import { decodeToken, verifyJwtWithExpAndAudience } from "common/utils/jwt.utils";
-import { VcFormatter } from './formatters';
-import { CredentialResponse } from 'common/interfaces/credential_response.interface';
-import * as VcIssuerTypes from "./types";
-import { InsufficienteParamaters, InternalError, InvalidCredentialRequest, InvalidToken } from 'common/classes';
+} from "../../common/interfaces/w3c_verifiable_credential.interface";
+import { decodeToken, verifyJwtWithExpAndAudience } from "../../common/utils/jwt.utils.js";
+import { VcFormatter } from './formatters.js';
+import { CredentialResponse } from "../../common/interfaces/credential_response.interface.js";
+import * as VcIssuerTypes from "./types.js";
+import {
+  InsufficienteParamaters,
+  InternalError,
+  InvalidCredentialRequest,
+  InvalidToken
+} from "../../common/classes/index.js";
 
 export class W3CVcIssuer {
   constructor(

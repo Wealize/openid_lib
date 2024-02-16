@@ -1,5 +1,5 @@
-import { JWA_ALGS } from "common/constants";
-import { GrantType, VpFormatsSupported } from "common/types";
+import { JWA_ALGS } from "../constants/index.js";
+import { GrantType, VpFormatsSupported } from "../types/index.js";
 
 export interface AuthServerMetadata {
   issuer: string;

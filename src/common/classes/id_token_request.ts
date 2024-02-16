@@ -1,5 +1,5 @@
-import { AuthzResponseMode } from "common/formats";
-import { AuthzResponseType } from "common/types";
+import { AuthzResponseMode } from "../formats/index.js";
+import { AuthzResponseType } from "../types/index.js";
 
 export class IdTokenRequest {
   params: IdTokenRequestParams;

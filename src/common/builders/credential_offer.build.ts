@@ -2,7 +2,7 @@ import {
   CredentialOffer,
   CredentialOfferGrants,
   CredentialsOfferData
-} from 'common/interfaces/credential_offer.interface';
+} from '../interfaces/credential_offer.interface.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export class CredentialOfferBuilder {

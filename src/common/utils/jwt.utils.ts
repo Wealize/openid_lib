@@ -1,6 +1,6 @@
 import { JWK, importJWK, jwtVerify } from "jose";
 import * as jwt from "jsonwebtoken";
-import { InvalidToken } from "common/classes";
+import { InvalidToken } from "../classes/index.js";
 
 export function decodeToken(
   jsonWebtoken: string,
@@ -19,7 +19,7 @@ export async function verifyJwtWithExpAndAudience(
 ) {
   const { payload } = decodeToken(token);
   const jwtPayload = payload as jwt.JwtPayload;
-  if (!jwtPayload.exp || jwtPayload.exp < Date.now()) {
+  if (!jwtPayload.exp || jwtPayload.exp < Math.floor(Date.now() / 1000)) {
     throw new InvalidToken("JWT is expired or does not have exp parameter");
   }
   if (audience) {

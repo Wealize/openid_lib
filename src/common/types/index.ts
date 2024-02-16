@@ -1,5 +1,8 @@
-import { JWA_ALGS } from "common/constants";
-import { W3CVerifiableCredentialFormats, W3CVerifiablePresentationFormats } from "common/formats";
+import { JWA_ALGS } from "../constants/index.js";
+import {
+  W3CVerifiableCredentialFormats,
+  W3CVerifiablePresentationFormats
+} from "../formats/index.js";
 
 // RFC 6749 Section 3.1.1
 // OAuth 2.0 Multiple Response Type Encoding Practices Section 3

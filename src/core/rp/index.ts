@@ -2,39 +2,39 @@ import { JWK } from "jose";
 import { v4 as uuidv4 } from 'uuid';
 import {
   AuthServerMetadata
-} from "common/interfaces/auth_server_metadata.interface";
+} from "../../common/interfaces/auth_server_metadata.interface.js";
 import {
   AuthzRequest,
   AuthzRequestWithJWT
-} from "common/interfaces/authz_request.interface";
+} from "../../common/interfaces/authz_request.interface.js";
 import {
   decodeToken,
   verifyJwtWithExpAndAudience
-} from "common/utils/jwt.utils";
+} from "../../common/utils/jwt.utils.js";
 import {
   HolderMetadata,
   ServiceMetadata
-} from "common/interfaces/client_metadata.interface";
+} from "../../common/interfaces/client_metadata.interface.js";
 import {
   ACCESS_TOKEN_EXPIRATION_TIME,
   C_NONCE_EXPIRATION_TIME,
   DEFAULT_SCOPE,
   ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
   JWA_ALGS
-} from "common/constants";
-import { VerificationResult, VpFormatsSupported } from "common/types";
+} from "../../common/constants/index.js";
+import { VerificationResult, VpFormatsSupported } from "../../common/types/index.js";
 import { JwtPayload } from "jsonwebtoken";
 import {
   IdTokenRequest,
   IdTokenRequestParams
-} from "common/classes/id_token_request";
-import { IdTokenResponse } from "common/interfaces/id_token_response";
+} from "../../common/classes/id_token_request.js";
+import { IdTokenResponse } from "../../common/interfaces/id_token_response.js";
 import { DIDDocument, Resolvable, Resolver } from "did-resolver";
-import { AuthorizationResponse } from "common/classes/authz_response";
-import { TokenRequest } from "common/interfaces/token_request.interface";
-import { TokenResponse } from "common/interfaces/token_response.interface";
-import { getAuthentificationJWKKeys } from "common/utils/did_document";
-import * as RpTypes from "./types";
+import { AuthorizationResponse } from "../../common/classes/authz_response.js";
+import { TokenRequest } from "../../common/interfaces/token_request.interface.js";
+import { TokenResponse } from "../../common/interfaces/token_response.interface.js";
+import { getAuthentificationJWKKeys } from "../../common/utils/did_document.js";
+import * as RpTypes from "./types.js";
 import {
   AccessDenied,
   InsufficienteParamaters,
@@ -44,9 +44,9 @@ import {
   InvalidScope,
   UnauthorizedClient,
   UnsupportedGrantType
-} from "common/classes";
+} from "../../common/classes/index.js";
 
-interface VerifiedBaseAuthzRequest {
+export interface VerifiedBaseAuthzRequest {
   validatedClientMetadata: RpTypes.ValidatedClientMetadata;
   authzRequest: AuthzRequest
 }
@@ -85,7 +85,7 @@ export class OpenIDReliyingParty {
     additionalParameters = {
       ...{
         responseMode: "direct_post",
-        state: uuidv4(),
+        nonce: uuidv4(),
         scope: DEFAULT_SCOPE,
         expirationTime: ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME
       },
@@ -180,6 +180,19 @@ export class OpenIDReliyingParty {
           }
         }
       }
+      if (additionalParameters.issuerStateVerifyCallback) {
+        if (!params.issuer_state) {
+          throw new InvalidRequest(`An "issuer_state" parameter is required`);
+        }
+        const issuerStateVerificationResult =
+          await additionalParameters.issuerStateVerifyCallback(params.issuer_state);
+        if (!issuerStateVerificationResult.valid) {
+          throw new InvalidRequest(
+            `Invalid "issuer_state" provided` +
+            `${issuerStateVerificationResult.error ? ": " + issuerStateVerificationResult.error : '.'}`
+          );
+        }
+      }
     }
     return {
       validatedClientMetadata,
@@ -247,10 +260,6 @@ export class OpenIDReliyingParty {
 
   async generateAccessToken(
     tokenRequest: TokenRequest,
-    codeVerifierCallback: (
-      clientId: string,
-      codeVerifier?: string
-    ) => Promise<VerificationResult>,
     generateIdToken: boolean,
     tokenSignCallback: RpTypes.TokenSignCallback,
     audience: string,
@@ -274,13 +283,27 @@ export class OpenIDReliyingParty {
             `No verification callback was provided for "${tokenRequest.grant_type}" grant type`
           );
         }
-        const verificationResult = await optionalParamaters.authorizeCodeCallback(
+        let verificationResult = await optionalParamaters.authorizeCodeCallback(
           tokenRequest.client_id, tokenRequest.code!
         );
         if (!verificationResult.valid) {
           throw new InvalidGrant(
             `Invalid "${tokenRequest.grant_type}" provided${verificationResult.error ?
               ": " + verificationResult.error : '.'}`
+          );
+        }
+        if (!optionalParamaters.codeVerifierCallback) {
+          throw new InsufficienteParamaters(
+            `No "code_verifier" verification callback was provided.`
+          );
+        }
+        verificationResult = await optionalParamaters.codeVerifierCallback(
+          tokenRequest.client_id,
+          tokenRequest.code_verifier
+        );
+        if (!verificationResult.valid) {
+          throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
+            ": " + verificationResult.error : '.'}`
           );
         }
         break;
@@ -311,27 +334,18 @@ export class OpenIDReliyingParty {
         throw new InternalError("Uninplemented");
         break;
     }
-    const verificationResult = await codeVerifierCallback(
-      tokenRequest.client_id,
-      tokenRequest.code_verifier
-    );
-    if (!verificationResult.valid) {
-      throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
-        ": " + verificationResult.error : '.'}`
-      );
-    }
     const cNonce = (optionalParamaters &&
       optionalParamaters.cNonceToEmploy) ?
       optionalParamaters.cNonceToEmploy : uuidv4();
     const tokenExp = (optionalParamaters &&
       optionalParamaters.accessTokenExp) ?
       optionalParamaters.accessTokenExp : ACCESS_TOKEN_EXPIRATION_TIME;
-    const now = Date.now();
+    const now = Math.floor(Date.now() / 1000);
     const token = await tokenSignCallback({
       aud: audience,
       iss: this.metadata.issuer,
       sub: tokenRequest.client_id,
-      exp: now + tokenExp * 1000,
+      exp: now + tokenExp,
       nonce: cNonce,
     });
     const result: TokenResponse = {
@@ -346,7 +360,7 @@ export class OpenIDReliyingParty {
       result.id_token = await tokenSignCallback({
         iss: this.metadata.issuer,
         sub: tokenRequest.client_id,
-        exp: now + tokenExp * 1000,
+        exp: now + tokenExp,
       },
         this.metadata.id_token_signing_alg_values_supported
       );
@@ -355,18 +369,12 @@ export class OpenIDReliyingParty {
   }
 
   private validateClientMetadata(clientMetadata: HolderMetadata): RpTypes.ValidatedClientMetadata {
-    const responseTypesSupported = [];
     const idTokenAlg: JWA_ALGS[] = [];
     const vpFormats: VpFormatsSupported = {}
-    // Check response_types_supported
-    for (const responseType in this.metadata.response_types_supported) {
-      if (clientMetadata.response_types_supported!.includes(responseType)) {
-        responseTypesSupported.push(responseType);
-      }
-    }
-    if (this.metadata.id_token_signing_alg_values_supported) {
-      for (const alg in clientMetadata.id_token_signing_alg_values_supported) {
-        if (clientMetadata.id_token_signing_alg_values_supported!.includes(alg as JWA_ALGS)) {
+    if (this.metadata.id_token_signing_alg_values_supported &&
+      clientMetadata.id_token_signing_alg_values_supported) {
+      for (const alg of clientMetadata.id_token_signing_alg_values_supported) {
+        if (this.metadata.id_token_signing_alg_values_supported.includes(alg as JWA_ALGS)) {
           idTokenAlg.push(alg as JWA_ALGS);
         }
       }
@@ -387,7 +395,7 @@ export class OpenIDReliyingParty {
       }
     }
     return {
-      responseTypesSupported,
+      responseTypesSupported: clientMetadata.response_types_supported ?? [],
       idTokenAlg,
       vpFormats
     }
@@ -422,4 +430,4 @@ function selectJwkFromSet(jwks: JWK[], kid: string): JWK {
   return jwk;
 }
 
-export * from "./types";
+export * from "./types.js";

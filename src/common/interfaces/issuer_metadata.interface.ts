@@ -1,4 +1,4 @@
-import { W3CVerifiableCredentialFormats } from "common/formats"
+import { W3CVerifiableCredentialFormats } from "../formats/index.js"
 
 export interface IssuerMetadata {
   credential_issuer: string,

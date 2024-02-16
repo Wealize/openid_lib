@@ -1,6 +1,6 @@
-import { InternalError } from "common/classes";
-import { W3CVerifiableCredentialFormats } from "common/formats";
-import { W3CVerifiableCredential } from "common/interfaces/w3c_verifiable_credential.interface";
+import { InternalError } from "../../common/classes/index.js";
+import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
+import { W3CVerifiableCredential } from "../../common/interfaces/w3c_verifiable_credential.interface.js";
 import { JwtPayload } from "jsonwebtoken";
 
 export abstract class VcFormatter {

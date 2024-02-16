@@ -1,11 +1,11 @@
-import { W3CVerifiableCredentialFormats } from "common/formats";
+import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
 import {
   W3CCredentialStatus,
   W3CSingleCredentialSubject,
   W3CVcSchemaDefinition,
   W3CVerifiableCredential
-} from "common/interfaces/w3c_verifiable_credential.interface";
-import { CompactVc, VerificationResult } from "common/types";
+} from "../../common/interfaces/w3c_verifiable_credential.interface.js";
+import { CompactVc, VerificationResult } from "../../common/types/index.js";
 import { JWK } from "jose";
 import { JwtHeader, JwtPayload } from "jsonwebtoken";
 

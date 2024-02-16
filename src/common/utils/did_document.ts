@@ -1,4 +1,4 @@
-import { DidDocumentError } from "common/classes";
+import { DidDocumentError } from "../classes/index.js";
 import { DIDDocument } from "did-resolver";
 import { JWK } from "jose";
 
@@ -7,7 +7,7 @@ export function getAuthentificationJWKKeys(
   methodIdentifier: string,
 ): JWK {
   if (!didDocument.authentication?.includes(methodIdentifier)) {
-    throw new DidDocumentError("The kid speciifed is not specified as a authentification relationship");
+    throw new DidDocumentError("The kid specified is not the identifier of an authentification relationship");
   }
   if (!didDocument.verificationMethod) {
     throw new DidDocumentError(`No verification methods defined in DidDocumet for did ${didDocument.id}`);

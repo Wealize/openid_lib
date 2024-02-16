@@ -1,3 +1,3 @@
-export * from "./formatters";
-export * from "./vc_issuer";
-export * from "./types";
+export * from "./formatters.js";
+export * from "./vc_issuer.js";
+export * from "./types.js";

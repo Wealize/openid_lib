@@ -1,4 +1,4 @@
-import { ControlProofType } from "common/types";
+import { ControlProofType } from "../types/index.js";
 
 export interface BaseControlProof {
   proof_type: ControlProofType;

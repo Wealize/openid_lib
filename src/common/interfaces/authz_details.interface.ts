@@ -1,4 +1,4 @@
-import { W3CVerifiableCredentialFormats } from "common/formats";
+import { W3CVerifiableCredentialFormats } from "../formats/index.js";
 
 export interface AuthorizationDetails { // OAuth 2.0 Rich Authorization Requests Section 2
   type: string, // OID4VCI Section 5.1.1
