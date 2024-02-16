@@ -8,12 +8,29 @@ import {
 // OAuth 2.0 Multiple Response Type Encoding Practices Section 3
 // OID4VP Section 5.4
 // TODO: Maybe we should not give support for the "token" response type
+/**
+ * Valid response types for an authorisation response
+ */
 export type AuthzResponseType = "code" | "token" | "id_token" | "vp_token";
+/**
+ * Valid grant types for a token request
+ */
 export type GrantType = "authorization_code" | "pre-authorised_code" | "vp_token";
+/**
+ * Valid control proof types
+ */
 export type ControlProofType = "jwt";
+/**
+ * Supported formats for a VP
+ */
 export type VpFormatsSupported = {
   [key in W3CVerifiableCredentialFormats | W3CVerifiablePresentationFormats]?: { alg_values_supported: JWA_ALGS[]; };
 };
+/**
+ * Compact VC representation
+ */
 export type CompactVc = string;
-
+/**
+ * The result of a verification process, with an optional error message
+ */
 export type VerificationResult = { valid: boolean, error?: string };

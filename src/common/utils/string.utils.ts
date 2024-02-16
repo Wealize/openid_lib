@@ -1,3 +1,8 @@
+/**
+ * Generate a random string with a specifiable length
+ * @param length The length of the string
+ * @returns A random generated string with the length specified
+ */
 export function generateRandomString(length: number) {
   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var result = '';

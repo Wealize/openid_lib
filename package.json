@@ -1,6 +1,6 @@
 {
   "name": "openid-lib",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "exports": "./index.js",
   "scripts": {

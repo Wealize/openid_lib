@@ -2,6 +2,9 @@ import { W3CVerifiableCredentialFormats } from "../formats/index.js";
 import { W3CVerifiableCredential } from "./w3c_verifiable_credential.interface.js";
 import { CompactVc } from "../types/index.js";
 
+/**
+ * Defines a credential response object in accordance to OID4VCI
+ */
 export interface CredentialResponse {
   format?: W3CVerifiableCredentialFormats;
   credential?: W3CVerifiableCredential | CompactVc;

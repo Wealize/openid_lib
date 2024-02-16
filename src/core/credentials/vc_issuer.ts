@@ -3,16 +3,28 @@ import { Resolver } from "did-resolver";
 import { JWK } from "jose";
 import { Jwt, JwtPayload } from "jsonwebtoken";
 import { ControlProof } from "../../common/classes/control_proof.js";
-import { CONTEXT_VC_DATA_MODEL_2, C_NONCE_EXPIRATION_TIME } from "../../common/constants/index.js";
+import {
+  CONTEXT_VC_DATA_MODEL_2,
+  C_NONCE_EXPIRATION_TIME
+} from "../../common/constants/index.js";
 import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
-import { CredentialRequest } from "../../common/interfaces/credential_request.interface.js";
-import { IssuerMetadata } from "../../common/interfaces/issuer_metadata.interface.js";
+import {
+  CredentialRequest
+} from "../../common/interfaces/credential_request.interface.js";
+import {
+  IssuerMetadata
+} from "../../common/interfaces/issuer_metadata.interface.js";
 import {
   W3CVcSchemaDefinition,
 } from "../../common/interfaces/w3c_verifiable_credential.interface";
-import { decodeToken, verifyJwtWithExpAndAudience } from "../../common/utils/jwt.utils.js";
+import {
+  decodeToken,
+  verifyJwtWithExpAndAudience
+} from "../../common/utils/jwt.utils.js";
 import { VcFormatter } from './formatters.js';
-import { CredentialResponse } from "../../common/interfaces/credential_response.interface.js";
+import {
+  CredentialResponse
+} from "../../common/interfaces/credential_response.interface.js";
 import * as VcIssuerTypes from "./types.js";
 import {
   InsufficienteParamaters,
@@ -21,7 +33,23 @@ import {
   InvalidToken
 } from "../../common/classes/index.js";
 
+/**
+ * W3C credentials issuer in both deferred and In-Time flows
+ */
 export class W3CVcIssuer {
+  /**
+   * Constructor of the issuer
+   * @param metadata Issuer metadata
+   * @param didResolver Object that allows to resolve the DIDs found 
+   * @param issuerDid The DID of the issuer
+   * @param signCallback Callback used to sign the VC generated
+   * @param cNonceRetrieval Callback to recover the challenge nonce expected 
+   * for a control proof
+   * @param getVcSchema Callback to recover the schema associated with a VC
+   * @param getCredentialData Callback to recover the subject data to 
+   * include in the VC
+   * It can also be used to specify if the user should follow the deferred flow
+   */
   constructor(
     private metadata: IssuerMetadata,
     private didResolver: Resolver,
@@ -32,22 +60,51 @@ export class W3CVcIssuer {
     private getCredentialData: VcIssuerTypes.GetCredentialData,
   ) { }
 
+  /**
+   * Allows to verify a JWT Access Token in string format
+   * @param token The access token
+   * @param publicKeyJwkAuthServer The public key that should verify the token 
+   * @param tokenVerifyCallback A callback that can be used to verify to perform an 
+   * additional verification of the contents of the token
+   * @returns Access token in JWT format
+   * @throws If data provided is incorrect
+   */
   async verifyAccessToken(
     token: string,
     publicKeyJwkAuthServer: JWK,
-    tokenVerifyCallback: VcIssuerTypes.AccessTokenVerifyCallback
+    tokenVerifyCallback?: VcIssuerTypes.AccessTokenVerifyCallback
   ): Promise<Jwt> {
-    await verifyJwtWithExpAndAudience(token, publicKeyJwkAuthServer, this.metadata.credential_issuer);
+    await verifyJwtWithExpAndAudience(
+      token,
+      publicKeyJwkAuthServer,
+      this.metadata.credential_issuer
+    );
     const jwt = decodeToken(token);
-    const verificationResult = await tokenVerifyCallback(jwt.header, jwt.payload as JwtPayload);
-    if (!verificationResult.valid) {
-      throw new InvalidToken(
-        `Invalid access token provided${verificationResult.error ? ": " + verificationResult.error : '.'}`
+    if (tokenVerifyCallback) {
+      const verificationResult = await tokenVerifyCallback(
+        jwt.header,
+        jwt.payload as JwtPayload
       );
+      if (!verificationResult.valid) {
+        throw new InvalidToken(
+          `Invalid access token provided${verificationResult.error ? ": " + verificationResult.error : '.'}`
+        );
+      }
     }
     return jwt;
   }
 
+  /**
+   * Allows to generate a Credential Response in accordance to 
+   * the OID4VCI specification
+   * @param acessToken The access token needed to perform the operation 
+   * @param credentialRequest The credential request sent by an user
+   * @param optionalParamaters A set of optional parameters that are only 
+   * required if the
+   * token is provided in string format and that allows to verify it
+   * @returns A credential response with a VC or a deferred code
+   * @throws If data provided is incorrect
+   */
   async generateCredentialResponse(
     acessToken: string | Jwt,
     credentialRequest: CredentialRequest,
@@ -55,7 +112,9 @@ export class W3CVcIssuer {
   ): Promise<CredentialResponse> {
     if (typeof acessToken === "string") {
       if (!optionalParamaters || !optionalParamaters.tokenVerification) {
-        throw new InsufficienteParamaters(`"tokenVerification" optional parameter must be set when acessToken is in string format`);
+        throw new InsufficienteParamaters(
+          `"tokenVerification" optional parameter must be set when acessToken is in string format`
+        );
       }
       acessToken = await this.verifyAccessToken(
         acessToken,
@@ -142,6 +201,17 @@ export class W3CVcIssuer {
     }
   }
 
+  /**
+   * Allows to exchange a deferred code for a VC
+   * @param acceptanceToken The deferred code sent by the issuer in a 
+   * previous instance
+   * @param deferredExchangeCallback A callback to verify the deferred code
+   * @param optionalParameters A set of optional parameters that allow to 
+   * specify certain 
+   * data of the VC generated
+   * @returns A credential response with the VC generated or a new 
+   * (or the same) deferred code
+   */
   async exchangeAcceptanceTokenForVc(
     acceptanceToken: string,
     deferredExchangeCallback: VcIssuerTypes.DeferredExchangeCallback,
@@ -157,14 +227,17 @@ export class W3CVcIssuer {
     return this.generateW3CCredential(
       exchangeResult.types,
       await this.getVcSchema(exchangeResult.types),
-      exchangeResult.subject,
+      exchangeResult.data?.id!,
       exchangeResult.data!,
       exchangeResult.format,
       optionalParameters
     );
   }
 
-  private checkCredentialTypesAndFormat(types: string[], format: W3CVerifiableCredentialFormats) {
+  private checkCredentialTypesAndFormat(
+    types: string[],
+    format: W3CVerifiableCredentialFormats
+  ) {
     const typesSet = new Set(types);
     for (const credentialSupported of this.metadata.credentials_supported) {
       const supportedSet = new Set(credentialSupported.types);
@@ -172,6 +245,8 @@ export class W3CVcIssuer {
         return;
       }
     }
-    throw new InvalidCredentialRequest("Unsuported combination of credential types and format");
+    throw new InvalidCredentialRequest(
+      "Unsuported combination of credential types and format"
+    );
   }
 }

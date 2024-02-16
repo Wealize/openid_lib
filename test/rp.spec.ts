@@ -121,7 +121,7 @@ describe("Reliying Party tests", async () => {
         const _verifiedIdTokenResponse = await rp.verifyIdTokenResponse(
           idTokenResponse,
           async (_header, payload, didDocument) => {
-            if (!payload.nonce || payload.nonce !== idTokenRequest.params.nonce!) {
+            if (!payload.nonce || payload.nonce !== idTokenRequest.requestParams.nonce!) {
               return { valid: false, error: "Invalid nonce" };
             }
             if (didDocument.id !== holderDid) {
@@ -448,7 +448,7 @@ async function generateIdToken(idRequest: IdTokenRequest): Promise<IdTokenRespon
     kid: `${holderDid}#${holderKid}`
   };
   const keyLike = await importJWK(holderJWK);
-  const idToken = await new SignJWT({ nonce: idRequest.params.nonce })
+  const idToken = await new SignJWT({ nonce: idRequest.requestParams.nonce })
     .setProtectedHeader(header)
     .setIssuer(holderDid)
     .setAudience((payload as JwtPayload).iss!)

@@ -22,7 +22,7 @@ import {
   ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
   JWA_ALGS
 } from "../../common/constants/index.js";
-import { VerificationResult, VpFormatsSupported } from "../../common/types/index.js";
+import { VpFormatsSupported } from "../../common/types/index.js";
 import { JwtPayload } from "jsonwebtoken";
 import {
   IdTokenRequest,
@@ -47,7 +47,13 @@ import {
 } from "../../common/classes/index.js";
 
 export interface VerifiedBaseAuthzRequest {
+  /**
+   * Client metadata related to supported formats and algorithms that are checked against the PR.
+   */
   validatedClientMetadata: RpTypes.ValidatedClientMetadata;
+  /**
+   * Verified authz request
+   */
   authzRequest: AuthzRequest
 }
 
@@ -57,7 +63,23 @@ interface VerifiedIdTokenResponse {
 }
 
 // TODO: Maybe we need a build to support multiples resolver, or move that responsability to the user
+/**
+ * Represents an entity acting as a Reliying Party. As such, it has the 
+ * capability to process authorisation requests and to send others. 
+ * It can also issue access tokens.
+ * 
+ * The "grant_type" "authorisation_code" and "pre-authorised_code" are supported 
+ * for authentication.
+ * 
+ */
 export class OpenIDReliyingParty {
+  /**
+   * @param defaultMetadataCallback Callback to get the default value to 
+   * consider for client metadata.
+   * @param metadata Authorisation server metadata
+   * @param didResolver Object responsible for obtaining the DID Documents 
+   * of the DIDs that are detected.
+   */
   constructor(
     private defaultMetadataCallback: RpTypes.GetClientDefaultMetada,
     private metadata: AuthServerMetadata,
@@ -66,6 +88,12 @@ export class OpenIDReliyingParty {
 
   }
 
+  /**
+   * Allows to add support for a new DID Method
+   * @param methodName DID Method name
+   * @param resolver Object responsible for obtaining the DID Documents 
+   * related to the DID specified
+   */
   addDidMethod(methodName: string, resolver: Resolvable) {
     const tmp = {} as Record<string, Resolvable>;
     tmp[methodName] = resolver;
@@ -75,6 +103,19 @@ export class OpenIDReliyingParty {
     });
   }
 
+  /**
+   * Allows to create a new Authorisation request in which an ID Token 
+   * is requested
+   * @param clientAuthorizationEndpoint Endpoint of the authorisation 
+   * server of the client
+   * @param audience "aud" parameter for the generated JWT.
+   * @param redirectUri URI to which the client should deliver the 
+   * authorisation response to
+   * @param jwtSignCallback Callback to generate the signed ID Token
+   * @param additionalParameters Additional parameters that handle 
+   * issues related to the content of the ID Token.
+   * @returns The ID Token Request 
+   */
   async createIdTokenRequest(
     clientAuthorizationEndpoint: string,
     audience: string,
@@ -112,13 +153,21 @@ export class OpenIDReliyingParty {
   }
 
   createIdTokenRequestFromBaseAuthzRequest() {
-
+    // TODO: PENDING
   }
 
   createVpTokenRequest() {
     // TODO: PENDING
   }
 
+  /**
+   * Allows to verify an authorisation request sent by a client 
+   * @param request The request sent by the client
+   * @param additionalParameters Optional parameters allowing 
+   * validations to be applied to the "scope", "authorisation_details" 
+   * and "issuer_state" parameters of the authorisation request
+   * @returns Verified Authz Reques with some of the client metadata extracted
+   */
   async verifyBaseAuthzRequest(
     request: AuthzRequestWithJWT,
     additionalParameters?: RpTypes.VerifyBaseAuthzRequestOptionalParams
@@ -200,11 +249,19 @@ export class OpenIDReliyingParty {
     }
   }
 
+  /**
+   * Allows to verify an ID Token Response sent by a client
+   * @param idTokenResponse The authorisation response to verify
+   * @param verifyCallback A callback that allows to verify the contents of the 
+   * header and payload of the received ID Token, but no the signature
+   * @returns The verified ID Token Response with the DID Document of the 
+   * associated token issuer. 
+   * @throws If data provided is incorrect
+   */
   async verifyIdTokenResponse(
     idTokenResponse: IdTokenResponse,
     verifyCallback: RpTypes.IdTokenVerifyCallback
   ): Promise<VerifiedIdTokenResponse> {
-    // Usamos jwebtoken para obtener header y payload
     const { header, payload } = decodeToken(idTokenResponse.id_token);
     const jwtPayload = payload as JwtPayload;
     if (!jwtPayload.iss) {
@@ -249,6 +306,16 @@ export class OpenIDReliyingParty {
     // TODO: PENDING
   }
 
+  /**
+   * Generates an authorisation response for a request with response type 
+   * "code".
+   * @param redirect_uri The URI to send the response to
+   * @param code The authorisation code to be sent
+   * @param state The state to associate with the response. It must be 
+   * the same as the one sent by the client in the corresponding 
+   * authorisation request if this parameter was present.
+   * @returns Authorization response
+   */
   createAuthzResponse(
     redirect_uri: string,
     code: string,
@@ -258,13 +325,27 @@ export class OpenIDReliyingParty {
     return new AuthorizationResponse(redirect_uri, code, state);
   }
 
+  /**
+   * Allows to generate a token response from a token request
+   * @param tokenRequest The token request sent by the client
+   * @param generateIdToken Flag indicating whether, together with 
+   * the access token, an ID Token should be generated.
+   * @param tokenSignCallback Callback that manages the signature of the token.
+   * @param audience JWT "aud" to include in the generated access token
+   * @param optionalParamaters Optional arguments to specify the nonce to be used, the time 
+   * validity of the nonce and callbacks to check the authorisation 
+   * and pre-authorisation codes sent. They also allow to specify how to 
+   * validate the code_challenge sent by the user in an authorisation request
+   * @returns Token response with the generated access token
+   * @throws If data provided is incorrect
+   */
   async generateAccessToken(
     tokenRequest: TokenRequest,
     generateIdToken: boolean,
     tokenSignCallback: RpTypes.TokenSignCallback,
     audience: string,
     optionalParamaters?: RpTypes.GenerateAccessTokenOptionalParameters
-  ) {
+  ): Promise<TokenResponse> {
     if (this.metadata.grant_types_supported
       && !this.metadata.grant_types_supported.includes(tokenRequest.grant_type)) {
       throw new UnsupportedGrantType(

@@ -1,6 +1,10 @@
 import { JWA_ALGS } from "../constants/index.js";
 import { GrantType, VpFormatsSupported } from "../types/index.js";
 
+/**
+ * Defines the metadata of an Authorization Server in accordance to 
+ * RFC 8414 "OAuth 2.0 Authorization Server Metadata"
+ */
 export interface AuthServerMetadata {
   issuer: string;
   authorization_endpoint?: string;

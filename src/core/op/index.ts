@@ -1,21 +1,62 @@
 import { v4 as uuidv4 } from 'uuid';
 import querystring from "querystring";
-import { AuthzRequestBuilder } from "../../common/builders/authz/authz_request.builder.js";
-import { AuthorizationDetails } from "../../common/interfaces/authz_details.interface.js";
-import { AuthzRequest, AuthzRequestLocation } from "../../common/interfaces/authz_request.interface.js";
-import { HolderMetadata, ServiceMetadata } from "../../common/interfaces/client_metadata.interface.js";
+import {
+  AuthzRequestBuilder
+} from "../../common/builders/authz/authz_request.builder.js";
+import {
+  AuthorizationDetails
+} from "../../common/interfaces/authz_details.interface.js";
+import {
+  AuthzRequest,
+  AuthzRequestLocation
+} from "../../common/interfaces/authz_request.interface.js";
+import {
+  HolderMetadata,
+  ServiceMetadata
+} from "../../common/interfaces/client_metadata.interface.js";
 import { AuthzResponseType } from "../../common/types/index.js";
 import { generateChallenge } from "../../common/utils/pkce.utils.js";
-import { DEFAULT_PKCE_LENGTH, generateRandomString } from '../../common/index.js';
+import {
+  DEFAULT_PKCE_LENGTH,
+  generateRandomString
+} from '../../common/index.js';
 
+/**
+ * Extended authorisation request
+ */
 interface AuthzRequestMethodData {
+  /**
+   * The petition in JWT format.
+   */
   jwt?: string,
+  /**
+   * The URL to send the request to
+   */
   url: string,
+  /**
+   * The state associated with the request
+   */
   state: string,
+  /**
+   * The "code_verifier" that resolves the challenge included 
+   * in the request
+   */
   code_verifier?: string
 }
 
+/**
+ * Define an entity acting as OpenIDProvider. As such, it can generate 
+ * authorisation requests
+ */
 export class OpenIDProvider {
+  /**
+   * Constructor of the OpenIDProvider class
+   * @param redirectUri URI at which responses to authorisation requests
+   *  are expected to be received
+   * @param requestCallback Callback that allow to sign the request objects
+   * @param metadata The authorisation metadata of the OP
+   * @param clientId The identifier of the OP
+   */
   constructor(
     private redirectUri: string,
     // For now, support for JWT. TODO: EXPAND SUPPORT TO JLD
@@ -27,6 +68,18 @@ export class OpenIDProvider {
   }
 
   // TODO: DERIVE FROM CREDENTIAL OFFER FOR ISSUER STATE AND EVEN AUTHZ DETAILS
+  /**
+   * Allows to generate an autorisation request
+   * @param url The URL to send the request to
+   * @param requestLocation Allows to indicate where the request parameters 
+   * should be included.
+   * @param response_type The response type expected
+   * @param authzDetails The autorisation details to include in the request
+   * @param scope The scope to include in the request
+   * @param audience The "aud" parameter to include in the request if a JWT is generated.
+   * @param pkceChallenge The challenge to include in the request.
+   * @returns The authorisation request to sent in URL format with additional information.
+   */
   async createBaseAuthzRequest(
     url: string,
     requestLocation: AuthzRequestLocation,
@@ -103,4 +156,10 @@ export class OpenIDProvider {
 
 }
 
+/**
+ * Function type that allows to sign an AuthzRequest
+ * @param data The request to sign
+ * @param target The audience of the request
+ * @returns The signed request in string format
+ */
 export type AuthzSignCallback = (data: AuthzRequest, target: string) => Promise<string>;

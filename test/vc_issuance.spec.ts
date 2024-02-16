@@ -150,7 +150,6 @@ describe("VC Issuance tests", () => {
                 },
                 types: ["DeferredVc"],
                 format: "jwt_vc_json",
-                subject: holderDid
               }
             }
             return { error: "Invalid deferred_code" }
