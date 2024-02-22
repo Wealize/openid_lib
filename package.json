@@ -2,7 +2,8 @@
   "name": "openid-lib",
   "version": "0.1.0",
   "description": "",
-  "exports": "./index.js",
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
   "scripts": {
     "test": "mocha --recursive dist/test --reporter spec --timeout 5000",
     "build_and_test": "npm run build && npm run test",
@@ -21,10 +22,10 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
-  "type": "module",
   "engines": {
     "node": ">=16"
   },
+  "type": "module",
   "dependencies": {
     "@cef-ebsi/key-did-resolver": "^2.0.0",
     "date-and-time": "^3.1.1",

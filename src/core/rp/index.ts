@@ -54,7 +54,7 @@ export interface VerifiedBaseAuthzRequest {
   /**
    * Verified authz request
    */
-  authzRequest: AuthzRequest
+  authzRequest: AuthzRequest,
 }
 
 interface VerifiedIdTokenResponse {
@@ -478,7 +478,8 @@ export class OpenIDReliyingParty {
     return {
       responseTypesSupported: clientMetadata.response_types_supported ?? [],
       idTokenAlg,
-      vpFormats
+      vpFormats,
+      authorizationEndpoint: clientMetadata.authorization_endpoint!
     }
   }
 

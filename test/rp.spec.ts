@@ -463,7 +463,7 @@ async function generateIdToken(idRequest: IdTokenRequest): Promise<IdTokenRespon
 const signCallback = async (payload: JwtPayload, _supportedAlgs?: JWA_ALGS[]) => {
   const header = {
     alg: "ES256",
-    kid: `${authServerDid}#${authServerDid}`
+    kid: `${authServerDid}#${authServerKid}`
   };
   const keyLike = await importJWK(authServerJWK);
   return await new SignJWT(payload)

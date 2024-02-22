@@ -55,7 +55,7 @@ export class AuthzRequestBuilder {
     redirect_uri: string,
     metadata: HolderMetadata,
     code_challenge: string,
-    code_challenge_method: JWA_ALGS,
+    code_challenge_method: string, // TODO: Define new type
     issuer_state?: string,
   ) {
     const builder = new AuthzRequestBuilder(

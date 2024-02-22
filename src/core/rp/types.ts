@@ -170,4 +170,8 @@ export interface ValidatedClientMetadata {
    * VP formats supported both by the client and by an RP
    */
   vpFormats: VpFormatsSupported;
+  /**
+   * Authorization endpoint of the client
+   */
+  authorizationEndpoint: string;
 };
