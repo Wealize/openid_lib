@@ -101,7 +101,7 @@ describe("Reliying Party tests", async () => {
           authzRequest,
           {
             authzDetailsVerifyCallback: async (details) => {
-              if (!details.types.includes("TestVc")) {
+              if (details.types && !details.types.includes("TestVc")) {
                 return { valid: false, error: "Unssuported VC Type" };
               }
               return { valid: true };
