@@ -10,7 +10,7 @@
     "build": "npx tsc",
     "run": "npx tsc && node dist/index.js"
   },
-  "author": "",
+  "author": "Izertis",
   "license": "ISC",
   "devDependencies": {
     "@types/chai": "^4.3.11",
