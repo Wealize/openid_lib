@@ -198,3 +198,6 @@ const _tokenResponse = await rp.generateAccessToken(
 The method enables several optional parameters that must be supplied depending on the `grant_type` supported:
 - `authorization_code`: Must supply a callback for the verification of the code itself and a second one for the verification of the PKCE Challenge that must have been delivered by the user in a previous authorization request.
 - pre-authorize_code`: It must supply a callback for the verification of the code itself that additionally receives the PIN sent by the user.
+
+# LICENSE
+The library has the following [license](./LICENSE.md).
