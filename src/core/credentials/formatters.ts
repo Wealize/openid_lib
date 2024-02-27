@@ -7,6 +7,7 @@ import {
   W3CVerifiableCredential,
 } from "../../common/interfaces/w3c_verifiable_credential.interface.js";
 import { JwtPayload } from "jsonwebtoken";
+import { expressDateInSeconds } from "../../common/utils/time.js";
 
 /**
  * Abstract class allowing to express unsigned W3C credentials in different formats.
@@ -74,14 +75,14 @@ class JwtVcFormatter extends VcFormatter {
     vc: W3CVerifiableCredential
   ): W3CVerifiableCredential | JwtPayload {
     if (vc.issued) {
-      token.iat = Date.parse(vc.issued!);
-      token.nbf = Date.parse(vc.issued!);
+      token.iat = expressDateInSeconds(vc.issued);
+      token.nbf = expressDateInSeconds(vc.issued);
     } else if (vc.issuanceDate) {
-      token.iat = Date.parse(vc.issuanceDate!);
-      token.nbf = Date.parse(vc.issuanceDate!);
+      token.iat = expressDateInSeconds(vc.issuanceDate);
+      token.nbf = expressDateInSeconds(vc.issuanceDate);
     } else if (vc.validFrom) {
-      token.iat = Date.parse(vc.validFrom!);
-      token.nbf = Date.parse(vc.validFrom!);
+      token.iat = expressDateInSeconds(vc.validFrom);
+      token.nbf = expressDateInSeconds(vc.validFrom);
     }
     if (vc.expirationDate) {
       token.exp = Date.parse(vc.validUntil);
@@ -94,11 +95,11 @@ class JwtVcFormatter extends VcFormatter {
     vc: W3CVerifiableCredential
   ): W3CVerifiableCredential | JwtPayload {
     if (vc.validFrom) {
-      token.iat = Date.parse(vc.validFrom!);
-      token.nbf = Date.parse(vc.validFrom!);
+      token.iat = expressDateInSeconds(vc.validFrom);
+      token.nbf = expressDateInSeconds(vc.validFrom);
     }
     if (vc.validUntil) {
-      token.exp = Date.parse(vc.validUntil);
+      token.exp = expressDateInSeconds(vc.validUntil);
     }
     return token;
   }
