@@ -21,7 +21,12 @@ export class IdTokenRequest {
    * @returns The request in URL format
    */
   toUri(): string {
-    return `${this.clientAuthorizationEndpoint}?${new URLSearchParams(Object.entries(this.requestParams)).toString()}`;
+    return `${this.clientAuthorizationEndpoint}?${new URLSearchParams(
+      Object.entries({
+        ...this.requestParams,
+        request: this.request
+      })
+    ).toString()}`;
   }
 }
 
