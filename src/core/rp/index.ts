@@ -137,9 +137,12 @@ export class OpenIDReliyingParty {
       scope: additionalParameters.scope!,
       redirect_uri: redirectUri,
       response_mode: additionalParameters.responseMode,
-      state: additionalParameters.state,
-      nonce: additionalParameters.nonce
+      nonce: additionalParameters.nonce,
+      client_id: this.metadata.issuer
     };
+    if (additionalParameters.state) {
+      requestParams.state = additionalParameters.state;
+    }
     const idToken = await jwtSignCallback({
       aud: audience,
       iss: this.metadata.issuer,

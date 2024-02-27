@@ -5,8 +5,8 @@ import { W3CVerifiableCredentialFormats } from "../formats/index.js";
  */
 export interface AuthorizationDetails {
     type: string;
-    format: W3CVerifiableCredentialFormats;
-    types: string[];
+    format?: W3CVerifiableCredentialFormats;
+    types?: string[];
     locations?: string[];
     actions?: string[];
     datatypes?: string[];

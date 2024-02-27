@@ -75,9 +75,12 @@ export class OpenIDReliyingParty {
                 scope: additionalParameters.scope,
                 redirect_uri: redirectUri,
                 response_mode: additionalParameters.responseMode,
-                state: additionalParameters.state,
-                nonce: additionalParameters.nonce
+                nonce: additionalParameters.nonce,
+                client_id: this.metadata.issuer
             };
+            if (additionalParameters.state) {
+                requestParams.state = additionalParameters.state;
+            }
             const idToken = yield jwtSignCallback(Object.assign(Object.assign({ aud: audience, iss: this.metadata.issuer, exp: Date.now() + additionalParameters.expirationTime }, requestParams), additionalParameters.additionalPayload), this.metadata.id_token_signing_alg_values_supported);
             return new IdTokenRequest(requestParams, idToken, clientAuthorizationEndpoint);
         });

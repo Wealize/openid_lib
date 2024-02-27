@@ -24,6 +24,7 @@ export declare class IdTokenRequest {
  */
 export interface IdTokenRequestParams {
     response_type: "id_token";
+    client_id: string;
     scope: string;
     redirect_uri: string;
     response_mode?: AuthzResponseMode;
