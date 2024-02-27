@@ -40,6 +40,9 @@ class JwtVcFormatter extends VcFormatter {
             iss: vc.issuer,
             vc
         };
+        if (vc.id) {
+            token.jti = vc.id;
+        }
         if (this.dataModel === W3CDataModel.V1) {
             return this.formatDataModel1(token, vc);
         }
