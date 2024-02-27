@@ -4,10 +4,14 @@ import { JWK } from "jose";
 import { Jwt, JwtPayload } from "jsonwebtoken";
 import { ControlProof } from "../../common/classes/control_proof.js";
 import {
+  CONTEXT_VC_DATA_MODEL_1,
   CONTEXT_VC_DATA_MODEL_2,
   C_NONCE_EXPIRATION_TIME
 } from "../../common/constants/index.js";
-import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
+import {
+  W3CDataModel,
+  W3CVerifiableCredentialFormats
+} from "../../common/formats/index.js";
 import {
   CredentialRequest
 } from "../../common/interfaces/credential_request.interface.js";
@@ -15,7 +19,7 @@ import {
   IssuerMetadata
 } from "../../common/interfaces/issuer_metadata.interface.js";
 import {
-  W3CVcSchemaDefinition,
+  W3CVcSchemaDefinition, W3CVerifiableCredential,
 } from "../../common/interfaces/w3c_verifiable_credential.interface";
 import {
   decodeToken,
@@ -108,6 +112,7 @@ export class W3CVcIssuer {
   async generateCredentialResponse(
     acessToken: string | Jwt,
     credentialRequest: CredentialRequest,
+    dataModel: W3CDataModel,
     optionalParamaters?: VcIssuerTypes.GenerateCredentialReponseOptionalParams
   ): Promise<CredentialResponse> {
     if (typeof acessToken === "string") {
@@ -151,6 +156,7 @@ export class W3CVcIssuer {
         jwtPayload.sub,
         credentialDataOrDeferred.data,
         credentialRequest.format,
+        dataModel,
         optionalParamaters
       );
     } else {
@@ -164,15 +170,18 @@ export class W3CVcIssuer {
     subject: string,
     vcData: Record<string, any>,
     format: W3CVerifiableCredentialFormats,
+    dataModel: W3CDataModel,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<CredentialResponse> {
     const vcId = uuidv4();
-    const formatter = VcFormatter.fromVcFormat(format);
-    const vcPreSign = formatter.formatVc({
-      "@context": CONTEXT_VC_DATA_MODEL_2,
+    const formatter = VcFormatter.fromVcFormat(format, dataModel);
+    const now = new Date().toISOString();
+    const content: W3CVerifiableCredential = {
+      "@context": dataModel === W3CDataModel.V1 ?
+        CONTEXT_VC_DATA_MODEL_2 : CONTEXT_VC_DATA_MODEL_1,
       type,
       credentialSchema: schema,
-      validFrom: new Date().toISOString(),
+      validFrom: now,
       validUntil: (optionalParameters && optionalParameters.getValidUntil) ?
         await optionalParameters.getValidUntil(
           type
@@ -189,7 +198,11 @@ export class W3CVcIssuer {
         id: subject,
         ...vcData
       }
-    });
+    };
+    if (dataModel === W3CDataModel.V1) {
+      content.issued = now;
+    }
+    const vcPreSign = formatter.formatVc(content);
     const signedVc = await this.signCallback(format, vcPreSign);
     return {
       format: format,
@@ -215,6 +228,7 @@ export class W3CVcIssuer {
   async exchangeAcceptanceTokenForVc(
     acceptanceToken: string,
     deferredExchangeCallback: VcIssuerTypes.DeferredExchangeCallback,
+    dataModel: W3CDataModel,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<CredentialResponse> {
     const exchangeResult = await deferredExchangeCallback(acceptanceToken);
@@ -230,6 +244,7 @@ export class W3CVcIssuer {
       exchangeResult.data?.id!,
       exchangeResult.data!,
       exchangeResult.format,
+      dataModel,
       optionalParameters
     );
   }

@@ -1,8 +1,32 @@
-// TODO: Think if support for VCDM 1.0 should be given
+/**
+ * Type definition that defines the possible models for a W3C VC
+ */
+export type W3CVerifiableCredential = W3CVerifiableCredentialV1 | W3CVerifiableCredentialV2;
+
+/**
+ * Defines a Verifiable Credential in accordance to W3C VC Data Model 1.0
+ */
+export interface W3CVerifiableCredentialV1 {
+  '@context': string[];
+  type: string[];
+  credentialSchema?: W3CVcSchemaDefinition[];
+  issuer: string;
+  issued?: string;
+  issuanceDate?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
+  expirationDate?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
+  id?: string;
+  credentialStatus?: W3CCredentialStatus;
+  description?: string;
+  credentialSubject: W3CSingleCredentialSubject;
+  proof?: EmbeddedProof;
+  [x: string]: any
+}
+
+
 /**
  * Defines a Verifiable Credential in accordance to W3C VC Data Model 2.0
  */
-export interface W3CVerifiableCredential {
+export interface W3CVerifiableCredentialV2 {
   '@context': string[];
   type: string[];
   credentialSchema?: W3CVcSchemaDefinition[];

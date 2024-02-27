@@ -13,3 +13,10 @@ export type W3CVerifiablePresentationFormats = "jwt_vp_json" | "ldp_vp" | "jwt_v
  * Valid response_modes for a authorisation response
  */
 export type AuthzResponseMode = "direct_post" | "post" | "query" | "fragment";
+/**
+ * W3C VC Data models version number
+ */
+export enum W3CDataModel {
+  V1,
+  V2
+}

@@ -1,6 +1,7 @@
 import { Resolver } from "did-resolver";
 import { JWK } from "jose";
 import { Jwt } from "jsonwebtoken";
+import { W3CDataModel } from "../../common/formats/index.js";
 import { CredentialRequest } from "../../common/interfaces/credential_request.interface.js";
 import { IssuerMetadata } from "../../common/interfaces/issuer_metadata.interface.js";
 import { CredentialResponse } from "../../common/interfaces/credential_response.interface.js";
@@ -51,7 +52,7 @@ export declare class W3CVcIssuer {
      * @returns A credential response with a VC or a deferred code
      * @throws If data provided is incorrect
      */
-    generateCredentialResponse(acessToken: string | Jwt, credentialRequest: CredentialRequest, optionalParamaters?: VcIssuerTypes.GenerateCredentialReponseOptionalParams): Promise<CredentialResponse>;
+    generateCredentialResponse(acessToken: string | Jwt, credentialRequest: CredentialRequest, dataModel: W3CDataModel, optionalParamaters?: VcIssuerTypes.GenerateCredentialReponseOptionalParams): Promise<CredentialResponse>;
     private generateW3CCredential;
     /**
      * Allows to exchange a deferred code for a VC
@@ -64,6 +65,6 @@ export declare class W3CVcIssuer {
      * @returns A credential response with the VC generated or a new
      * (or the same) deferred code
      */
-    exchangeAcceptanceTokenForVc(acceptanceToken: string, deferredExchangeCallback: VcIssuerTypes.DeferredExchangeCallback, optionalParameters?: VcIssuerTypes.BaseOptionalParams): Promise<CredentialResponse>;
+    exchangeAcceptanceTokenForVc(acceptanceToken: string, deferredExchangeCallback: VcIssuerTypes.DeferredExchangeCallback, dataModel: W3CDataModel, optionalParameters?: VcIssuerTypes.BaseOptionalParams): Promise<CredentialResponse>;
     private checkCredentialTypesAndFormat;
 }

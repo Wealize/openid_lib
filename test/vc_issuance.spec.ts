@@ -1,6 +1,11 @@
 import { assert, expect } from "chai";
 import { W3CVcIssuer } from "../src/core/credentials/index.js";
-import { CredentialRequest, CredentialResponse, CredentialSupportedBuilder } from "../src/index.js";
+import {
+  CredentialRequest,
+  CredentialResponse,
+  CredentialSupportedBuilder,
+  W3CDataModel
+} from "../src/index.js";
 import { Resolver } from "did-resolver";
 import { getResolver } from "@cef-ebsi/key-did-resolver";
 import { SignJWT, importJWK } from "jose";
@@ -96,6 +101,7 @@ describe("VC Issuance tests", () => {
         const credentialResponse = await vcIssuer.generateCredentialResponse(
           await generateAccessToken(),
           credentialRequest,
+          W3CDataModel.V2,
           {
             tokenVerification: {
               publicKeyJwkAuthServer: issuerJWK,
@@ -127,6 +133,7 @@ describe("VC Issuance tests", () => {
         credentialResponse = await vcIssuer.generateCredentialResponse(
           await generateAccessToken(),
           credentialRequest,
+          W3CDataModel.V2,
           {
             tokenVerification: {
               publicKeyJwkAuthServer: issuerJWK,
@@ -154,7 +161,8 @@ describe("VC Issuance tests", () => {
               }
             }
             return { error: "Invalid deferred_code" }
-          }
+          },
+          W3CDataModel.V2
         );
         expect(credentialResponse.credential).not.to.be.undefined;
       } catch (_error: any) {

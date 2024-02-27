@@ -9,7 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { v4 as uuidv4 } from 'uuid';
 import { ControlProof } from "../../common/classes/control_proof.js";
-import { CONTEXT_VC_DATA_MODEL_2, C_NONCE_EXPIRATION_TIME } from "../../common/constants/index.js";
+import { CONTEXT_VC_DATA_MODEL_1, CONTEXT_VC_DATA_MODEL_2, C_NONCE_EXPIRATION_TIME } from "../../common/constants/index.js";
+import { W3CDataModel } from "../../common/formats/index.js";
 import { decodeToken, verifyJwtWithExpAndAudience } from "../../common/utils/jwt.utils.js";
 import { VcFormatter } from './formatters.js';
 import { InsufficienteParamaters, InternalError, InvalidCredentialRequest, InvalidToken } from "../../common/classes/index.js";
@@ -72,7 +73,7 @@ export class W3CVcIssuer {
      * @returns A credential response with a VC or a deferred code
      * @throws If data provided is incorrect
      */
-    generateCredentialResponse(acessToken, credentialRequest, optionalParamaters) {
+    generateCredentialResponse(acessToken, credentialRequest, dataModel, optionalParamaters) {
         return __awaiter(this, void 0, void 0, function* () {
             if (typeof acessToken === "string") {
                 if (!optionalParamaters || !optionalParamaters.tokenVerification) {
@@ -96,22 +97,24 @@ export class W3CVcIssuer {
                 };
             }
             else if (credentialDataOrDeferred.data) {
-                return this.generateW3CCredential(credentialRequest.types, yield this.getVcSchema(credentialRequest.types), jwtPayload.sub, credentialDataOrDeferred.data, credentialRequest.format, optionalParamaters);
+                return this.generateW3CCredential(credentialRequest.types, yield this.getVcSchema(credentialRequest.types), jwtPayload.sub, credentialDataOrDeferred.data, credentialRequest.format, dataModel, optionalParamaters);
             }
             else {
                 throw new InternalError("No credential data or deferred code received");
             }
         });
     }
-    generateW3CCredential(type, schema, subject, vcData, format, optionalParameters) {
+    generateW3CCredential(type, schema, subject, vcData, format, dataModel, optionalParameters) {
         return __awaiter(this, void 0, void 0, function* () {
             const vcId = uuidv4();
-            const formatter = VcFormatter.fromVcFormat(format);
-            const vcPreSign = formatter.formatVc({
-                "@context": CONTEXT_VC_DATA_MODEL_2,
+            const formatter = VcFormatter.fromVcFormat(format, dataModel);
+            const now = new Date().toISOString();
+            const content = {
+                "@context": dataModel === W3CDataModel.V1 ?
+                    CONTEXT_VC_DATA_MODEL_2 : CONTEXT_VC_DATA_MODEL_1,
                 type,
                 credentialSchema: schema,
-                validFrom: new Date().toISOString(),
+                validFrom: now,
                 validUntil: (optionalParameters && optionalParameters.getValidUntil) ?
                     yield optionalParameters.getValidUntil(type) : undefined,
                 id: vcId,
@@ -119,7 +122,11 @@ export class W3CVcIssuer {
                     yield optionalParameters.getCredentialStatus(type, vcId, subject) : undefined,
                 issuer: this.issuerDid,
                 credentialSubject: Object.assign({ id: subject }, vcData)
-            });
+            };
+            if (dataModel === W3CDataModel.V1) {
+                content.issued = now;
+            }
+            const vcPreSign = formatter.formatVc(content);
             const signedVc = yield this.signCallback(format, vcPreSign);
             return {
                 format: format,
@@ -142,7 +149,7 @@ export class W3CVcIssuer {
      * @returns A credential response with the VC generated or a new
      * (or the same) deferred code
      */
-    exchangeAcceptanceTokenForVc(acceptanceToken, deferredExchangeCallback, optionalParameters) {
+    exchangeAcceptanceTokenForVc(acceptanceToken, deferredExchangeCallback, dataModel, optionalParameters) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const exchangeResult = yield deferredExchangeCallback(acceptanceToken);
@@ -152,7 +159,7 @@ export class W3CVcIssuer {
             if (exchangeResult.deferredCode) {
                 return { acceptance_token: exchangeResult.deferredCode };
             }
-            return this.generateW3CCredential(exchangeResult.types, yield this.getVcSchema(exchangeResult.types), (_a = exchangeResult.data) === null || _a === void 0 ? void 0 : _a.id, exchangeResult.data, exchangeResult.format, optionalParameters);
+            return this.generateW3CCredential(exchangeResult.types, yield this.getVcSchema(exchangeResult.types), (_a = exchangeResult.data) === null || _a === void 0 ? void 0 : _a.id, exchangeResult.data, exchangeResult.format, dataModel, optionalParameters);
         });
     }
     checkCredentialTypesAndFormat(types, format) {

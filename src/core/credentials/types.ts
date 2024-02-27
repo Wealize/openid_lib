@@ -3,7 +3,7 @@ import {
   W3CCredentialStatus,
   W3CSingleCredentialSubject,
   W3CVcSchemaDefinition,
-  W3CVerifiableCredential
+  W3CVerifiableCredential,
 } from "../../common/interfaces/w3c_verifiable_credential.interface.js";
 import { CompactVc, VerificationResult } from "../../common/types/index.js";
 import { JWK } from "jose";
