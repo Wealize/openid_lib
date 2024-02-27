@@ -73,7 +73,10 @@ class JwtVcFormatter extends VcFormatter {
     token: JwtPayload,
     vc: W3CVerifiableCredential
   ): W3CVerifiableCredential | JwtPayload {
-    if (vc.issuanceDate) {
+    if (vc.issued) {
+      token.iat = Date.parse(vc.issued!);
+      token.nbf = Date.parse(vc.issued!);
+    } else if (vc.issuanceDate) {
       token.iat = Date.parse(vc.issuanceDate!);
       token.nbf = Date.parse(vc.issuanceDate!);
     } else if (vc.validFrom) {
