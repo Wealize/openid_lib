@@ -12,6 +12,7 @@ export interface W3CVerifiableCredentialV1 {
     issuer: string;
     issued?: string;
     issuanceDate?: string;
+    validFrom?: string;
     expirationDate?: string;
     id?: string;
     credentialStatus?: W3CCredentialStatus;

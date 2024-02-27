@@ -13,6 +13,7 @@ export interface W3CVerifiableCredentialV1 {
   issuer: string;
   issued?: string;
   issuanceDate?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
+  validFrom?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   expirationDate?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   id?: string;
   credentialStatus?: W3CCredentialStatus;

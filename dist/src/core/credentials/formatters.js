@@ -49,6 +49,10 @@ class JwtVcFormatter extends VcFormatter {
     }
     formatDataModel1(token, vc) {
         if (vc.issuanceDate) {
+            token.iat = Date.parse(vc.issuanceDate);
+            token.nbf = Date.parse(vc.issuanceDate);
+        }
+        else if (vc.validFrom) {
             token.iat = Date.parse(vc.validFrom);
             token.nbf = Date.parse(vc.validFrom);
         }

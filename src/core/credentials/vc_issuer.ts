@@ -178,6 +178,7 @@ export class W3CVcIssuer {
       type,
       credentialSchema: schema,
       issuanceDate: now,
+      validFrom: now,
       expirationDate: (optionalParameters && optionalParameters.getValidUntil) ?
         await optionalParameters.getValidUntil(
           type
