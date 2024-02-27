@@ -53,6 +53,8 @@ export declare class W3CVcIssuer {
      * @throws If data provided is incorrect
      */
     generateCredentialResponse(acessToken: string | Jwt, credentialRequest: CredentialRequest, dataModel: W3CDataModel, optionalParamaters?: VcIssuerTypes.GenerateCredentialReponseOptionalParams): Promise<CredentialResponse>;
+    private generateW3CDataForV1;
+    private generateW3CDataForV2;
     private generateW3CCredential;
     /**
      * Allows to exchange a deferred code for a VC

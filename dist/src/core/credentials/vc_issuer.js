@@ -104,17 +104,34 @@ export class W3CVcIssuer {
             }
         });
     }
-    generateW3CCredential(type, schema, subject, vcData, format, dataModel, optionalParameters) {
+    generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) {
         return __awaiter(this, void 0, void 0, function* () {
-            const vcId = uuidv4();
-            const formatter = VcFormatter.fromVcFormat(format, dataModel);
             const now = new Date().toISOString();
-            const content = {
-                "@context": dataModel === W3CDataModel.V1 ?
-                    CONTEXT_VC_DATA_MODEL_2 : CONTEXT_VC_DATA_MODEL_1,
+            const vcId = `vc:${this.metadata.credential_issuer}#${uuidv4()}`;
+            return {
+                "@context": CONTEXT_VC_DATA_MODEL_1,
                 type,
                 credentialSchema: schema,
-                validFrom: now,
+                issuanceDate: now,
+                expirationDate: (optionalParameters && optionalParameters.getValidUntil) ?
+                    yield optionalParameters.getValidUntil(type) : undefined,
+                id: vcId,
+                credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
+                    yield optionalParameters.getCredentialStatus(type, vcId, subject) : undefined,
+                issuer: this.issuerDid,
+                issued: now,
+                credentialSubject: Object.assign({ id: subject }, vcData)
+            };
+        });
+    }
+    generateW3CDataForV2(type, schema, subject, vcData, optionalParameters) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const vcId = `vc:${this.metadata.credential_issuer}#${uuidv4()}`;
+            return {
+                "@context": CONTEXT_VC_DATA_MODEL_2,
+                type,
+                credentialSchema: schema,
+                validFrom: new Date().toISOString(),
                 validUntil: (optionalParameters && optionalParameters.getValidUntil) ?
                     yield optionalParameters.getValidUntil(type) : undefined,
                 id: vcId,
@@ -123,9 +140,14 @@ export class W3CVcIssuer {
                 issuer: this.issuerDid,
                 credentialSubject: Object.assign({ id: subject }, vcData)
             };
-            if (dataModel === W3CDataModel.V1) {
-                content.issued = now;
-            }
+        });
+    }
+    generateW3CCredential(type, schema, subject, vcData, format, dataModel, optionalParameters) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const formatter = VcFormatter.fromVcFormat(format, dataModel);
+            const content = dataModel === W3CDataModel.V1 ?
+                yield this.generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) :
+                yield this.generateW3CDataForV2(type, schema, subject, vcData, optionalParameters);
             const vcPreSign = formatter.formatVc(content);
             const signedVc = yield this.signCallback(format, vcPreSign);
             return {

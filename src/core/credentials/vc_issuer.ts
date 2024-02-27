@@ -19,7 +19,7 @@ import {
   IssuerMetadata
 } from "../../common/interfaces/issuer_metadata.interface.js";
 import {
-  W3CVcSchemaDefinition, W3CVerifiableCredential,
+  W3CVcSchemaDefinition, W3CVerifiableCredential, W3CVerifiableCredentialV1, W3CVerifiableCredentialV2,
 } from "../../common/interfaces/w3c_verifiable_credential.interface";
 import {
   decodeToken,
@@ -164,24 +164,53 @@ export class W3CVcIssuer {
     }
   }
 
-  private async generateW3CCredential(
+  private async generateW3CDataForV1(
     type: string[],
     schema: W3CVcSchemaDefinition[],
     subject: string,
     vcData: Record<string, any>,
-    format: W3CVerifiableCredentialFormats,
-    dataModel: W3CDataModel,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
-  ): Promise<CredentialResponse> {
-    const vcId = uuidv4();
-    const formatter = VcFormatter.fromVcFormat(format, dataModel);
+  ): Promise<W3CVerifiableCredentialV1> {
     const now = new Date().toISOString();
-    const content: W3CVerifiableCredential = {
-      "@context": dataModel === W3CDataModel.V1 ?
-        CONTEXT_VC_DATA_MODEL_2 : CONTEXT_VC_DATA_MODEL_1,
+    const vcId = `vc:${this.metadata.credential_issuer}#${uuidv4()}`;
+    return {
+      "@context": CONTEXT_VC_DATA_MODEL_1,
       type,
       credentialSchema: schema,
-      validFrom: now,
+      issuanceDate: now,
+      expirationDate: (optionalParameters && optionalParameters.getValidUntil) ?
+        await optionalParameters.getValidUntil(
+          type
+        ) : undefined,
+      id: vcId,
+      credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
+        await optionalParameters.getCredentialStatus(
+          type,
+          vcId,
+          subject
+        ) : undefined,
+      issuer: this.issuerDid,
+      issued: now,
+      credentialSubject: {
+        id: subject,
+        ...vcData
+      }
+    }
+  }
+
+  private async generateW3CDataForV2(
+    type: string[],
+    schema: W3CVcSchemaDefinition[],
+    subject: string,
+    vcData: Record<string, any>,
+    optionalParameters?: VcIssuerTypes.BaseOptionalParams,
+  ): Promise<W3CVerifiableCredentialV2> {
+    const vcId = `vc:${this.metadata.credential_issuer}#${uuidv4()}`;
+    return {
+      "@context": CONTEXT_VC_DATA_MODEL_2,
+      type,
+      credentialSchema: schema,
+      validFrom: new Date().toISOString(),
       validUntil: (optionalParameters && optionalParameters.getValidUntil) ?
         await optionalParameters.getValidUntil(
           type
@@ -198,10 +227,22 @@ export class W3CVcIssuer {
         id: subject,
         ...vcData
       }
-    };
-    if (dataModel === W3CDataModel.V1) {
-      content.issued = now;
     }
+  }
+
+  private async generateW3CCredential(
+    type: string[],
+    schema: W3CVcSchemaDefinition[],
+    subject: string,
+    vcData: Record<string, any>,
+    format: W3CVerifiableCredentialFormats,
+    dataModel: W3CDataModel,
+    optionalParameters?: VcIssuerTypes.BaseOptionalParams,
+  ): Promise<CredentialResponse> {
+    const formatter = VcFormatter.fromVcFormat(format, dataModel);
+    const content: W3CVerifiableCredential = dataModel === W3CDataModel.V1 ?
+      await this.generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) :
+      await this.generateW3CDataForV2(type, schema, subject, vcData, optionalParameters)
     const vcPreSign = formatter.formatVc(content);
     const signedVc = await this.signCallback(format, vcPreSign);
     return {
