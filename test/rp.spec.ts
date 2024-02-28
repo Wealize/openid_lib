@@ -74,7 +74,7 @@ describe("Reliying Party tests", async () => {
     },
     {
       ...generateDefaultAuthorisationServerMetadata("https://issuer"),
-      grant_types_supported: ["authorization_code", "pre-authorised_code"]
+      grant_types_supported: ["authorization_code", "urn:ietf:params:oauth:grant-type:pre-authorized_code"]
     },
     new Resolver(getResolver())
   );
@@ -415,7 +415,7 @@ describe("Reliying Party tests", async () => {
       .build()
     // Create Token Request
     const tokenRequest: TokenRequest = {
-      grant_type: "pre-authorised_code",
+      grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
       client_id: holderDid,
       "pre-authorised_code": credentialOffer.grants?.["urn:ietf:params:oauth:grant-type:pre-authorized_code"]?.["pre-authorized_code"],
       user_pin: "444"

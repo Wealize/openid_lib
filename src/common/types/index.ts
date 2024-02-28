@@ -15,7 +15,9 @@ export type AuthzResponseType = "code" | "token" | "id_token" | "vp_token";
 /**
  * Valid grant types for a token request
  */
-export type GrantType = "authorization_code" | "pre-authorised_code" | "vp_token";
+export type GrantType = "authorization_code" |
+  "urn:ietf:params:oauth:grant-type:pre-authorized_code" |
+  "vp_token";
 /**
  * Valid control proof types
  */

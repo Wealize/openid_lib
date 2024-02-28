@@ -277,7 +277,7 @@ export class OpenIDReliyingParty {
                             ": " + verificationResult.error : '.'}`);
                     }
                     break;
-                case "pre-authorised_code":
+                case "urn:ietf:params:oauth:grant-type:pre-authorized_code":
                     if (!tokenRequest["pre-authorised_code"]) {
                         throw new InvalidGrant(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
                     }
