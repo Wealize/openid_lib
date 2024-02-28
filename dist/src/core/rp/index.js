@@ -278,13 +278,13 @@ export class OpenIDReliyingParty {
                     }
                     break;
                 case "urn:ietf:params:oauth:grant-type:pre-authorized_code":
-                    if (!tokenRequest["pre-authorised_code"]) {
+                    if (!tokenRequest["pre-authorized_code"]) {
                         throw new InvalidGrant(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
                     }
                     if (!optionalParamaters || !optionalParamaters.preAuthorizeCodeCallback) {
                         throw new InsufficienteParamaters(`No verification callback was provided for "${tokenRequest.grant_type}" grant type`);
                     }
-                    const verificationResultPre = yield optionalParamaters.preAuthorizeCodeCallback(tokenRequest.client_id, tokenRequest["pre-authorised_code"], tokenRequest.user_pin);
+                    const verificationResultPre = yield optionalParamaters.preAuthorizeCodeCallback(tokenRequest.client_id, tokenRequest["pre-authorized_code"], tokenRequest.user_pin);
                     if (!verificationResultPre.valid) {
                         throw new InvalidGrant(`Invalid "${tokenRequest.grant_type}" provided${verificationResultPre.error ?
                             ": " + verificationResultPre.error : '.'}`);

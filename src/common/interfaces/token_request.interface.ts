@@ -9,7 +9,7 @@ export interface TokenRequest {
   client_id: string;
   code?: string;
   code_verifier?: string;
-  "pre-authorised_code"?: string;
+  "pre-authorized_code"?: string;
   user_pin?: string;
   vp_token?: string;
 }

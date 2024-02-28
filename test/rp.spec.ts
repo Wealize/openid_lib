@@ -417,7 +417,7 @@ describe("Reliying Party tests", async () => {
     const tokenRequest: TokenRequest = {
       grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
       client_id: holderDid,
-      "pre-authorised_code": credentialOffer.grants?.["urn:ietf:params:oauth:grant-type:pre-authorized_code"]?.["pre-authorized_code"],
+      "pre-authorized_code": credentialOffer.grants?.["urn:ietf:params:oauth:grant-type:pre-authorized_code"]?.["pre-authorized_code"],
       user_pin: "444"
     };
     try {

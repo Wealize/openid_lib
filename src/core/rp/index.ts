@@ -392,7 +392,7 @@ export class OpenIDReliyingParty {
         }
         break;
       case "urn:ietf:params:oauth:grant-type:pre-authorized_code":
-        if (!tokenRequest["pre-authorised_code"]) {
+        if (!tokenRequest["pre-authorized_code"]) {
           throw new InvalidGrant(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
         }
         if (!optionalParamaters || !optionalParamaters.preAuthorizeCodeCallback) {
@@ -401,7 +401,7 @@ export class OpenIDReliyingParty {
           );
         }
         const verificationResultPre = await optionalParamaters.preAuthorizeCodeCallback(
-          tokenRequest.client_id, tokenRequest["pre-authorised_code"]!, tokenRequest.user_pin
+          tokenRequest.client_id, tokenRequest["pre-authorized_code"]!, tokenRequest.user_pin
         );
         if (!verificationResultPre.valid) {
           throw new InvalidGrant(
