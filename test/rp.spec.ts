@@ -429,9 +429,9 @@ describe("Reliying Party tests", async () => {
         {
           preAuthorizeCodeCallback: async (_clientId, code, pin) => {
             if (code !== "123" || pin !== "444") {
-              return { valid: false, error: "Invalid pre-auth" };
+              return { error: "Invalid pre-auth" };
             }
-            return { valid: true };
+            return { client_id: holderDid };
           }
         }
       );

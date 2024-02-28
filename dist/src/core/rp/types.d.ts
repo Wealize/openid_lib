@@ -75,7 +75,10 @@ export interface GenerateAccessTokenOptionalParameters {
      * @returns Indication of whether the verification was successful
      * accompanied by an optional error message
      */
-    preAuthorizeCodeCallback?: (clientId: string, preCode: string, pin?: string) => Promise<VerificationResult>;
+    preAuthorizeCodeCallback?: (clientId: string | undefined, preCode: string, pin?: string) => Promise<{
+        client_id?: string;
+        error?: string;
+    }>;
     /**
      * Allows to verify the "code_challenge" parameter sent by an user in
      * a previous authorisation request

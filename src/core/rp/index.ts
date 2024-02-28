@@ -349,6 +349,7 @@ export class OpenIDReliyingParty {
     audience: string,
     optionalParamaters?: RpTypes.GenerateAccessTokenOptionalParameters
   ): Promise<TokenResponse> {
+    let clientId = tokenRequest.client_id;
     if (this.metadata.grant_types_supported
       && !this.metadata.grant_types_supported.includes(tokenRequest.grant_type)) {
       throw new UnsupportedGrantType(
@@ -403,12 +404,13 @@ export class OpenIDReliyingParty {
         const verificationResultPre = await optionalParamaters.preAuthorizeCodeCallback(
           tokenRequest.client_id, tokenRequest["pre-authorized_code"]!, tokenRequest.user_pin
         );
-        if (!verificationResultPre.valid) {
+        if (!verificationResultPre.client_id) {
           throw new InvalidGrant(
             `Invalid "${tokenRequest.grant_type}" provided${verificationResultPre.error ?
               ": " + verificationResultPre.error : '.'}`
           );
         }
+        clientId = verificationResultPre.client_id;
         break;
       case "vp_token":
         // TODO: PENDING OF VP VERIFICATION METHOD
@@ -428,7 +430,7 @@ export class OpenIDReliyingParty {
     const token = await tokenSignCallback({
       aud: audience,
       iss: this.metadata.issuer,
-      sub: tokenRequest.client_id,
+      sub: clientId,
       exp: now + tokenExp,
       nonce: cNonce,
     });
@@ -443,7 +445,7 @@ export class OpenIDReliyingParty {
     if (generateIdToken) {
       result.id_token = await tokenSignCallback({
         iss: this.metadata.issuer,
-        sub: tokenRequest.client_id,
+        sub: clientId,
         exp: now + tokenExp,
       },
         this.metadata.id_token_signing_alg_values_supported

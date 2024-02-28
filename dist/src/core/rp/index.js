@@ -251,6 +251,7 @@ export class OpenIDReliyingParty {
      */
     generateAccessToken(tokenRequest, generateIdToken, tokenSignCallback, audience, optionalParamaters) {
         return __awaiter(this, void 0, void 0, function* () {
+            let clientId = tokenRequest.client_id;
             if (this.metadata.grant_types_supported
                 && !this.metadata.grant_types_supported.includes(tokenRequest.grant_type)) {
                 throw new UnsupportedGrantType(`Grant type "${tokenRequest.grant_type}" not supported`);
@@ -285,10 +286,11 @@ export class OpenIDReliyingParty {
                         throw new InsufficienteParamaters(`No verification callback was provided for "${tokenRequest.grant_type}" grant type`);
                     }
                     const verificationResultPre = yield optionalParamaters.preAuthorizeCodeCallback(tokenRequest.client_id, tokenRequest["pre-authorized_code"], tokenRequest.user_pin);
-                    if (!verificationResultPre.valid) {
+                    if (!verificationResultPre.client_id) {
                         throw new InvalidGrant(`Invalid "${tokenRequest.grant_type}" provided${verificationResultPre.error ?
                             ": " + verificationResultPre.error : '.'}`);
                     }
+                    clientId = verificationResultPre.client_id;
                     break;
                 case "vp_token":
                     // TODO: PENDING OF VP VERIFICATION METHOD
@@ -308,7 +310,7 @@ export class OpenIDReliyingParty {
             const token = yield tokenSignCallback({
                 aud: audience,
                 iss: this.metadata.issuer,
-                sub: tokenRequest.client_id,
+                sub: clientId,
                 exp: now + tokenExp,
                 nonce: cNonce,
             });
@@ -323,7 +325,7 @@ export class OpenIDReliyingParty {
             if (generateIdToken) {
                 result.id_token = yield tokenSignCallback({
                     iss: this.metadata.issuer,
-                    sub: tokenRequest.client_id,
+                    sub: clientId,
                     exp: now + tokenExp,
                 }, this.metadata.id_token_signing_alg_values_supported);
             }
