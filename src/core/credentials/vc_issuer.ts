@@ -143,7 +143,7 @@ export class W3CVcIssuer {
     );
     const credentialDataOrDeferred = await this.getCredentialData(
       credentialRequest.types,
-      jwtPayload.sub
+      proofAssociatedClient
     );
     if (credentialDataOrDeferred.deferredCode) {
       return {
@@ -153,7 +153,7 @@ export class W3CVcIssuer {
       return this.generateW3CCredential(
         credentialRequest.types,
         await this.getVcSchema(credentialRequest.types),
-        jwtPayload.sub,
+        proofAssociatedClient,
         credentialDataOrDeferred.data,
         credentialRequest.format,
         dataModel,
