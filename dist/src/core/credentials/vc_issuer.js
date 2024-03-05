@@ -90,14 +90,14 @@ export class W3CVcIssuer {
             }
             const cNonce = yield this.cNonceRetrieval(jwtPayload.sub);
             yield controlProof.verifyProof(cNonce, this.metadata.credential_issuer, this.didResolver);
-            const credentialDataOrDeferred = yield this.getCredentialData(credentialRequest.types, jwtPayload.sub);
+            const credentialDataOrDeferred = yield this.getCredentialData(credentialRequest.types, proofAssociatedClient);
             if (credentialDataOrDeferred.deferredCode) {
                 return {
                     acceptance_token: credentialDataOrDeferred.deferredCode
                 };
             }
             else if (credentialDataOrDeferred.data) {
-                return this.generateW3CCredential(credentialRequest.types, yield this.getVcSchema(credentialRequest.types), jwtPayload.sub, credentialDataOrDeferred.data, credentialRequest.format, dataModel, optionalParamaters);
+                return this.generateW3CCredential(credentialRequest.types, yield this.getVcSchema(credentialRequest.types), proofAssociatedClient, credentialDataOrDeferred.data, credentialRequest.format, dataModel, optionalParamaters);
             }
             else {
                 throw new InternalError("No credential data or deferred code received");
