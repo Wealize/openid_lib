@@ -33,18 +33,16 @@ export function decodeToken(jsonWebtoken) {
  */
 export function verifyJwtWithExpAndAudience(token, publicKeyJWK, audience) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { payload } = decodeToken(token);
-        const jwtPayload = payload;
-        if (!jwtPayload.exp || jwtPayload.exp < Math.floor(Date.now() / 1000)) {
+        const publicKey = yield importJWK(publicKeyJWK);
+        const payload = yield jwtVerify(token, publicKey);
+        if (!payload.payload.exp || payload.payload.exp < Math.floor(Date.now() / 1000)) {
             throw new InvalidToken("JWT is expired or does not have exp parameter");
         }
         if (audience) {
-            if (!jwtPayload.aud || jwtPayload.aud !== audience) {
+            if (!payload.payload.aud || payload.payload.aud !== audience) {
                 throw new InvalidToken("JWT audience is invalid or is not defined");
             }
         }
-        const publicKey = yield importJWK(publicKeyJWK);
-        yield jwtVerify(token, publicKey);
     });
 }
 /**

@@ -31,18 +31,16 @@ export async function verifyJwtWithExpAndAudience(
   publicKeyJWK: JWK,
   audience?: string
 ) {
-  const { payload } = decodeToken(token);
-  const jwtPayload = payload as jwt.JwtPayload;
-  if (!jwtPayload.exp || jwtPayload.exp < Math.floor(Date.now() / 1000)) {
+  const publicKey = await importJWK(publicKeyJWK);
+  const payload = await jwtVerify(token, publicKey);
+  if (!payload.payload.exp || payload.payload.exp < Math.floor(Date.now() / 1000)) {
     throw new InvalidToken("JWT is expired or does not have exp parameter");
   }
   if (audience) {
-    if (!jwtPayload.aud || jwtPayload.aud !== audience) {
+    if (!payload.payload.aud || payload.payload.aud !== audience) {
       throw new InvalidToken("JWT audience is invalid or is not defined");
     }
   }
-  const publicKey = await importJWK(publicKeyJWK);
-  await jwtVerify(token, publicKey);
 }
 
 /**
