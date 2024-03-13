@@ -1,14 +1,17 @@
 import { assert, expect } from "chai";
 import { W3CVcIssuer } from "../src/core/credentials/index.js";
 import {
+  ControlProof,
   CredentialRequest,
   CredentialResponse,
   CredentialSupportedBuilder,
+  InvalidToken,
   W3CDataModel
 } from "../src/index.js";
 import { Resolver } from "did-resolver";
 import { getResolver } from "@cef-ebsi/key-did-resolver";
 import { SignJWT, importJWK } from "jose";
+import { JwtPayload } from "jsonwebtoken";
 
 const issuerUrl = "https://issuer";
 
@@ -84,6 +87,17 @@ describe("VC Issuance tests", () => {
           deferredCode: "deferred"
         }
       }
+    },
+    async (accessToken, credentialRequest) => {
+      const controlProof = ControlProof.fromJSON(credentialRequest.proof);
+      const proofAssociatedClient = controlProof.getAssociatedIdentifier();
+      const jwtPayload = accessToken.payload as JwtPayload;
+      if (proofAssociatedClient !== jwtPayload.sub) {
+        throw new InvalidToken(
+          "Access Token was issued for a different identifier that the one that sign the proof"
+        );
+      }
+      return proofAssociatedClient;
     }
   );
 
@@ -112,7 +126,6 @@ describe("VC Issuance tests", () => {
           }
         );
         expect(credentialResponse.credential).not.to.be.undefined;
-        console.log(credentialResponse.credential);
       } catch (_error: any) {
         assert.fail("Should not have thrown");
       }

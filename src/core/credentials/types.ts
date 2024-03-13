@@ -7,7 +7,10 @@ import {
 } from "../../common/interfaces/w3c_verifiable_credential.interface.js";
 import { CompactVc, VerificationResult } from "../../common/types/index.js";
 import { JWK } from "jose";
-import { JwtHeader, JwtPayload } from "jsonwebtoken";
+import { Jwt, JwtHeader, JwtPayload } from "jsonwebtoken";
+import {
+  CredentialRequest
+} from "../../common/interfaces/credential_request.interface.js";
 
 /**
  * Function type that allows to verify the contents, but no the 
@@ -41,6 +44,17 @@ export type VcSignCallback = (
 export type DeferredExchangeCallback = (
   acceptanceToken: string
 ) => Promise<ExtendedCredentialDataOrDeferred | { error: string }>
+
+/**
+ * Function type that resolve credential subject from credential request and access token
+ * @param accessToken
+ * @param credentialRequest
+ * @returns Credential Subject
+ */
+export type ResolveCredentialSubject = (
+  accessToken: Jwt,
+  credentialRequest: CredentialRequest
+) => Promise<string>
 
 /**
  * Contains the subject data of a VC along with its type and format, 

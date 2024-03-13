@@ -31,7 +31,7 @@ export class W3CVcIssuer {
      * include in the VC
      * It can also be used to specify if the user should follow the deferred flow
      */
-    constructor(metadata, didResolver, issuerDid, signCallback, cNonceRetrieval, getVcSchema, getCredentialData) {
+    constructor(metadata, didResolver, issuerDid, signCallback, cNonceRetrieval, getVcSchema, getCredentialData, resolveCredentialSubject) {
         this.metadata = metadata;
         this.didResolver = didResolver;
         this.issuerDid = issuerDid;
@@ -39,6 +39,7 @@ export class W3CVcIssuer {
         this.cNonceRetrieval = cNonceRetrieval;
         this.getVcSchema = getVcSchema;
         this.getCredentialData = getCredentialData;
+        this.resolveCredentialSubject = resolveCredentialSubject;
     }
     /**
      * Allows to verify a JWT Access Token in string format
@@ -83,21 +84,17 @@ export class W3CVcIssuer {
             }
             this.checkCredentialTypesAndFormat(credentialRequest.types, credentialRequest.format);
             const controlProof = ControlProof.fromJSON(credentialRequest.proof);
-            const proofAssociatedClient = controlProof.getAssociatedIdentifier();
-            const jwtPayload = acessToken.payload;
-            if (proofAssociatedClient !== jwtPayload.sub) {
-                throw new InvalidToken("Access Token was issued for a different identifier that the one that sign the proof");
-            }
-            const cNonce = yield this.cNonceRetrieval(jwtPayload.sub);
+            const credentialSubject = yield this.resolveCredentialSubject(acessToken, credentialRequest);
+            const cNonce = yield this.cNonceRetrieval(credentialSubject);
             yield controlProof.verifyProof(cNonce, this.metadata.credential_issuer, this.didResolver);
-            const credentialDataOrDeferred = yield this.getCredentialData(credentialRequest.types, proofAssociatedClient);
+            const credentialDataOrDeferred = yield this.getCredentialData(credentialRequest.types, credentialSubject);
             if (credentialDataOrDeferred.deferredCode) {
                 return {
                     acceptance_token: credentialDataOrDeferred.deferredCode
                 };
             }
             else if (credentialDataOrDeferred.data) {
-                return this.generateW3CCredential(credentialRequest.types, yield this.getVcSchema(credentialRequest.types), proofAssociatedClient, credentialDataOrDeferred.data, credentialRequest.format, dataModel, optionalParamaters);
+                return this.generateW3CCredential(credentialRequest.types, yield this.getVcSchema(credentialRequest.types), credentialSubject, credentialDataOrDeferred.data, credentialRequest.format, dataModel, optionalParamaters);
             }
             else {
                 throw new InternalError("No credential data or deferred code received");

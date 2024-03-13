@@ -31,6 +31,7 @@ import {
 } from "../../common/interfaces/credential_response.interface.js";
 import * as VcIssuerTypes from "./types.js";
 import {
+  AccessDenied,
   InsufficienteParamaters,
   InternalError,
   InvalidCredentialRequest,
@@ -62,6 +63,7 @@ export class W3CVcIssuer {
     private cNonceRetrieval: VcIssuerTypes.ChallengeNonceRetrieval,
     private getVcSchema: VcIssuerTypes.GetCredentialSchema,
     private getCredentialData: VcIssuerTypes.GetCredentialData,
+    private resolveCredentialSubject: VcIssuerTypes.ResolveCredentialSubject
   ) { }
 
   /**
@@ -129,21 +131,15 @@ export class W3CVcIssuer {
     }
     this.checkCredentialTypesAndFormat(credentialRequest.types, credentialRequest.format);
     const controlProof = ControlProof.fromJSON(credentialRequest.proof);
-    const proofAssociatedClient = controlProof.getAssociatedIdentifier();
-    const jwtPayload = acessToken.payload as JwtPayload;
-    if (proofAssociatedClient !== jwtPayload.sub) {
-      throw new InvalidToken(
-        "Access Token was issued for a different identifier that the one that sign the proof"
-      );
-    }
-    const cNonce = await this.cNonceRetrieval(jwtPayload.sub);
+    const credentialSubject = await this.resolveCredentialSubject(acessToken, credentialRequest)
+    const cNonce = await this.cNonceRetrieval(credentialSubject);
     await controlProof.verifyProof(cNonce,
       this.metadata.credential_issuer,
       this.didResolver
     );
     const credentialDataOrDeferred = await this.getCredentialData(
       credentialRequest.types,
-      proofAssociatedClient
+      credentialSubject
     );
     if (credentialDataOrDeferred.deferredCode) {
       return {
@@ -153,7 +149,7 @@ export class W3CVcIssuer {
       return this.generateW3CCredential(
         credentialRequest.types,
         await this.getVcSchema(credentialRequest.types),
-        proofAssociatedClient,
+        credentialSubject,
         credentialDataOrDeferred.data,
         credentialRequest.format,
         dataModel,
