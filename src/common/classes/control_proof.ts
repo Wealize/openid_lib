@@ -22,6 +22,8 @@ export abstract class ControlProof {
    * Express the proof as a object that contains only the attributes
    */
   abstract toJSON(): Record<string, string>;
+
+  abstract getProofField(fieldName: string): any;
   /**
    * Allows to verify a proof
    * @param cNonce Challenge nonce that should contain the proof
@@ -67,9 +69,11 @@ export abstract class ControlProof {
 
 class JwtControlProof extends ControlProof {
   private clientIdentifier?: string;
+  private decodedJwt;
 
   constructor(format: ControlProofType, private jwt: string) {
     super(format);
+    this.decodedJwt = decodeToken(this.jwt);
   }
 
   toJSON(): Record<string, string> {
@@ -81,7 +85,7 @@ class JwtControlProof extends ControlProof {
 
   getAssociatedIdentifier(): string {
     if (!this.clientIdentifier) {
-      const { header, payload } = decodeToken(this.jwt);
+      const { header, payload } = this.decodedJwt;
       if (!header.kid) {
         throw new InvalidProof(`"kid" parameter must be specified`);
       }
@@ -90,12 +94,16 @@ class JwtControlProof extends ControlProof {
     return this.clientIdentifier;
   }
 
+  getProofField(fieldName: string): any {
+    return (this.decodedJwt.payload as JwtPayload)[fieldName];
+  }
+
   async verifyProof(
     cNonce: string,
     audience: string,
     didResolver: Resolvable
   ): Promise<void> {
-    const { header, payload } = decodeToken(this.jwt);
+    const { header, payload } = this.decodedJwt;
     const jwtPayload = payload as JwtPayload;
     if (!header.typ || header.typ !== "openid4vci-proof+jwt") {
       throw new InvalidProof(`Invalid "typ" paramater in proof header`);

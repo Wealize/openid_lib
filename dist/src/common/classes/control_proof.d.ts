@@ -14,6 +14,7 @@ export declare abstract class ControlProof {
      * Express the proof as a object that contains only the attributes
      */
     abstract toJSON(): Record<string, string>;
+    abstract getProofField(fieldName: string): any;
     /**
      * Allows to verify a proof
      * @param cNonce Challenge nonce that should contain the proof
@@ -39,9 +40,11 @@ export declare abstract class ControlProof {
 declare class JwtControlProof extends ControlProof {
     private jwt;
     private clientIdentifier?;
+    private decodedJwt;
     constructor(format: ControlProofType, jwt: string);
     toJSON(): Record<string, string>;
     getAssociatedIdentifier(): string;
+    getProofField(fieldName: string): any;
     verifyProof(cNonce: string, audience: string, didResolver: Resolvable): Promise<void>;
 }
 export {};

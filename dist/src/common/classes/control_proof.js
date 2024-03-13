@@ -51,6 +51,7 @@ class JwtControlProof extends ControlProof {
     constructor(format, jwt) {
         super(format);
         this.jwt = jwt;
+        this.decodedJwt = decodeToken(this.jwt);
     }
     toJSON() {
         return {
@@ -60,7 +61,7 @@ class JwtControlProof extends ControlProof {
     }
     getAssociatedIdentifier() {
         if (!this.clientIdentifier) {
-            const { header, payload } = decodeToken(this.jwt);
+            const { header, payload } = this.decodedJwt;
             if (!header.kid) {
                 throw new InvalidProof(`"kid" parameter must be specified`);
             }
@@ -68,10 +69,13 @@ class JwtControlProof extends ControlProof {
         }
         return this.clientIdentifier;
     }
+    getProofField(fieldName) {
+        return this.decodedJwt.payload[fieldName];
+    }
     verifyProof(cNonce, audience, didResolver) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const { header, payload } = decodeToken(this.jwt);
+            const { header, payload } = this.decodedJwt;
             const jwtPayload = payload;
             if (!header.typ || header.typ !== "openid4vci-proof+jwt") {
                 throw new InvalidProof(`Invalid "typ" paramater in proof header`);
