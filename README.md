@@ -18,8 +18,8 @@ The library comes with a battery of tests written with Mocha and Chai. To run th
 - Issuance of access tokens
   - Support for `grant_type` "authorization_code".
   - Support for `grant_type` "pre-authorize_code".
-- Issuance of W3C credentials for version 2 of the data model.
-  - Verification of DIDs control tests.
+- Issuance of W3C credentials for version 1 and 2 of the data model.
+  - Verification of DIDs for control proofs.
   - Support for in-time flow.
   - Support for deferred flow.
 
@@ -36,9 +36,9 @@ The library does not implement or support any cryptographic algorithms. Instead,
 ## Builders
 The library defines multiple builders that can be used to generate authorization requests, `credential offers`, authorization details and also the metadata of a credential issuer.
 
-## Reliying Party
+## Relying Party
 
-To manage the OpenID process for issuers or any other entity interested in authorization/authentication, the ***OpenIdReliyingParty*** class is defined. For its construction, the user should provide the metadata of the authorization service, an instance of ***DidResolver*** and a callback that allows to obtain the default metadata from the clients. The latter allows the metadata to be bound to the use case, eliminating the need for clients to specify it in full. In practice, the metadata implicitly specified by the user will be combined with the default metadata, the former prevailing over the latter.
+To manage the OpenID process for issuers or any other entity interested in authorization/authentication, the ***OpenIdRelyingParty*** class is defined. For its construction, the user should provide the metadata of the authorization service, an instance of ***DidResolver*** and a callback that allows to obtain the default metadata from the clients. The latter allows the metadata to be bound to the use case, eliminating the need for clients to specify it in full. In practice, the metadata implicitly specified by the user will be combined with the default metadata, the former prevailing over the latter.
 
 ```ts
 const rp = new OpenIDReliyingParty(
@@ -130,7 +130,7 @@ export type CreateIdTokenRequestOptionalParams = {
    */
   responseMode?: AuthzResponseMode;
   /**
-   * Additiona payload to include in the JWT 
+   * Additional payload to include in the JWT 
    */
   additionalPayload?: Record<string, any>;
   /**
@@ -197,7 +197,7 @@ const _tokenResponse = await rp.generateAccessToken(
 
 The method enables several optional parameters that must be supplied depending on the `grant_type` supported:
 - `authorization_code`: Must supply a callback for the verification of the code itself and a second one for the verification of the PKCE Challenge that must have been delivered by the user in a previous authorization request.
-- pre-authorize_code`: It must supply a callback for the verification of the code itself that additionally receives the PIN sent by the user.
+- `pre-authorize_code`: It must supply a callback for the verification of the code itself that additionally receives the PIN sent by the user.
 
 # LICENSE
 The library has the following [license](./LICENSE.md).
