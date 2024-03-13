@@ -1,3 +1,5 @@
+import { JwtPayload } from "jsonwebtoken";
+
 /**
  * Type definition that defines the possible models for a W3C VC
  */
@@ -12,7 +14,7 @@ export interface W3CVerifiableCredentialV1 {
   credentialSchema?: W3CVcSchemaDefinition[];
   issuer: string;
   issued?: string;
-  issuanceDate?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
+  issuanceDate: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   validFrom?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   expirationDate?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   id?: string;
@@ -85,4 +87,8 @@ export interface EmbeddedProof {
   proofValue: string;
   previousProof?: string | string[];
   nonce?: string;
+}
+
+export interface VcJwtPayload extends JwtPayload {
+  vc: W3CVerifiableCredential
 }

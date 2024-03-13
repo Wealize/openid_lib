@@ -1,4 +1,5 @@
 // TODO: "JWT_VC is a old identifier. It's there for compatibility"
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#format-profiles
 /**
  * THe valid formats for a W3C VC
  */

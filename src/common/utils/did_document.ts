@@ -18,6 +18,23 @@ export function getAuthentificationJWKKeys(
   if (!didDocument.authentication?.includes(methodIdentifier)) {
     throw new DidDocumentError("The kid specified is not the identifier of an authentification relationship");
   }
+  return getJwkFromDocument(didDocument, methodIdentifier);
+}
+
+export function getAssertionMethodJWKKeys(
+  didDocument: DIDDocument,
+  methodIdentifier: string,
+): JWK {
+  if (!didDocument.assertionMethod?.includes(methodIdentifier)) {
+    throw new DidDocumentError("The kid specified is not the identifier of an assertionMethod relationship");
+  }
+  return getJwkFromDocument(didDocument, methodIdentifier);
+}
+
+function getJwkFromDocument(
+  didDocument: DIDDocument,
+  methodIdentifier: string,
+): JWK {
   if (!didDocument.verificationMethod) {
     throw new DidDocumentError(`No verification methods defined in DidDocumet for did ${didDocument.id}`);
   }
