@@ -1,3 +1,4 @@
+import { JwtPayload } from "jsonwebtoken";
 /**
  * Type definition that defines the possible models for a W3C VC
  */
@@ -11,11 +12,12 @@ export interface W3CVerifiableCredentialV1 {
     credentialSchema?: W3CVcSchemaDefinition[];
     issuer: string;
     issued?: string;
-    issuanceDate?: string;
+    issuanceDate: string;
     validFrom?: string;
     expirationDate?: string;
     id?: string;
     credentialStatus?: W3CCredentialStatus;
+    termsOfUse?: W3CTermsOfUse;
     description?: string;
     credentialSubject: W3CSingleCredentialSubject;
     proof?: EmbeddedProof;
@@ -33,6 +35,7 @@ export interface W3CVerifiableCredentialV2 {
     validUntil?: string;
     id?: string;
     credentialStatus?: W3CCredentialStatus;
+    termsOfUse?: W3CTermsOfUse;
     description?: string;
     credentialSubject: W3CSingleCredentialSubject;
     proof?: EmbeddedProof;
@@ -53,6 +56,11 @@ export interface W3CVcSchemaDefinition {
 export interface W3CCredentialStatus {
     id?: string;
     type: string;
+    [key: string]: any;
+}
+export interface W3CTermsOfUse {
+    type: string;
+    id?: string;
     [key: string]: any;
 }
 /**
@@ -78,4 +86,7 @@ export interface EmbeddedProof {
     proofValue: string;
     previousProof?: string | string[];
     nonce?: string;
+}
+export interface VcJwtPayload extends JwtPayload {
+    vc: W3CVerifiableCredential;
 }

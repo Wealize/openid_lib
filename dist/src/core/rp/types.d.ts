@@ -1,5 +1,6 @@
 import { JWA_ALGS } from "../../common/constants/index.js";
 import { AuthzResponseMode } from "../../common/formats/index.js";
+import { DIFPresentationDefinition } from "../../common/index.js";
 import { AuthorizationDetails } from "../../common/interfaces/authz_details.interface.js";
 import { HolderMetadata } from "../../common/interfaces/client_metadata.interface.js";
 import { VerificationResult, VpFormatsSupported } from "../../common/types/index.js";
@@ -103,7 +104,7 @@ export type CreateIdTokenRequestOptionalParams = {
      */
     responseMode?: AuthzResponseMode;
     /**
-     * Additiona payload to include in the JWT
+     * Additional payload to include in the JWT
      */
     additionalPayload?: Record<string, any>;
     /**
@@ -124,6 +125,47 @@ export type CreateIdTokenRequestOptionalParams = {
      * The scope to include in the JWT
      */
     scope?: string;
+};
+/**
+ * Defines an object type that allows to specify the optional parameters of
+ * "createVpTokenRequest" OpenIDReliyingParty method
+ */
+export type CreateVpTokenRequestOptionalParams = {
+    /**
+   * Response mode to specify in the ID Token
+   * @defaultValue "direct_post"
+   */
+    responseMode?: AuthzResponseMode;
+    /**
+     * Additional payload to include in the JWT
+     */
+    additionalPayload?: Record<string, any>;
+    /**
+     * The state to indicate in the JWT
+     */
+    state?: string;
+    /**
+     * The nonce to indicate in the JWT.
+     * @defaultValue UUID randomly generated
+     */
+    nonce?: string;
+    /**
+     * The expiration time of the JWT. Must be in seconds
+     * @defaultValue 1 hour
+     */
+    expirationTime?: number;
+    /**
+     * The scope to include in the JWT
+     */
+    scope?: string;
+    /**
+     * The presentation definition to include in the JWT
+     */
+    presentation_definition?: DIFPresentationDefinition;
+    /**
+     * The URI in which the presentation definition can be retrieved
+     */
+    presentation_definition_uri?: string;
 };
 /**
  * Client metadata that has been processed to indicate which formats, signature

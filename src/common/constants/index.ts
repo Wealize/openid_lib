@@ -1,4 +1,5 @@
 export const ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minute in ms
+export const VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minute in ms
 export const C_NONCE_EXPIRATION_TIME = 1 * 3600 // 1 hour in seconds
 export const ACCESS_TOKEN_EXPIRATION_TIME = 1 * 3600 // 1 hour in seconds
 export const DEFAULT_PKCE_LENGTH = 7;

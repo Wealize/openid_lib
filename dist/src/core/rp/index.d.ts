@@ -7,6 +7,9 @@ import { AuthorizationResponse } from "../../common/classes/authz_response.js";
 import { TokenRequest } from "../../common/interfaces/token_request.interface.js";
 import { TokenResponse } from "../../common/interfaces/token_response.interface.js";
 import * as RpTypes from "./types.js";
+import { DIFPresentationDefinition, VpTokenResponse } from "../../common/index.js";
+import { VpTokenRequest } from "../../common/classes/vp_token_request.js";
+import { CredentialAdditionalVerification, NonceVerification } from "../presentations/types.js";
 export interface VerifiedBaseAuthzRequest {
     /**
      * Client metadata related to supported formats and algorithms that are checked against the PR.
@@ -21,6 +24,10 @@ interface VerifiedIdTokenResponse {
     didDocument: DIDDocument;
     token: string;
 }
+interface VerifiedVpTokenResponse {
+    token: string;
+    claimsData: Record<string, any>;
+}
 /**
  * Represents an entity acting as a Reliying Party. As such, it has the
  * capability to process authorisation requests and to send others.
@@ -34,14 +41,17 @@ export declare class OpenIDReliyingParty {
     private defaultMetadataCallback;
     private metadata;
     private didResolver;
+    private vpCredentialVerificationCallback;
     /**
      * @param defaultMetadataCallback Callback to get the default value to
      * consider for client metadata.
      * @param metadata Authorisation server metadata
      * @param didResolver Object responsible for obtaining the DID Documents
      * of the DIDs that are detected.
+     * @param vpCredentialVerificationCallback Optional callback needed to verify for
+     * CredentialStatus and Verification
      */
-    constructor(defaultMetadataCallback: RpTypes.GetClientDefaultMetada, metadata: AuthServerMetadata, didResolver: Resolver);
+    constructor(defaultMetadataCallback: RpTypes.GetClientDefaultMetada, metadata: AuthServerMetadata, didResolver: Resolver, vpCredentialVerificationCallback: CredentialAdditionalVerification);
     /**
      * Allows to add support for a new DID Method
      * @param methodName DID Method name
@@ -64,7 +74,7 @@ export declare class OpenIDReliyingParty {
      */
     createIdTokenRequest(clientAuthorizationEndpoint: string, audience: string, redirectUri: string, jwtSignCallback: RpTypes.TokenSignCallback, additionalParameters?: RpTypes.CreateIdTokenRequestOptionalParams): Promise<IdTokenRequest>;
     createIdTokenRequestFromBaseAuthzRequest(): void;
-    createVpTokenRequest(): void;
+    createVpTokenRequest(clientAuthorizationEndpoint: string, audience: string, redirectUri: string, jwtSignCallback: RpTypes.TokenSignCallback, additionalParameters?: RpTypes.CreateVpTokenRequestOptionalParams): Promise<VpTokenRequest>;
     /**
      * Allows to verify an authorisation request sent by a client
      * @param request The request sent by the client
@@ -84,7 +94,7 @@ export declare class OpenIDReliyingParty {
      * @throws If data provided is incorrect
      */
     verifyIdTokenResponse(idTokenResponse: IdTokenResponse, verifyCallback: RpTypes.IdTokenVerifyCallback): Promise<VerifiedIdTokenResponse>;
-    verifyVpTokenResponse(): void;
+    verifyVpTokenResponse(vpTokenResponse: VpTokenResponse, presentationDefinition: DIFPresentationDefinition, nonceVerificationCallback: NonceVerification): Promise<VerifiedVpTokenResponse>;
     /**
      * Generates an authorisation response for a request with response type
      * "code".

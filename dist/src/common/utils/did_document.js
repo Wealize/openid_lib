@@ -13,6 +13,16 @@ export function getAuthentificationJWKKeys(didDocument, methodIdentifier) {
     if (!((_a = didDocument.authentication) === null || _a === void 0 ? void 0 : _a.includes(methodIdentifier))) {
         throw new DidDocumentError("The kid specified is not the identifier of an authentification relationship");
     }
+    return getJwkFromDocument(didDocument, methodIdentifier);
+}
+export function getAssertionMethodJWKKeys(didDocument, methodIdentifier) {
+    var _a;
+    if (!((_a = didDocument.assertionMethod) === null || _a === void 0 ? void 0 : _a.includes(methodIdentifier))) {
+        throw new DidDocumentError("The kid specified is not the identifier of an assertionMethod relationship");
+    }
+    return getJwkFromDocument(didDocument, methodIdentifier);
+}
+function getJwkFromDocument(didDocument, methodIdentifier) {
     if (!didDocument.verificationMethod) {
         throw new DidDocumentError(`No verification methods defined in DidDocumet for did ${didDocument.id}`);
     }

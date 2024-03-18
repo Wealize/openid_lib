@@ -10,3 +10,4 @@ import { JWK } from "jose";
  * with that ID. It can also throws if the method does not provide any JWK
  */
 export declare function getAuthentificationJWKKeys(didDocument: DIDDocument, methodIdentifier: string): JWK;
+export declare function getAssertionMethodJWKKeys(didDocument: DIDDocument, methodIdentifier: string): JWK;

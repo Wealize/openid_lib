@@ -19,6 +19,7 @@ export interface W3CVerifiableCredentialV1 {
   expirationDate?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   id?: string;
   credentialStatus?: W3CCredentialStatus;
+  termsOfUse?: W3CTermsOfUse;
   description?: string;
   credentialSubject: W3CSingleCredentialSubject;
   proof?: EmbeddedProof;
@@ -38,6 +39,7 @@ export interface W3CVerifiableCredentialV2 {
   validUntil?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   id?: string;
   credentialStatus?: W3CCredentialStatus;
+  termsOfUse?: W3CTermsOfUse;
   description?: string;
   credentialSubject: W3CSingleCredentialSubject;
   proof?: EmbeddedProof;
@@ -60,7 +62,13 @@ export interface W3CVcSchemaDefinition {
 export interface W3CCredentialStatus {
   id?: string;
   type: string;
-  [key: string]: any
+  [key: string]: any;
+}
+
+export interface W3CTermsOfUse {
+  type: string;
+  id?: string;
+  [key: string]: any;
 }
 
 /**
