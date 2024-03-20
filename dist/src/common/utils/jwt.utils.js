@@ -34,7 +34,7 @@ export function decodeToken(jsonWebtoken) {
 export function verifyJwtWithExpAndAudience(token, publicKeyJWK, audience) {
     return __awaiter(this, void 0, void 0, function* () {
         const publicKey = yield importJWK(publicKeyJWK);
-        const payload = yield jwtVerify(token, publicKey);
+        const payload = yield jwtVerify(token, publicKey, { clockTolerance: 5 });
         if (!payload.payload.exp || payload.payload.exp < Math.floor(Date.now() / 1000)) {
             throw new InvalidToken("JWT is expired or does not have exp parameter");
         }
