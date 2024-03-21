@@ -46,7 +46,7 @@ import {
   obtainDid
 } from "../../common/utils/index.js";
 import { InternalError, InvalidRequest } from "../../common/classes/error/index.js";
-import { CredentialAdditionalVerification, NonceVerification } from "./types";
+import { CredentialAdditionalVerification, NonceVerification, VpExtractedData } from "./types";
 
 // Should be used to check credential Status and terms of use
 
@@ -73,7 +73,7 @@ export class VpResolver {
     vp: any,
     definition: DIFPresentationDefinition,
     submission: DIFPresentationSubmission
-  ): Promise<Record<string, any>> {
+  ): Promise<VpExtractedData> {
     try {
       if (definition.id !== submission.definition_id) {
         throw new InvalidRequest(
@@ -100,8 +100,12 @@ export class VpResolver {
         idsAlreadyUsed.add(inputDescriptor.id);
       }
       this.jwtCache = {};
+      const result = {
+        claimsData: descriptorClaimsMap,
+        holderDid: this.vpHolder!
+      };
       this.vpHolder = undefined;
-      return descriptorClaimsMap;
+      return result;
     } catch (error: any) {
       this.jwtCache = {};
       this.vpHolder = undefined;

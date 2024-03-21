@@ -258,7 +258,7 @@ export class OpenIDReliyingParty {
             const claimData = yield vpResolver.verifyPresentation(vpTokenResponse.vp_token, presentationDefinition, vpTokenResponse.presentation_submission);
             return {
                 token: vpTokenResponse.vp_token,
-                claimsData: claimData
+                vpInternalData: claimData
             };
         });
     }

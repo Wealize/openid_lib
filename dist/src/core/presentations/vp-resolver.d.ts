@@ -1,7 +1,7 @@
 import { DIFPresentationDefinition } from "../../common/interfaces/presentation_definition.interface";
 import { DIFPresentationSubmission } from "../../common/interfaces/presentation_submission.interface";
 import { Resolver } from "did-resolver";
-import { CredentialAdditionalVerification, NonceVerification } from "./types";
+import { CredentialAdditionalVerification, NonceVerification, VpExtractedData } from "./types";
 export declare class VpResolver {
     private didResolver;
     private audience;
@@ -10,7 +10,7 @@ export declare class VpResolver {
     private jwtCache;
     private vpHolder;
     constructor(didResolver: Resolver, audience: string, externalValidation: CredentialAdditionalVerification, nonceValidation: NonceVerification);
-    verifyPresentation(vp: any, definition: DIFPresentationDefinition, submission: DIFPresentationSubmission): Promise<Record<string, any>>;
+    verifyPresentation(vp: any, definition: DIFPresentationDefinition, submission: DIFPresentationSubmission): Promise<VpExtractedData>;
     private deserializeJwtVc;
     private getSchema;
     private decodeAndParse;

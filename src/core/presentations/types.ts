@@ -11,3 +11,8 @@ export type NonceVerification = (
   subject: string,
   nonce: string,
 ) => Promise<VerificationResult>;
+
+export type VpExtractedData = {
+  claimsData: Record<string, any>;
+  holderDid: string;
+}

@@ -57,7 +57,7 @@ import {
   VpTokenRequest,
   VpTokenRequestParams
 } from "../../common/classes/vp_token_request.js";
-import { CredentialAdditionalVerification, NonceVerification } from "../presentations/types.js";
+import { CredentialAdditionalVerification, NonceVerification, VpExtractedData } from "../presentations/types.js";
 
 export interface VerifiedBaseAuthzRequest {
   /**
@@ -77,7 +77,7 @@ interface VerifiedIdTokenResponse {
 
 interface VerifiedVpTokenResponse {
   token: string;
-  claimsData: Record<string, any>
+  vpInternalData: VpExtractedData
 }
 
 // TODO: Maybe we need a build to support multiples resolver, or move that responsability to the user
@@ -385,7 +385,7 @@ export class OpenIDReliyingParty {
     );
     return {
       token: vpTokenResponse.vp_token,
-      claimsData: claimData
+      vpInternalData: claimData
     }
   }
 

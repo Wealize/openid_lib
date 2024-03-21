@@ -49,8 +49,12 @@ export class VpResolver {
                     idsAlreadyUsed.add(inputDescriptor.id);
                 }
                 this.jwtCache = {};
+                const result = {
+                    claimsData: descriptorClaimsMap,
+                    holderDid: this.vpHolder
+                };
                 this.vpHolder = undefined;
-                return descriptorClaimsMap;
+                return result;
             }
             catch (error) {
                 this.jwtCache = {};

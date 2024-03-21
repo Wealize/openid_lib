@@ -9,7 +9,7 @@ import { TokenResponse } from "../../common/interfaces/token_response.interface.
 import * as RpTypes from "./types.js";
 import { DIFPresentationDefinition, VpTokenResponse } from "../../common/index.js";
 import { VpTokenRequest } from "../../common/classes/vp_token_request.js";
-import { CredentialAdditionalVerification, NonceVerification } from "../presentations/types.js";
+import { CredentialAdditionalVerification, NonceVerification, VpExtractedData } from "../presentations/types.js";
 export interface VerifiedBaseAuthzRequest {
     /**
      * Client metadata related to supported formats and algorithms that are checked against the PR.
@@ -26,7 +26,7 @@ interface VerifiedIdTokenResponse {
 }
 interface VerifiedVpTokenResponse {
     token: string;
-    claimsData: Record<string, any>;
+    vpInternalData: VpExtractedData;
 }
 /**
  * Represents an entity acting as a Reliying Party. As such, it has the
