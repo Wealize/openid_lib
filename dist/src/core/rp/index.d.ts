@@ -94,7 +94,7 @@ export declare class OpenIDReliyingParty {
      * @throws If data provided is incorrect
      */
     verifyIdTokenResponse(idTokenResponse: IdTokenResponse, verifyCallback: RpTypes.IdTokenVerifyCallback): Promise<VerifiedIdTokenResponse>;
-    verifyVpTokenResponse(vpTokenResponse: VpTokenResponse, presentationDefinition: DIFPresentationDefinition, nonceVerificationCallback: NonceVerification): Promise<VerifiedVpTokenResponse>;
+    verifyVpTokenResponse(vpTokenResponse: VpTokenResponse, presentationDefinition: DIFPresentationDefinition, nonceVerificationCallback: NonceVerification, passVcSignatureVerification?: boolean): Promise<VerifiedVpTokenResponse>;
     /**
      * Generates an authorisation response for a request with response type
      * "code".

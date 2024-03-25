@@ -369,14 +369,16 @@ export class OpenIDReliyingParty {
   async verifyVpTokenResponse(
     vpTokenResponse: VpTokenResponse,
     presentationDefinition: DIFPresentationDefinition,
-    nonceVerificationCallback: NonceVerification
+    nonceVerificationCallback: NonceVerification,
+    passVcSignatureVerification: boolean = true
   ): Promise<VerifiedVpTokenResponse> {
     // TODO: STUDY IF WE SHOULD COMPARE DEFINITION VP FORMATS WITH METADATA FORMATS
     const vpResolver = new VpResolver(
       this.didResolver,
       this.metadata.issuer,
       this.vpCredentialVerificationCallback,
-      nonceVerificationCallback
+      nonceVerificationCallback,
+      passVcSignatureVerification
     );
     const claimData = await vpResolver.verifyPresentation(
       vpTokenResponse.vp_token,

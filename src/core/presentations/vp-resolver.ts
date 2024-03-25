@@ -64,7 +64,8 @@ export class VpResolver {
     private didResolver: Resolver,
     private audience: string,
     private externalValidation: CredentialAdditionalVerification,
-    private nonceValidation: NonceVerification
+    private nonceValidation: NonceVerification,
+    private passVcSignatureVerification: boolean = false
   ) {
     this.jwtCache = {};
   }
@@ -157,21 +158,23 @@ export class VpResolver {
         );
       }
     }
-    const didResolution = await this.didResolver.resolve(vc.issuer);
-    if (didResolution.didResolutionMetadata.error) {
-      throw new InvalidRequest(
-        `Did resolution failed. Error ${didResolution.didResolutionMetadata.error
-        }: ${didResolution.didResolutionMetadata.message}`);
-    }
-    const didDocument = didResolution.didDocument!;
-    const jwk = getAssertionMethodJWKKeys(didDocument, header.kid);
-    const publicKey = await importJWK(jwk);
-    try {
-      await jwtVerify(data, publicKey);
-    } catch (error: any) {
-      throw new InvalidRequest(
-        `Descriptor "${descriptorId}" JWT verification failed`
-      );
+    if (this.passVcSignatureVerification) {
+      const didResolution = await this.didResolver.resolve(vc.issuer);
+      if (didResolution.didResolutionMetadata.error) {
+        throw new InvalidRequest(
+          `Did resolution failed. Error ${didResolution.didResolutionMetadata.error
+          }: ${didResolution.didResolutionMetadata.message}`);
+      }
+      const didDocument = didResolution.didDocument!;
+      const jwk = getAssertionMethodJWKKeys(didDocument, header.kid);
+      const publicKey = await importJWK(jwk);
+      try {
+        await jwtVerify(data, publicKey);
+      } catch (error: any) {
+        throw new InvalidRequest(
+          `Descriptor "${descriptorId}" JWT verification failed`
+        );
+      }
     }
     // Verify VC Schema
     if (vc.credentialSchema) { // TODO: Analyze if we should force this

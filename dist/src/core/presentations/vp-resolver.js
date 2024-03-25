@@ -17,11 +17,12 @@ import { decodeToken, getAssertionMethodJWKKeys, getAuthentificationJWKKeys, obt
 import { InternalError, InvalidRequest } from "../../common/classes/error/index.js";
 // Should be used to check credential Status and terms of use
 export class VpResolver {
-    constructor(didResolver, audience, externalValidation, nonceValidation) {
+    constructor(didResolver, audience, externalValidation, nonceValidation, passVcSignatureVerification = false) {
         this.didResolver = didResolver;
         this.audience = audience;
         this.externalValidation = externalValidation;
         this.nonceValidation = nonceValidation;
+        this.passVcSignatureVerification = passVcSignatureVerification;
         this.jwtCache = {};
     }
     verifyPresentation(vp, definition, submission) {
@@ -93,18 +94,20 @@ export class VpResolver {
                     throw new InvalidRequest("Credential subject ID and VP Holder mismatch");
                 }
             }
-            const didResolution = yield this.didResolver.resolve(vc.issuer);
-            if (didResolution.didResolutionMetadata.error) {
-                throw new InvalidRequest(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error}: ${didResolution.didResolutionMetadata.message}`);
-            }
-            const didDocument = didResolution.didDocument;
-            const jwk = getAssertionMethodJWKKeys(didDocument, header.kid);
-            const publicKey = yield importJWK(jwk);
-            try {
-                yield jwtVerify(data, publicKey);
-            }
-            catch (error) {
-                throw new InvalidRequest(`Descriptor "${descriptorId}" JWT verification failed`);
+            if (this.passVcSignatureVerification) {
+                const didResolution = yield this.didResolver.resolve(vc.issuer);
+                if (didResolution.didResolutionMetadata.error) {
+                    throw new InvalidRequest(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error}: ${didResolution.didResolutionMetadata.message}`);
+                }
+                const didDocument = didResolution.didDocument;
+                const jwk = getAssertionMethodJWKKeys(didDocument, header.kid);
+                const publicKey = yield importJWK(jwk);
+                try {
+                    yield jwtVerify(data, publicKey);
+                }
+                catch (error) {
+                    throw new InvalidRequest(`Descriptor "${descriptorId}" JWT verification failed`);
+                }
             }
             // Verify VC Schema
             if (vc.credentialSchema) { // TODO: Analyze if we should force this

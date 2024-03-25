@@ -7,9 +7,10 @@ export declare class VpResolver {
     private audience;
     private externalValidation;
     private nonceValidation;
+    private passVcSignatureVerification;
     private jwtCache;
     private vpHolder;
-    constructor(didResolver: Resolver, audience: string, externalValidation: CredentialAdditionalVerification, nonceValidation: NonceVerification);
+    constructor(didResolver: Resolver, audience: string, externalValidation: CredentialAdditionalVerification, nonceValidation: NonceVerification, passVcSignatureVerification?: boolean);
     verifyPresentation(vp: any, definition: DIFPresentationDefinition, submission: DIFPresentationSubmission): Promise<VpExtractedData>;
     private deserializeJwtVc;
     private getSchema;
