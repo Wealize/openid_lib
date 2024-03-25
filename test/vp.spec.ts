@@ -82,6 +82,7 @@ describe("VP Verification tests", async () => {
   let firstVc: string | W3CVerifiableCredentialV2;
   let secondVc: string | W3CVerifiableCredentialV2;
   before(async () => {
+    console.log(`abc[${1}]`);
     // Generate some credentials to include in the VP
     const credentialSupported = [
       new CredentialSupportedBuilder().withTypes(["VcTestOne"]).build(),
