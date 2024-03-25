@@ -328,6 +328,12 @@ export class VpResolver {
     descriptorId: string,
   ) {
     const now = Date.now();
+    if (vc.validFrom) {
+      const validFrom = Date.parse(vc.validFrom);
+      if (validFrom > now) {
+        throw new InvalidRequest(`${descriptorId} is not yet valid`);
+      }
+    }
     switch (dataModel) {
       case W3CDataModel.V1:
         const vcV1 = vc as W3CVerifiableCredentialV1;
@@ -338,7 +344,7 @@ export class VpResolver {
         }
         const issuanceDate = Date.parse(vcV1.issuanceDate);
         if (now < issuanceDate) {
-          throw new InvalidRequest(`Descriptor "${descriptorId}" invalid issuance date`);
+          throw new InvalidRequest(`${descriptorId} invalid issuance date`);
         }
         if (vcV1.expirationDate) {
           const expirationDate = Date.parse(vcV1.expirationDate);
@@ -349,12 +355,6 @@ export class VpResolver {
         break
       case W3CDataModel.V2:
         const vcV2 = vc as W3CVerifiableCredentialV2;
-        if (vcV2.validFrom) {
-          const validFrom = Date.parse(vcV2.validFrom);
-          if (validFrom > now) {
-            throw new InvalidRequest(`${descriptorId} is not yet valid`);
-          }
-        }
         if (vcV2.validUntil) {
           const validUntil = Date.parse(vcV2.validUntil);
           if (validUntil <= now) {
