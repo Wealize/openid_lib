@@ -134,7 +134,7 @@ describe("VP Verification tests", async () => {
     let credentialResponse = await vcIssuer.generateCredentialResponse(
       await generateAccessToken(),
       credentialRequest,
-      W3CDataModel.V2,
+      W3CDataModel.V1,
       {
         tokenVerification: {
           publicKeyJwkAuthServer: issuerJWK,
@@ -156,7 +156,7 @@ describe("VP Verification tests", async () => {
     credentialResponse = await vcIssuer.generateCredentialResponse(
       await generateAccessToken(),
       credentialRequest,
-      W3CDataModel.V2,
+      W3CDataModel.V1,
       {
         tokenVerification: {
           publicKeyJwkAuthServer: issuerJWK,

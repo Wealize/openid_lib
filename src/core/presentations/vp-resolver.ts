@@ -185,7 +185,7 @@ export class VpResolver {
         const schema = await this.getSchema(W3CSchema);
         const validator = new Validator();
         const validationResult = validator.validate(vc, schema);
-        if (!validationResult.errors.length) {
+        if (validationResult.errors.length) {
           throw new InvalidRequest(
             "VC does not validate against its own schema specification"
           );
