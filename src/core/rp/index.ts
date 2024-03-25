@@ -370,7 +370,7 @@ export class OpenIDReliyingParty {
     vpTokenResponse: VpTokenResponse,
     presentationDefinition: DIFPresentationDefinition,
     nonceVerificationCallback: NonceVerification,
-    passVcSignatureVerification: boolean = true
+    vcSignatureVerification: boolean = true
   ): Promise<VerifiedVpTokenResponse> {
     // TODO: STUDY IF WE SHOULD COMPARE DEFINITION VP FORMATS WITH METADATA FORMATS
     const vpResolver = new VpResolver(
@@ -378,7 +378,7 @@ export class OpenIDReliyingParty {
       this.metadata.issuer,
       this.vpCredentialVerificationCallback,
       nonceVerificationCallback,
-      passVcSignatureVerification
+      vcSignatureVerification
     );
     const claimData = await vpResolver.verifyPresentation(
       vpTokenResponse.vp_token,

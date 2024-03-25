@@ -251,10 +251,10 @@ export class OpenIDReliyingParty {
             };
         });
     }
-    verifyVpTokenResponse(vpTokenResponse, presentationDefinition, nonceVerificationCallback, passVcSignatureVerification = true) {
+    verifyVpTokenResponse(vpTokenResponse, presentationDefinition, nonceVerificationCallback, vcSignatureVerification = true) {
         return __awaiter(this, void 0, void 0, function* () {
             // TODO: STUDY IF WE SHOULD COMPARE DEFINITION VP FORMATS WITH METADATA FORMATS
-            const vpResolver = new VpResolver(this.didResolver, this.metadata.issuer, this.vpCredentialVerificationCallback, nonceVerificationCallback, passVcSignatureVerification);
+            const vpResolver = new VpResolver(this.didResolver, this.metadata.issuer, this.vpCredentialVerificationCallback, nonceVerificationCallback, vcSignatureVerification);
             const claimData = yield vpResolver.verifyPresentation(vpTokenResponse.vp_token, presentationDefinition, vpTokenResponse.presentation_submission);
             return {
                 token: vpTokenResponse.vp_token,
