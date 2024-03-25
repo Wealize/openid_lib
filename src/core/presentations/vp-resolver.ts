@@ -88,14 +88,14 @@ export class VpResolver {
       }
       const idsAlreadyUsed = new Set<string>();
       const descriptorClaimsMap = {} as Record<string, any>;
-      for (const descriptor of submission.descriptor_map) {
+      for (const [index, descriptor] of submission.descriptor_map.entries()) {
         if (idsAlreadyUsed.has(descriptor.id)) {
           throw new InvalidRequest("Can't be two descriptors with the same ID");
         }
         const inputDescriptor = this.findDefinitionInputDescriptor(definition, descriptor.id);
         const rootFormats = definition.format;
         const format = inputDescriptor.format ?? rootFormats;
-        const vc = await this.extractCredentialFromVp(vp, descriptor, rootFormats, format);
+        const vc = await this.extractCredentialFromVp(vp, descriptor, rootFormats, format, index);
         const claimData = this.resolveInputDescriptor(inputDescriptor, vc);
         descriptorClaimsMap[inputDescriptor.id] = claimData;
         idsAlreadyUsed.add(inputDescriptor.id);
@@ -117,7 +117,7 @@ export class VpResolver {
   private async deserializeJwtVc(
     data: any,
     validAlgs: JWA_ALGS[],
-    descriptorId: string,
+    descriptorIndex: number,
   ): Promise<{
     data: VcJwtPayload,
     jwa: JWA_ALGS
@@ -132,20 +132,20 @@ export class VpResolver {
     const { header, payload } = decodeToken(data);
     if (!header.kid) {
       throw new InvalidRequest(
-        `Descriptor "${descriptorId}" JWT VC must contains a 'kid' parameter`
+        `presentation_submission.descriptor_map[${descriptorIndex}].id JWT VC must contains a 'kid' parameter`
       );
     }
     if (!validAlgs.includes(header.alg as JWA_ALGS)) {
       throw new InvalidRequest(
-        `Descriptor "${descriptorId}" JWT VC unssuported JWA: ${header.alg}`
+        `presentation_submission.descriptor_map[${descriptorIndex}].id JWT VC unssuported JWA: ${header.alg}`
       );
     }
     if (!("vc" in (payload as JwtPayload))) {
-      throw new InvalidRequest(`Descriptor ${descriptorId} is not a JWT VC`);
+      throw new InvalidRequest(`presentation_submission.descriptor_map[${descriptorIndex}].id is not a JWT VC`);
     }
     const vc = (payload as VcJwtPayload).vc as W3CVerifiableCredential;
     const dataModelVersion = this.checkVcDataModel(vc);
-    this.checkDateValidities(vc, dataModelVersion, descriptorId);
+    this.checkDateValidities(vc, dataModelVersion, descriptorIndex);
     if (vc.credentialSubject.id) {
       if (!this.vpHolder) {
         throw new InvalidRequest(
@@ -172,7 +172,7 @@ export class VpResolver {
         await jwtVerify(data, publicKey);
       } catch (error: any) {
         throw new InvalidRequest(
-          `Descriptor "${descriptorId}" JWT verification failed`
+          `presentation_submission.descriptor_map[${descriptorIndex}].id JWT verification failed`
         );
       }
     }
@@ -225,7 +225,7 @@ export class VpResolver {
     format: W3CVerifiableCredentialFormats | W3CVerifiablePresentationFormats,
     data: any,
     validAlgs: JWA_ALGS[],
-    descriptorId: string,
+    descriptorIndex: number,
   ): Promise<{
     data: JwtVpPayload | VcJwtPayload,
     jwa: JWA_ALGS
@@ -236,10 +236,10 @@ export class VpResolver {
     switch (format) {
       case "jwt_vc":
       case "jwt_vc_json":
-        return { ...await this.deserializeJwtVc(data, validAlgs, descriptorId) };
+        return { ...await this.deserializeJwtVc(data, validAlgs, descriptorIndex) };
       case "jwt_vp":
       case "jwt_vp_json":
-        return { ...await this.deserializeJwtVp(data, validAlgs, descriptorId) };
+        return { ...await this.deserializeJwtVp(data, validAlgs, descriptorIndex) };
       case "jwt_vc_json-ld":
       case "ldp_vc":
       case "ldp_vp":
@@ -250,7 +250,7 @@ export class VpResolver {
   private async deserializeJwtVp(
     data: any,
     validAlgs: JWA_ALGS[],
-    descriptorId: string
+    descriptorIndex: number
   ): Promise<{
     data: JwtVpPayload,
     jwa: JWA_ALGS
@@ -267,23 +267,23 @@ export class VpResolver {
     if (!header.kid) {
       // TODO: Define error type
       throw new InvalidRequest(
-        `Descriptor "${descriptorId}" JWT VP must contains a 'kid' parameter`
+        `presentation_submission.descriptor_map[${descriptorIndex}].id JWT VP must contains a 'kid' parameter`
       );
     }
     if (!validAlgs.includes(header.alg as JWA_ALGS)) {
       throw new InvalidRequest(
-        `Descriptor "${descriptorId}" JWT VP unssuported JWA: ${header.alg}`
+        `presentation_submission.descriptor_map[${descriptorIndex}].id JWT VP unssuported JWA: ${header.alg}`
       );
     }
     const jwtPayload = payload as JwtPayload;
     if (!jwtPayload.vp) {
-      throw new InvalidRequest(`Descriptor ${descriptorId} is not a JWT VP`);
+      throw new InvalidRequest(`presentation_submission.descriptor_map[${descriptorIndex}].id is not a JWT VP`);
     }
     const vp = (payload as JwtVpPayload).vp as W3CVerifiablePresentation;
     // TODO: WE SHOULD CHECK THE @CONTEXT. SHOULD IT BE THE SAME AS THE VC?
     if (!vp.type.includes(W3C_VP_TYPE)) {
       throw new InvalidRequest(
-        `Descriptor ${descriptorId} JWT VP must be of type "${W3C_VP_TYPE}"`
+        `presentation_submission.descriptor_map[${descriptorIndex}].id JWT VP must be of type "${W3C_VP_TYPE}"`
       );
     }
     if (jwtPayload.aud !== this.audience) {
@@ -304,7 +304,7 @@ export class VpResolver {
     const nonceVerification = await this.nonceValidation(holderDid, jwtPayload.nonce);
     if (!nonceVerification.valid) {
       throw new InvalidRequest(
-        `Descriptor ${descriptorId} invalid nonce specified${nonceVerification.error ?
+        `presentation_submission.descriptor_map[${descriptorIndex}].id invalid nonce specified${nonceVerification.error ?
           `: ${nonceVerification.error}`
           : '.'
         }`
@@ -325,9 +325,17 @@ export class VpResolver {
   private checkDateValidities(
     vc: W3CVerifiableCredential,
     dataModel: W3CDataModel,
-    descriptorId: string,
+    descriptorIndex: number,
   ) {
     const now = Date.now();
+    if (vc.validFrom) {
+      const validFrom = Date.parse(vc.validFrom);
+      if (validFrom > now) {
+        throw new InvalidRequest(
+          `presentation_submission.descriptor_map[${descriptorIndex}].id is not yet valid`
+        );
+      }
+    }
     switch (dataModel) {
       case W3CDataModel.V1:
         const vcV1 = vc as W3CVerifiableCredentialV1;
@@ -338,27 +346,25 @@ export class VpResolver {
         }
         const issuanceDate = Date.parse(vcV1.issuanceDate);
         if (now < issuanceDate) {
-          throw new InvalidRequest(`Descriptor "${descriptorId}" invalid issuance date`);
+          throw new InvalidRequest(
+            `presentation_submission.descriptor_map[${descriptorIndex}].id invalid issuance date`
+          );
         }
         if (vcV1.expirationDate) {
           const expirationDate = Date.parse(vcV1.expirationDate);
           if (now >= expirationDate) {
-            throw new InvalidRequest(`${descriptorId} is expired`);
+            throw new InvalidRequest(
+              `presentation_submission.descriptor_map[${descriptorIndex}].id is expired`
+            );
           }
         }
         break
       case W3CDataModel.V2:
         const vcV2 = vc as W3CVerifiableCredentialV2;
-        if (vcV2.validFrom) {
-          const validFrom = Date.parse(vcV2.validFrom);
-          if (validFrom > now) {
-            throw new InvalidRequest(`${descriptorId} is not yet valid`);
-          }
-        }
         if (vcV2.validUntil) {
           const validUntil = Date.parse(vcV2.validUntil);
           if (validUntil <= now) {
-            throw new InvalidRequest(`${descriptorId} is expired`);
+            throw new InvalidRequest(`presentation_submission.descriptor_map[${descriptorIndex}].id is expired`);
           }
         }
         break
@@ -399,7 +405,8 @@ export class VpResolver {
     data: any, // TODO: Revise in the future
     descriptor: DescriptorMap,
     expectedFormats: LdFormat & JwtFormat,
-    endObjectFormats: LdFormat & JwtFormat
+    endObjectFormats: LdFormat & JwtFormat,
+    descriptorIndex: number
   ): Promise<VcJwtPayload> {
     const resolveDescriptor = async () => {
       if (currentDescriptor!.id && currentDescriptor!.id !== mainId) {
@@ -424,7 +431,7 @@ export class VpResolver {
         currentDescriptor!.format,
         tmp[0],
         validAlgs,
-        descriptor.id
+        descriptorIndex
       );
       currentTraversalObject = parseResult.data;
       lastJwa = parseResult.jwa;
