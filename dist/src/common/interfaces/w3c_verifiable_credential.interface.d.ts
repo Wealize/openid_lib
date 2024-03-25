@@ -9,7 +9,7 @@ export type W3CVerifiableCredential = W3CVerifiableCredentialV1 | W3CVerifiableC
 export interface W3CVerifiableCredentialV1 {
     '@context': string[];
     type: string[];
-    credentialSchema?: W3CVcSchemaDefinition[];
+    credentialSchema?: W3CVcSchemaDefinition | W3CVcSchemaDefinition[];
     issuer: string;
     issued?: string;
     issuanceDate: string;
@@ -29,7 +29,7 @@ export interface W3CVerifiableCredentialV1 {
 export interface W3CVerifiableCredentialV2 {
     '@context': string[];
     type: string[];
-    credentialSchema?: W3CVcSchemaDefinition[];
+    credentialSchema?: W3CVcSchemaDefinition | W3CVcSchemaDefinition[];
     issuer: string;
     validFrom?: string;
     validUntil?: string;

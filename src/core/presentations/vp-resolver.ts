@@ -178,7 +178,10 @@ export class VpResolver {
     }
     // Verify VC Schema
     if (vc.credentialSchema) { // TODO: Analyze if we should force this
-      for (const W3CSchema of vc.credentialSchema) {
+      const schemaArray = Array.isArray(vc.credentialSchema) ?
+        vc.credentialSchema :
+        [vc.credentialSchema];
+      for (const W3CSchema of schemaArray) {
         const schema = await this.getSchema(W3CSchema);
         const validator = new Validator();
         const validationResult = validator.validate(vc, schema);

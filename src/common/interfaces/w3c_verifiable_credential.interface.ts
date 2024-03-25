@@ -11,7 +11,7 @@ export type W3CVerifiableCredential = W3CVerifiableCredentialV1 | W3CVerifiableC
 export interface W3CVerifiableCredentialV1 {
   '@context': string[];
   type: string[];
-  credentialSchema?: W3CVcSchemaDefinition[];
+  credentialSchema?: W3CVcSchemaDefinition | W3CVcSchemaDefinition[];
   issuer: string;
   issued?: string;
   issuanceDate: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
@@ -33,7 +33,7 @@ export interface W3CVerifiableCredentialV1 {
 export interface W3CVerifiableCredentialV2 {
   '@context': string[];
   type: string[];
-  credentialSchema?: W3CVcSchemaDefinition[];
+  credentialSchema?: W3CVcSchemaDefinition | W3CVcSchemaDefinition[];
   issuer: string;
   validFrom?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   validUntil?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
