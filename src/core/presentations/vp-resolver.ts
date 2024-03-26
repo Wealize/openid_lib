@@ -158,6 +158,7 @@ export class VpResolver {
         );
       }
     }
+    let publicKey;
     if (this.passVcSignatureVerification) {
       const didResolution = await this.didResolver.resolve(vc.issuer);
       if (didResolution.didResolutionMetadata.error) {
@@ -167,7 +168,7 @@ export class VpResolver {
       }
       const didDocument = didResolution.didDocument!;
       const jwk = getAssertionMethodJWKKeys(didDocument, header.kid);
-      const publicKey = await importJWK(jwk);
+      publicKey = await importJWK(jwk);
       try {
         await jwtVerify(data, publicKey);
       } catch (error: any) {
@@ -194,7 +195,8 @@ export class VpResolver {
     }
     const verificationResult = await this.externalValidation(
       vc,
-      dataModelVersion
+      dataModelVersion,
+      publicKey
     );
     if (!verificationResult.valid) {
       throw new InvalidRequest(verificationResult.error!);

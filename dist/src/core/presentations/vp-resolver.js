@@ -94,6 +94,7 @@ export class VpResolver {
                     throw new InvalidRequest("Credential subject ID and VP Holder mismatch");
                 }
             }
+            let publicKey;
             if (this.passVcSignatureVerification) {
                 const didResolution = yield this.didResolver.resolve(vc.issuer);
                 if (didResolution.didResolutionMetadata.error) {
@@ -101,7 +102,7 @@ export class VpResolver {
                 }
                 const didDocument = didResolution.didDocument;
                 const jwk = getAssertionMethodJWKKeys(didDocument, header.kid);
-                const publicKey = yield importJWK(jwk);
+                publicKey = yield importJWK(jwk);
                 try {
                     yield jwtVerify(data, publicKey);
                 }
@@ -123,7 +124,7 @@ export class VpResolver {
                     }
                 }
             }
-            const verificationResult = yield this.externalValidation(vc, dataModelVersion);
+            const verificationResult = yield this.externalValidation(vc, dataModelVersion, publicKey);
             if (!verificationResult.valid) {
                 throw new InvalidRequest(verificationResult.error);
             }
