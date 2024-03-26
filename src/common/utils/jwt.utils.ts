@@ -32,7 +32,7 @@ export async function verifyJwtWithExpAndAudience(
   audience?: string
 ) {
   const publicKey = await importJWK(publicKeyJWK);
-  const payload = await jwtVerify(token, publicKey);
+  const payload = await jwtVerify(token, publicKey, { clockTolerance: 5 });
   if (!payload.payload.exp || payload.payload.exp < Math.floor(Date.now() / 1000)) {
     throw new InvalidToken("JWT is expired or does not have exp parameter");
   }
