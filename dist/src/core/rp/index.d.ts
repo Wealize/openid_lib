@@ -1,8 +1,8 @@
+import { DIDDocument, Resolvable, Resolver } from "did-resolver";
 import { AuthServerMetadata } from "../../common/interfaces/auth_server_metadata.interface.js";
 import { AuthzRequest, AuthzRequestWithJWT } from "../../common/interfaces/authz_request.interface.js";
 import { IdTokenRequest } from "../../common/classes/id_token_request.js";
 import { IdTokenResponse } from "../../common/interfaces/id_token_response.js";
-import { DIDDocument, Resolvable, Resolver } from "did-resolver";
 import { AuthorizationResponse } from "../../common/classes/authz_response.js";
 import { TokenRequest } from "../../common/interfaces/token_request.interface.js";
 import { TokenResponse } from "../../common/interfaces/token_response.interface.js";
@@ -74,6 +74,19 @@ export declare class OpenIDReliyingParty {
      */
     createIdTokenRequest(clientAuthorizationEndpoint: string, audience: string, redirectUri: string, jwtSignCallback: RpTypes.TokenSignCallback, additionalParameters?: RpTypes.CreateIdTokenRequestOptionalParams): Promise<IdTokenRequest>;
     createIdTokenRequestFromBaseAuthzRequest(): void;
+    /**
+     * Allows to create a new Authorisation request in which an VP Token
+     * is requested
+     * @param clientAuthorizationEndpoint Endpoint of the authorisation
+     * server of the client
+     * @param audience "aud" parameter for the generated JWT.
+     * @param redirectUri URI to which the client should deliver the
+     * authorisation response to
+     * @param jwtSignCallback Callback to generate the signed VP Token
+     * @param additionalParameters Additional parameters that handle
+     * issues related to the content of the VP Token.
+     * @returns The VP Token Request
+     */
     createVpTokenRequest(clientAuthorizationEndpoint: string, audience: string, redirectUri: string, jwtSignCallback: RpTypes.TokenSignCallback, additionalParameters?: RpTypes.CreateVpTokenRequestOptionalParams): Promise<VpTokenRequest>;
     /**
      * Allows to verify an authorisation request sent by a client
@@ -94,6 +107,19 @@ export declare class OpenIDReliyingParty {
      * @throws If data provided is incorrect
      */
     verifyIdTokenResponse(idTokenResponse: IdTokenResponse, verifyCallback: RpTypes.IdTokenVerifyCallback): Promise<VerifiedIdTokenResponse>;
+    /**
+     * Allows to verify an VP Token Response sent by a client
+     * @param vpTokenResponse The authorisation response to verify
+     * @param presentationDefinition The presentation definition to use to
+     * verify the VP
+     * @param nonceVerificationCallback A callback used to verify the nonce of a JWT_VP
+     * @param vcSignatureVerification A callback that can be used to perform additional
+     * verification of any of the VC extracted from the VP. This can be used to check
+     * the status of any VC and its terms of use.
+     * @returns The verified VP Token Response with holder DID and the data
+     * extracted from the VCs of the VP
+     * @throws If data provided is incorrect
+     */
     verifyVpTokenResponse(vpTokenResponse: VpTokenResponse, presentationDefinition: DIFPresentationDefinition, nonceVerificationCallback: NonceVerification, vcSignatureVerification?: boolean): Promise<VerifiedVpTokenResponse>;
     /**
      * Generates an authorisation response for a request with response type

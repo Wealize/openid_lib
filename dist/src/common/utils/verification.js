@@ -7,6 +7,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+/**
+ * Utility function that can be used in almost all verification callbacks
+ * of the differents components of this library
+ * @param _data Any amount of data
+ * @returns Allways returns a valid verification
+ */
 export function alwaysAcceptVerification(..._data) {
     return __awaiter(this, void 0, void 0, function* () {
         return { valid: true };

@@ -15,6 +15,15 @@ export function getAuthentificationJWKKeys(didDocument, methodIdentifier) {
     }
     return getJwkFromDocument(didDocument, methodIdentifier);
 }
+/**
+ * Obtains the Assertion JWK from a DID Document
+ * @param didDocument The DID document from which to extract the key
+ * @param methodIdentifier The verification method to search in the DID document
+ * @returns The publick key associated in JWK format
+ * @throws If the method identifier provided is not specified in a
+ * authentification relationship or if there is not verification method
+ * with that ID. It can also throws if the method does not provide any JWK
+ */
 export function getAssertionMethodJWKKeys(didDocument, methodIdentifier) {
     var _a;
     if (!((_a = didDocument.assertionMethod) === null || _a === void 0 ? void 0 : _a.includes(methodIdentifier))) {

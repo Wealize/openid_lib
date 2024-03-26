@@ -1,5 +1,8 @@
 import jsonpath from "jsonpath";
 import fetch from 'node-fetch';
+import { JwtPayload } from "jsonwebtoken";
+import { Resolver } from "did-resolver";
+import { importJWK, jwtVerify } from "jose";
 import {
   Schema,
   Validator
@@ -22,9 +25,6 @@ import {
   W3CVerifiableCredentialFormats,
   W3CVerifiablePresentationFormats
 } from "../../common/formats/index.js";
-import { JwtPayload } from "jsonwebtoken";
-import { Resolver } from "did-resolver";
-import { importJWK, jwtVerify } from "jose";
 import {
   JwtVpPayload,
   VcJwtPayload,
@@ -45,11 +45,22 @@ import {
   getAuthentificationJWKKeys,
   obtainDid
 } from "../../common/utils/index.js";
-import { InternalError, InvalidRequest } from "../../common/classes/error/index.js";
-import { CredentialAdditionalVerification, NonceVerification, VpExtractedData } from "./types";
+import {
+  InternalError,
+  InvalidRequest
+} from "../../common/classes/error/index.js";
+import {
+  CredentialAdditionalVerification,
+  NonceVerification,
+  VpExtractedData
+} from "./types";
 
-// Should be used to check credential Status and terms of use
 
+/**
+ * Component specialized in the verification of verifiable 
+ * submissions, for which it requires the original definition 
+ * and the submission delivered together with the VP.
+ */
 export class VpResolver {
   private jwtCache: Record<
     string,
@@ -60,16 +71,37 @@ export class VpResolver {
     }>;
   private vpHolder: string | undefined;
 
+  /**
+   * Main constructor of this class
+   * @param didResolver The DID Resolver to employ
+   * @param audience The expected audience in the tokens that will be processed
+   * @param externalValidation Callback that will be used to request external 
+   * verification of any detected VC. This verification should focus on 
+   * validating issues related to the trust framework and the use case.
+   * @param nonceValidation Callback the nonces specified in any JWT VP
+   * @param vcSignatureVerification Flag indicating whether the signatures of the VCs 
+   * included in the VP should be verified. To that regard, the DID Resolver provided must 
+   * be able to generate the needed DID Documents
+   */
   constructor(
     private didResolver: Resolver,
     private audience: string,
     private externalValidation: CredentialAdditionalVerification,
     private nonceValidation: NonceVerification,
-    private passVcSignatureVerification: boolean = false
+    private vcSignatureVerification: boolean = false
   ) {
     this.jwtCache = {};
   }
 
+  /**
+   * Verify a Verifiable Presentation
+   * @param vp Any data structure in which the VP is located
+   * @param definition The definition of the presentation to be 
+   * used to verify the PV
+   * @param submission The presentation submission submitted with the VP
+   * @returns Data extracted from the credentials contained 
+   * in the VP as indicated in the definition provided.
+   */
   async verifyPresentation(
     vp: any,
     definition: DIFPresentationDefinition,
@@ -159,7 +191,7 @@ export class VpResolver {
       }
     }
     let publicKey;
-    if (this.passVcSignatureVerification) {
+    if (this.vcSignatureVerification) {
       const didResolution = await this.didResolver.resolve(vc.issuer);
       if (didResolution.didResolutionMetadata.error) {
         throw new InvalidRequest(

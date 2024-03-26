@@ -43,7 +43,7 @@ export interface W3CVerifiableCredentialV2 {
 }
 /**
  * Defines the schema definition of a credential in
- * accordance to W3C VC Data Model 2.0
+ * accordance to W3C VC
  */
 export interface W3CVcSchemaDefinition {
     id: string;
@@ -51,27 +51,30 @@ export interface W3CVcSchemaDefinition {
 }
 /**
  * Defines the status information of a credential in
- * accordance to W3C VC Data Model 2.0
+ * accordance to W3C VC
  */
 export interface W3CCredentialStatus {
     id?: string;
     type: string;
     [key: string]: any;
 }
+/**
+ * Defines the terms of use information in accordance to W3C VC
+ */
 export interface W3CTermsOfUse {
     type: string;
     id?: string;
     [key: string]: any;
 }
 /**
- * Defines subject data of a credential in accordance to W3C VC Data Model 2.0
+ * Defines subject data of a credential in accordance to W3C VC
  */
 export interface W3CSingleCredentialSubject {
     id?: string;
     [key: string]: any;
 }
 /**
- * Defines an embedded proof for a VC in accordance to W3C Data Model 2.0
+ * Defines an embedded proof for a VC in accordance to W3C VC
  * @see https://www.w3.org/TR/vc-data-integrity/#proofs
  */
 export interface EmbeddedProof {
@@ -87,6 +90,9 @@ export interface EmbeddedProof {
     previousProof?: string | string[];
     nonce?: string;
 }
+/**
+ * Defines the payload of a JWT_VC
+ */
 export interface VcJwtPayload extends JwtPayload {
     vc: W3CVerifiableCredential;
 }

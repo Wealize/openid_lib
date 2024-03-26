@@ -9,6 +9,9 @@ export interface VpTokenResponse {
     presentation_submission: DIFPresentationSubmission;
     [key: string]: any;
 }
+/**
+ * Defines the payload of an VP Token
+ */
 export interface JwtVpPayload extends JwtPayload {
     vp: W3CVerifiablePresentation;
 }

@@ -21,7 +21,7 @@ export declare class VpTokenRequest {
     toUri(): string;
 }
 /**
- * Parameters of a ID Token Request
+ * Parameters of a VP Token Request
  */
 export interface VpTokenRequestParams {
     response_type: "vp_token";
