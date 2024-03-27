@@ -27,7 +27,7 @@ import {
 } from "../../common/formats/index.js";
 import {
   JwtVpPayload,
-  VcJwtPayload,
+  JwtVcPayload,
   W3CVcSchemaDefinition,
   W3CVerifiableCredential,
   W3CVerifiableCredentialV1,
@@ -66,7 +66,7 @@ export class VpResolver {
     string,
     {
       type: "vp" | "vc",
-      data: VcJwtPayload | JwtVpPayload,
+      data: JwtVcPayload | JwtVpPayload,
       alg: JWA_ALGS
     }>;
   private vpHolder: string | undefined;
@@ -151,7 +151,7 @@ export class VpResolver {
     validAlgs: JWA_ALGS[],
     descriptorId: string,
   ): Promise<{
-    data: VcJwtPayload,
+    data: JwtVcPayload,
     jwa: JWA_ALGS
   }> {
     if (typeof data !== "string") {
@@ -159,7 +159,7 @@ export class VpResolver {
     }
     const cacheData = this.jwtCache[data];
     if (cacheData && cacheData.type == "vc") {
-      return { data: cacheData.data as VcJwtPayload, jwa: cacheData.alg };
+      return { data: cacheData.data as JwtVcPayload, jwa: cacheData.alg };
     }
     const { header, payload } = decodeToken(data);
     if (!header.kid) {
@@ -175,9 +175,9 @@ export class VpResolver {
     if (!("vc" in (payload as JwtPayload))) {
       throw new InvalidRequest(`Descriptor ${descriptorId} is not a JWT VC`);
     }
-    const vc = (payload as VcJwtPayload).vc as W3CVerifiableCredential;
+    const vc = (payload as JwtVcPayload).vc as W3CVerifiableCredential;
     const dataModelVersion = this.checkVcDataModel(vc);
-    this.checkDateValidities(vc, dataModelVersion, descriptorId);
+    this.verifyVcDates(vc, dataModelVersion, descriptorId);
     if (vc.credentialSubject.id) {
       if (!this.vpHolder) {
         throw new InvalidRequest(
@@ -234,12 +234,12 @@ export class VpResolver {
       throw new InvalidRequest(verificationResult.error!);
     }
     this.jwtCache[data] = {
-      data: payload as VcJwtPayload,
+      data: payload as JwtVcPayload,
       alg: header.alg as JWA_ALGS,
       type: "vc"
     };
     return {
-      data: payload as VcJwtPayload,
+      data: payload as JwtVcPayload,
       jwa: header.alg as JWA_ALGS
     }
   }
@@ -261,7 +261,7 @@ export class VpResolver {
     validAlgs: JWA_ALGS[],
     descriptorId: string,
   ): Promise<{
-    data: JwtVpPayload | VcJwtPayload,
+    data: JwtVpPayload | JwtVcPayload,
     jwa: JWA_ALGS
   }> {
     if (checkIfLdFormat(format)) {
@@ -356,7 +356,7 @@ export class VpResolver {
     }
   }
 
-  private checkDateValidities(
+  private verifyVcDates(
     vc: W3CVerifiableCredential,
     dataModel: W3CDataModel,
     descriptorId: string,
@@ -434,7 +434,7 @@ export class VpResolver {
     descriptor: DescriptorMap,
     expectedFormats: LdFormat & JwtFormat,
     endObjectFormats: LdFormat & JwtFormat
-  ): Promise<VcJwtPayload> {
+  ): Promise<JwtVcPayload> {
     const resolveDescriptor = async () => {
       if (currentDescriptor!.id && currentDescriptor!.id !== mainId) {
         throw new InvalidRequest(
@@ -486,7 +486,7 @@ export class VpResolver {
     if (!validAlgs.includes(lastJwa!)) {
       throw new InvalidRequest(`Unsupported JWA`);
     }
-    return currentTraversalObject as VcJwtPayload;
+    return currentTraversalObject as JwtVcPayload;
   }
 
   private resolveJsonPath(data: any, path: string) {
@@ -498,7 +498,7 @@ export class VpResolver {
 
   private resolveInputDescriptor(
     inputDescriptor: PresentationInputDescriptor,
-    data: VcJwtPayload
+    data: JwtVcPayload
   ): Record<string, any> {
     const result: Record<string, any> = {};
     if (inputDescriptor.constraints.fields) {

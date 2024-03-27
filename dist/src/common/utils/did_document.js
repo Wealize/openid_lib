@@ -1,4 +1,7 @@
 import { DidDocumentError } from "../classes/index.js";
+// TODO: In a DID Document the VerificationMethod can be expressed 
+// in differents formats other than JWK.
+// https://www.w3.org/TR/did-core/#verification-material
 /**
  * Obtains the Authentification JWK from a DID Document
  * @param didDocument The DID document from which to extract the key

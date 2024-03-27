@@ -110,7 +110,7 @@ export class VpResolver {
             }
             const vc = payload.vc;
             const dataModelVersion = this.checkVcDataModel(vc);
-            this.checkDateValidities(vc, dataModelVersion, descriptorId);
+            this.verifyVcDates(vc, dataModelVersion, descriptorId);
             if (vc.credentialSubject.id) {
                 if (!this.vpHolder) {
                     throw new InvalidRequest("A VC has been detected prior to any VP");
@@ -254,7 +254,7 @@ export class VpResolver {
             };
         });
     }
-    checkDateValidities(vc, dataModel, descriptorId) {
+    verifyVcDates(vc, dataModel, descriptorId) {
         const now = Date.now();
         if (vc.validFrom) {
             const validFrom = Date.parse(vc.validFrom);

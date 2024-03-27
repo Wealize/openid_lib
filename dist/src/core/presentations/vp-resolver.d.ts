@@ -42,7 +42,7 @@ export declare class VpResolver {
     private getSchema;
     private decodeAndParse;
     private deserializeJwtVp;
-    private checkDateValidities;
+    private verifyVcDates;
     private checkVcDataModel;
     private checkFormatValidity;
     private extractCredentialFromVp;

@@ -103,6 +103,6 @@ export interface EmbeddedProof {
 /**
  * Defines the payload of a JWT_VC
  */
-export interface VcJwtPayload extends JwtPayload {
+export interface JwtVcPayload extends JwtPayload {
   vc: W3CVerifiableCredential
 }
