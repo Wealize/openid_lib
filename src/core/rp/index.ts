@@ -1,5 +1,8 @@
 import { JWK } from "jose";
 import { v4 as uuidv4 } from 'uuid';
+import fetch from 'node-fetch';
+import { JwtPayload } from "jsonwebtoken";
+import { DIDDocument, Resolvable, Resolver } from "did-resolver";
 import {
   AuthServerMetadata
 } from "../../common/interfaces/auth_server_metadata.interface.js";
@@ -23,16 +26,18 @@ import {
   JWA_ALGS
 } from "../../common/constants/index.js";
 import { VpFormatsSupported } from "../../common/types/index.js";
-import { JwtPayload } from "jsonwebtoken";
 import {
   IdTokenRequest,
   IdTokenRequestParams
 } from "../../common/classes/id_token_request.js";
 import { IdTokenResponse } from "../../common/interfaces/id_token_response.js";
-import { DIDDocument, Resolvable, Resolver } from "did-resolver";
 import { AuthorizationResponse } from "../../common/classes/authz_response.js";
-import { TokenRequest } from "../../common/interfaces/token_request.interface.js";
-import { TokenResponse } from "../../common/interfaces/token_response.interface.js";
+import {
+  TokenRequest
+} from "../../common/interfaces/token_request.interface.js";
+import {
+  TokenResponse
+} from "../../common/interfaces/token_response.interface.js";
 import { getAuthentificationJWKKeys } from "../../common/utils/did_document.js";
 import * as RpTypes from "./types.js";
 import {
@@ -45,6 +50,22 @@ import {
   UnauthorizedClient,
   UnsupportedGrantType
 } from "../../common/classes/index.js";
+import {
+  VpResolver
+} from "../presentations/vp-resolver.js";
+import {
+  DIFPresentationDefinition,
+  VpTokenResponse
+} from "../../common/index.js";
+import {
+  VpTokenRequest,
+  VpTokenRequestParams
+} from "../../common/classes/vp_token_request.js";
+import {
+  CredentialAdditionalVerification,
+  NonceVerification,
+  VpExtractedData
+} from "../presentations/types.js";
 
 export interface VerifiedBaseAuthzRequest {
   /**
@@ -60,6 +81,11 @@ export interface VerifiedBaseAuthzRequest {
 interface VerifiedIdTokenResponse {
   didDocument: DIDDocument;
   token: string
+}
+
+interface VerifiedVpTokenResponse {
+  token: string;
+  vpInternalData: VpExtractedData
 }
 
 // TODO: Maybe we need a build to support multiples resolver, or move that responsability to the user
@@ -79,11 +105,14 @@ export class OpenIDReliyingParty {
    * @param metadata Authorisation server metadata
    * @param didResolver Object responsible for obtaining the DID Documents 
    * of the DIDs that are detected.
+   * @param vpCredentialVerificationCallback Optional callback needed to verify for
+   * CredentialStatus and Verification
    */
   constructor(
     private defaultMetadataCallback: RpTypes.GetClientDefaultMetada,
     private metadata: AuthServerMetadata,
-    private didResolver: Resolver
+    private didResolver: Resolver,
+    private vpCredentialVerificationCallback: CredentialAdditionalVerification
   ) {
 
   }
@@ -150,17 +179,81 @@ export class OpenIDReliyingParty {
       ...requestParams,
       ...additionalParameters.additionalPayload
     },
-      this.metadata.id_token_signing_alg_values_supported
+      this.metadata.request_object_signing_alg_values_supported
     );
-    return new IdTokenRequest(requestParams, idToken, clientAuthorizationEndpoint);
+    return new IdTokenRequest(
+      requestParams,
+      idToken,
+      clientAuthorizationEndpoint
+    );
   }
 
   createIdTokenRequestFromBaseAuthzRequest() {
     // TODO: PENDING
   }
 
-  createVpTokenRequest() {
-    // TODO: PENDING
+  /**
+   * Allows to create a new Authorisation request in which an VP Token 
+   * is requested
+   * @param clientAuthorizationEndpoint Endpoint of the authorisation 
+   * server of the client
+   * @param audience "aud" parameter for the generated JWT.
+   * @param redirectUri URI to which the client should deliver the 
+   * authorisation response to
+   * @param jwtSignCallback Callback to generate the signed VP Token
+   * @param additionalParameters Additional parameters that handle 
+   * issues related to the content of the VP Token.
+   * @returns The VP Token Request 
+   */
+  async createVpTokenRequest(
+    clientAuthorizationEndpoint: string,
+    audience: string,
+    redirectUri: string,
+    jwtSignCallback: RpTypes.TokenSignCallback,
+    additionalParameters?: RpTypes.CreateVpTokenRequestOptionalParams
+  ) {
+    additionalParameters = {
+      ...{
+        responseMode: "direct_post",
+        nonce: uuidv4(),
+        scope: DEFAULT_SCOPE,
+        expirationTime: ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME
+      },
+      ...additionalParameters
+    };
+    const requestParams: VpTokenRequestParams = {
+      response_type: "vp_token",
+      scope: additionalParameters.scope!,
+      redirect_uri: redirectUri,
+      response_mode: additionalParameters.responseMode,
+      nonce: additionalParameters.nonce,
+      client_id: this.metadata.issuer
+    };
+    if (additionalParameters.presentation_definition) {
+      requestParams.presentation_definition =
+        additionalParameters.presentation_definition;
+    } else if (additionalParameters.presentation_definition_uri) {
+      requestParams.presentation_definition_uri =
+        additionalParameters.presentation_definition_uri;
+    } else {
+      throw new InvalidRequest(
+        "Either presentation_definition or presentation_definition URI must be defined"
+      );
+    }
+    const vpToken = await jwtSignCallback({
+      aud: audience,
+      iss: this.metadata.issuer,
+      exp: Date.now() + additionalParameters.expirationTime!,
+      ...requestParams,
+      ...additionalParameters.additionalPayload
+    },
+      this.metadata.request_object_signing_alg_values_supported
+    );
+    return new VpTokenRequest(
+      requestParams,
+      vpToken,
+      clientAuthorizationEndpoint
+    );
   }
 
   /**
@@ -186,11 +279,16 @@ export class OpenIDReliyingParty {
       }
       const { header, payload } = decodeToken(request.request);
       if (this.metadata.request_object_signing_alg_values_supported &&
-        !this.metadata.request_object_signing_alg_values_supported.includes(header.alg as JWA_ALGS)) {
+        !this.metadata.request_object_signing_alg_values_supported.includes(
+          header.alg as JWA_ALGS
+        )) {
         throw new InvalidRequest("Unsuported request signing alg");
       }
       params = payload as AuthzRequest;
-      if (!params.client_metadata || "jwks_uri" in params.client_metadata === false) {
+      if (
+        !params.client_metadata ||
+        "jwks_uri" in params.client_metadata === false
+      ) {
         throw new InvalidRequest("Expected client metadata with jwks_uri");
       }
       const keys = await fetchJWKs(params.client_metadata.jwks_uri);
@@ -199,16 +297,25 @@ export class OpenIDReliyingParty {
       }
       const jwk = selectJwkFromSet(keys, header.kid);
       try {
-        await verifyJwtWithExpAndAudience(request.request, jwk, this.metadata.issuer);
+        await verifyJwtWithExpAndAudience(
+          request.request,
+          jwk,
+          this.metadata.issuer
+        );
       } catch (error: any) {
         throw new InvalidRequest(error.message);
       }
     }
-    params.client_metadata = await this.resolveClientMetadata(params.client_metadata);
-    const validatedClientMetadata = this.validateClientMetadata(params.client_metadata);
+    params.client_metadata = await this.resolveClientMetadata(
+      params.client_metadata
+    );
+    const validatedClientMetadata = this.validateClientMetadata(
+      params.client_metadata
+    );
     if (additionalParameters) {
       if (additionalParameters.scopeVerifyCallback) {
-        const scopeVerificationResult = await additionalParameters.scopeVerifyCallback(params.scope);
+        const scopeVerificationResult =
+          await additionalParameters.scopeVerifyCallback(params.scope);
         if (!scopeVerificationResult.valid) {
           throw new InvalidScope(
             `Invalid scope specified` +
@@ -218,15 +325,20 @@ export class OpenIDReliyingParty {
       }
       if (params.authorization_details) {
         for (const details of params.authorization_details) {
-          if (details.locations && !details.locations.includes(this.metadata.issuer)) {
-            throw new InvalidRequest("Location must contains Issuer client id value");
+          if (details.locations &&
+            !details.locations.includes(this.metadata.issuer)) {
+            throw new InvalidRequest(
+              "Location must contains Issuer client id value"
+            );
           }
           if (additionalParameters.authzDetailsVerifyCallback) {
-            const authDetailsVerificationResult = await additionalParameters.authzDetailsVerifyCallback(details);
+            const authDetailsVerificationResult =
+              await additionalParameters.authzDetailsVerifyCallback(details);
             if (!authDetailsVerificationResult.valid) {
               throw new InvalidRequest(
                 `Invalid authorization details specified` +
-                `${authDetailsVerificationResult.error ? ": " + authDetailsVerificationResult.error : '.'}`
+                `${authDetailsVerificationResult.error ? ": "
+                  + authDetailsVerificationResult.error : '.'}`
               );
             }
           }
@@ -241,7 +353,8 @@ export class OpenIDReliyingParty {
         if (!issuerStateVerificationResult.valid) {
           throw new InvalidRequest(
             `Invalid "issuer_state" provided` +
-            `${issuerStateVerificationResult.error ? ": " + issuerStateVerificationResult.error : '.'}`
+            `${issuerStateVerificationResult.error ? ": "
+              + issuerStateVerificationResult.error : '.'}`
           );
         }
       }
@@ -305,8 +418,42 @@ export class OpenIDReliyingParty {
     }
   }
 
-  verifyVpTokenResponse() {
-    // TODO: PENDING
+  /**
+   * Allows to verify an VP Token Response sent by a client
+   * @param vpTokenResponse The authorisation response to verify
+   * @param presentationDefinition The presentation definition to use to 
+   * verify the VP
+   * @param nonceVerificationCallback A callback used to verify the nonce of a JWT_VP
+   * @param vcSignatureVerification A callback that can be used to perform additional 
+   * verification of any of the VC extracted from the VP. This can be used to check 
+   * the status of any VC and its terms of use.
+   * @returns The verified VP Token Response with holder DID and the data 
+   * extracted from the VCs of the VP
+   * @throws If data provided is incorrect
+   */
+  async verifyVpTokenResponse(
+    vpTokenResponse: VpTokenResponse,
+    presentationDefinition: DIFPresentationDefinition,
+    nonceVerificationCallback: NonceVerification,
+    vcSignatureVerification: boolean = true
+  ): Promise<VerifiedVpTokenResponse> {
+    // TODO: STUDY IF WE SHOULD COMPARE DEFINITION VP FORMATS WITH METADATA FORMATS
+    const vpResolver = new VpResolver(
+      this.didResolver,
+      this.metadata.issuer,
+      this.vpCredentialVerificationCallback,
+      nonceVerificationCallback,
+      vcSignatureVerification
+    );
+    const claimData = await vpResolver.verifyPresentation(
+      vpTokenResponse.vp_token,
+      presentationDefinition,
+      vpTokenResponse.presentation_submission
+    );
+    return {
+      token: vpTokenResponse.vp_token,
+      vpInternalData: claimData
+    }
   }
 
   /**
@@ -415,7 +562,9 @@ export class OpenIDReliyingParty {
       case "vp_token":
         // TODO: PENDING OF VP VERIFICATION METHOD
         if (!tokenRequest.vp_token) {
-          throw new InsufficienteParamaters(`Grant type "vp_token" requires the "vp_token" parameter`);
+          throw new InsufficienteParamaters(
+            `Grant type "vp_token" requires the "vp_token" parameter`
+          );
         }
         throw new InternalError("Uninplemented");
         break;
@@ -476,7 +625,9 @@ export class OpenIDReliyingParty {
               intersectArray.push(alg);
             }
           }
-          vpFormats[format as keyof VpFormatsSupported] = { alg_values_supported: intersectArray };
+          vpFormats[format as keyof VpFormatsSupported] = {
+            alg_values_supported: intersectArray
+          };
         }
       }
     }
@@ -499,7 +650,7 @@ export class OpenIDReliyingParty {
 async function fetchJWKs(url: string): Promise<JWK[]> {
   try {
     const response = await fetch(url);
-    const jwks = await response.json();
+    const jwks: any = await response.json();
     if (jwks.keys) {
       throw new InvalidRequest("No 'keys' paramater found");
     }

@@ -1,5 +1,5 @@
 import { InvalidDataProvided } from "../../classes/index.js";
-import { DEFAULT_SCOPE, JWA_ALGS } from "../../constants/index.js";
+import { DEFAULT_SCOPE } from "../../constants/index.js";
 import { AuthorizationDetails } from "../../interfaces/authz_details.interface.js";
 import { AuthzRequest } from "../../interfaces/authz_request.interface.js";
 import {

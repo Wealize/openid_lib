@@ -69,7 +69,9 @@ export type ChallengeNonceRetrieval = (clientId: string) => Promise<string>;
  * @param types Types of the VC
  * @return The W3C schema definition of VC
  */
-export type GetCredentialSchema = (types: string[]) => Promise<W3CVcSchemaDefinition[]>;
+export type GetCredentialSchema = (types: string[]) => Promise<
+  W3CVcSchemaDefinition | W3CVcSchemaDefinition[]
+>;
 
 /**
  * Function type that allows to recover the subject data of a VC

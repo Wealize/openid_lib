@@ -166,7 +166,7 @@ export class W3CVcIssuer {
 
   private async generateW3CDataForV1(
     type: string[],
-    schema: W3CVcSchemaDefinition[],
+    schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
     vcData: Record<string, any>,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
@@ -201,7 +201,7 @@ export class W3CVcIssuer {
 
   private async generateW3CDataForV2(
     type: string[],
-    schema: W3CVcSchemaDefinition[],
+    schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
     vcData: Record<string, any>,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
@@ -233,7 +233,7 @@ export class W3CVcIssuer {
 
   private async generateW3CCredential(
     type: string[],
-    schema: W3CVcSchemaDefinition[],
+    schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
     vcData: Record<string, any>,
     format: W3CVerifiableCredentialFormats,
