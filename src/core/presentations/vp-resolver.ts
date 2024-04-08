@@ -41,6 +41,7 @@ import {
 } from "../../common/constants/index.js";
 import {
   decodeToken,
+  didFromDidUrl,
   getAssertionMethodJWKKeys,
   getAuthentificationJWKKeys,
   obtainDid
@@ -178,13 +179,15 @@ export class VpResolver {
     const vc = (payload as JwtVcPayload).vc as W3CVerifiableCredential;
     const dataModelVersion = this.checkVcDataModel(vc);
     this.verifyVcDates(vc, dataModelVersion, descriptorId);
-    if (vc.credentialSubject.id) {
+    const vcSubject = vc.credentialSubject.id!;
+    const vcSubjectDid = didFromDidUrl(vcSubject);
+    if (vcSubjectDid) {
       if (!this.vpHolder) {
         throw new InvalidRequest(
           "A VC has been detected prior to any VP"
         );
       }
-      if (this.vpHolder !== vc.credentialSubject.id) {
+      if (this.vpHolder !== vcSubjectDid) {
         throw new InvalidRequest(
           "Credential subject ID and VP Holder mismatch"
         );
@@ -323,14 +326,15 @@ export class VpResolver {
     if (jwtPayload.aud !== this.audience) {
       throw new InvalidRequest("Invalid audience for VP Token");
     }
-    const holderDid = obtainDid(header.kid, vp.holder);
-    const didResolution = await this.didResolver.resolve(holderDid);
+    const holderDidUrl = obtainDid(header.kid, vp.holder);
+    const didResolution = await this.didResolver.resolve(holderDidUrl);
     if (didResolution.didResolutionMetadata.error) {
       throw new InvalidRequest(
         `Did resolution failed. Error ${didResolution.didResolutionMetadata.error
         }: ${didResolution.didResolutionMetadata.message}`);
     }
     const didDocument = didResolution.didDocument!;
+    const holderDid = didDocument.id;
     const jwk = getAuthentificationJWKKeys(didDocument, header.kid);
     const publicKey = await importJWK(jwk);
     // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW

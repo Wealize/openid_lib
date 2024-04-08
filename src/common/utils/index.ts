@@ -6,3 +6,4 @@ export * from "./string.utils.js";
 export * from "./url.utils.js";
 export * from "./verifiable-credential.js";
 export * from "./verification.js";
+export * from "./did.utils.js";

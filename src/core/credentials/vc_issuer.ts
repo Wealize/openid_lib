@@ -36,6 +36,7 @@ import {
   InvalidCredentialRequest,
   InvalidToken
 } from "../../common/classes/index.js";
+import { areDidUrlsSameDid } from '../../common/utils/did.utils.js';
 
 /**
  * W3C credentials issuer in both deferred and In-Time flows
@@ -62,6 +63,7 @@ export class W3CVcIssuer {
     private cNonceRetrieval: VcIssuerTypes.ChallengeNonceRetrieval,
     private getVcSchema: VcIssuerTypes.GetCredentialSchema,
     private getCredentialData: VcIssuerTypes.GetCredentialData,
+    private resolveCredentialSubject?: VcIssuerTypes.ResolveCredentialSubject
   ) { }
 
   /**
@@ -131,19 +133,23 @@ export class W3CVcIssuer {
     const controlProof = ControlProof.fromJSON(credentialRequest.proof);
     const proofAssociatedClient = controlProof.getAssociatedIdentifier();
     const jwtPayload = acessToken.payload as JwtPayload;
-    if (proofAssociatedClient !== jwtPayload.sub) {
+    if (!areDidUrlsSameDid(proofAssociatedClient, jwtPayload.sub!)) {
       throw new InvalidToken(
         "Access Token was issued for a different identifier that the one that sign the proof"
       );
     }
-    const cNonce = await this.cNonceRetrieval(jwtPayload.sub);
+    const cNonce = await this.cNonceRetrieval(jwtPayload.sub!);
     await controlProof.verifyProof(cNonce,
       this.metadata.credential_issuer,
       this.didResolver
     );
+    let credentialSubject = proofAssociatedClient;
+    if (this.resolveCredentialSubject) {
+      credentialSubject = await this.resolveCredentialSubject(jwtPayload.sub!, proofAssociatedClient);
+    } 
     const credentialDataOrDeferred = await this.getCredentialData(
       credentialRequest.types,
-      proofAssociatedClient
+      credentialSubject
     );
     if (credentialDataOrDeferred.deferredCode) {
       return {
@@ -153,7 +159,7 @@ export class W3CVcIssuer {
       return this.generateW3CCredential(
         credentialRequest.types,
         await this.getVcSchema(credentialRequest.types),
-        proofAssociatedClient,
+        credentialSubject,
         credentialDataOrDeferred.data,
         credentialRequest.format,
         dataModel,

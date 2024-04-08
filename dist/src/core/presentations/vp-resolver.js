@@ -13,7 +13,7 @@ import { importJWK, jwtVerify } from "jose";
 import { Validator } from "jsonschema";
 import { W3CDataModel } from "../../common/formats/index.js";
 import { CONTEXT_VC_DATA_MODEL_1, CONTEXT_VC_DATA_MODEL_2, W3C_VP_TYPE } from "../../common/constants/index.js";
-import { decodeToken, getAssertionMethodJWKKeys, getAuthentificationJWKKeys, obtainDid } from "../../common/utils/index.js";
+import { decodeToken, didFromDidUrl, getAssertionMethodJWKKeys, getAuthentificationJWKKeys, obtainDid } from "../../common/utils/index.js";
 import { InternalError, InvalidRequest } from "../../common/classes/error/index.js";
 /**
  * Component specialized in the verification of verifiable
@@ -111,11 +111,13 @@ export class VpResolver {
             const vc = payload.vc;
             const dataModelVersion = this.checkVcDataModel(vc);
             this.verifyVcDates(vc, dataModelVersion, descriptorId);
-            if (vc.credentialSubject.id) {
+            const vcSubject = vc.credentialSubject.id;
+            const vcSubjectDid = didFromDidUrl(vcSubject);
+            if (vcSubjectDid) {
                 if (!this.vpHolder) {
                     throw new InvalidRequest("A VC has been detected prior to any VP");
                 }
-                if (this.vpHolder !== vc.credentialSubject.id) {
+                if (this.vpHolder !== vcSubjectDid) {
                     throw new InvalidRequest("Credential subject ID and VP Holder mismatch");
                 }
             }
@@ -226,12 +228,13 @@ export class VpResolver {
             if (jwtPayload.aud !== this.audience) {
                 throw new InvalidRequest("Invalid audience for VP Token");
             }
-            const holderDid = obtainDid(header.kid, vp.holder);
-            const didResolution = yield this.didResolver.resolve(holderDid);
+            const holderDidUrl = obtainDid(header.kid, vp.holder);
+            const didResolution = yield this.didResolver.resolve(holderDidUrl);
             if (didResolution.didResolutionMetadata.error) {
                 throw new InvalidRequest(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error}: ${didResolution.didResolutionMetadata.message}`);
             }
             const didDocument = didResolution.didDocument;
+            const holderDid = didDocument.id;
             const jwk = getAuthentificationJWKKeys(didDocument, header.kid);
             const publicKey = yield importJWK(jwk);
             // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
