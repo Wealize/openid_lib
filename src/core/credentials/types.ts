@@ -2,6 +2,7 @@ import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
 import {
   W3CCredentialStatus,
   W3CSingleCredentialSubject,
+  W3CTermsOfUse,
   W3CVcSchemaDefinition,
   W3CVerifiableCredential,
 } from "../../common/interfaces/w3c_verifiable_credential.interface.js";
@@ -131,6 +132,16 @@ export interface BaseOptionalParams {
     credentialId: string,
     holder: string
   ) => Promise<W3CCredentialStatus>;
+  /**
+   * 
+   * @param types 
+   * @param holder 
+   * @returns 
+   */
+  getTermsOfUse?: (
+    types: string[],
+    holder: string
+  ) => Promise<W3CTermsOfUse>;
   /**
    * Challenge nonce to send with the credential response
    */

@@ -104,6 +104,23 @@ export class W3CVcIssuer {
             }
         });
     }
+    generateVcDirectMode(did, dataModel, types, format, optionalParamaters) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.checkCredentialTypesAndFormat(types, format);
+            const credentialDataOrDeferred = yield this.getCredentialData(types, did);
+            if (credentialDataOrDeferred.deferredCode) {
+                return {
+                    acceptance_token: credentialDataOrDeferred.deferredCode
+                };
+            }
+            else if (credentialDataOrDeferred.data) {
+                return this.generateW3CCredential(types, yield this.getVcSchema(types), did, credentialDataOrDeferred.data, format, dataModel, optionalParamaters);
+            }
+            else {
+                throw new InternalError("No credential data or deferred code received");
+            }
+        });
+    }
     generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) {
         return __awaiter(this, void 0, void 0, function* () {
             const now = new Date().toISOString();
@@ -121,6 +138,8 @@ export class W3CVcIssuer {
                     yield optionalParameters.getCredentialStatus(type, vcId, subject) : undefined,
                 issuer: this.issuerDid,
                 issued: now,
+                termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
+                    yield optionalParameters.getTermsOfUse(type, subject) : undefined,
                 credentialSubject: Object.assign({ id: subject }, vcData)
             };
         });
@@ -138,6 +157,8 @@ export class W3CVcIssuer {
                 id: vcId,
                 credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
                     yield optionalParameters.getCredentialStatus(type, vcId, subject) : undefined,
+                termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
+                    yield optionalParameters.getTermsOfUse(type, subject) : undefined,
                 issuer: this.issuerDid,
                 credentialSubject: Object.assign({ id: subject }, vcData)
             };

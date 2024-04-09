@@ -164,6 +164,37 @@ export class W3CVcIssuer {
     }
   }
 
+  async generateVcDirectMode(
+    did: string,
+    dataModel: W3CDataModel,
+    types: string[],
+    format: W3CVerifiableCredentialFormats,
+    optionalParamaters?: VcIssuerTypes.BaseOptionalParams
+  ): Promise<CredentialResponse> {
+    this.checkCredentialTypesAndFormat(types, format);
+    const credentialDataOrDeferred = await this.getCredentialData(
+      types,
+      did
+    );
+    if (credentialDataOrDeferred.deferredCode) {
+      return {
+        acceptance_token: credentialDataOrDeferred.deferredCode
+      }
+    } else if (credentialDataOrDeferred.data) {
+      return this.generateW3CCredential(
+        types,
+        await this.getVcSchema(types),
+        did,
+        credentialDataOrDeferred.data,
+        format,
+        dataModel,
+        optionalParamaters
+      );
+    } else {
+      throw new InternalError("No credential data or deferred code received");
+    }
+  }
+
   private async generateW3CDataForV1(
     type: string[],
     schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
@@ -192,6 +223,11 @@ export class W3CVcIssuer {
         ) : undefined,
       issuer: this.issuerDid,
       issued: now,
+      termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
+        await optionalParameters.getTermsOfUse(
+          type,
+          subject
+        ) : undefined,
       credentialSubject: {
         id: subject,
         ...vcData
@@ -221,6 +257,11 @@ export class W3CVcIssuer {
         await optionalParameters.getCredentialStatus(
           type,
           vcId,
+          subject
+        ) : undefined,
+      termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
+        await optionalParameters.getTermsOfUse(
+          type,
           subject
         ) : undefined,
       issuer: this.issuerDid,

@@ -1,5 +1,5 @@
 import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
-import { W3CCredentialStatus, W3CSingleCredentialSubject, W3CVcSchemaDefinition, W3CVerifiableCredential } from "../../common/interfaces/w3c_verifiable_credential.interface.js";
+import { W3CCredentialStatus, W3CSingleCredentialSubject, W3CTermsOfUse, W3CVcSchemaDefinition, W3CVerifiableCredential } from "../../common/interfaces/w3c_verifiable_credential.interface.js";
 import { CompactVc, VerificationResult } from "../../common/types/index.js";
 import { JWK } from "jose";
 import { JwtHeader, JwtPayload } from "jsonwebtoken";
@@ -101,6 +101,13 @@ export interface BaseOptionalParams {
      * @param holder The identifier of the holder of the VC
      */
     getCredentialStatus?: (types: string[], credentialId: string, holder: string) => Promise<W3CCredentialStatus>;
+    /**
+     *
+     * @param types
+     * @param holder
+     * @returns
+     */
+    getTermsOfUse?: (types: string[], holder: string) => Promise<W3CTermsOfUse>;
     /**
      * Challenge nonce to send with the credential response
      */
