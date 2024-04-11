@@ -111,6 +111,9 @@ export class VpResolver {
             const vc = payload.vc;
             const dataModelVersion = this.checkVcDataModel(vc);
             this.verifyVcDates(vc, dataModelVersion, descriptorId);
+            if (!vc.credentialSubject.id) {
+                throw new InvalidRequest(`Credential Subject not defined`);
+            }
             const vcSubject = vc.credentialSubject.id;
             const vcSubjectDid = didFromDidUrl(vcSubject);
             if (vcSubjectDid) {

@@ -179,7 +179,10 @@ export class VpResolver {
     const vc = (payload as JwtVcPayload).vc as W3CVerifiableCredential;
     const dataModelVersion = this.checkVcDataModel(vc);
     this.verifyVcDates(vc, dataModelVersion, descriptorId);
-    const vcSubject = vc.credentialSubject.id!;
+    if (!vc.credentialSubject.id) {
+      throw new InvalidRequest(`Credential Subject not defined`);
+    }
+    const vcSubject = vc.credentialSubject.id;
     const vcSubjectDid = didFromDidUrl(vcSubject);
     if (vcSubjectDid) {
       if (!this.vpHolder) {
