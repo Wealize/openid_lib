@@ -342,7 +342,10 @@ export class VpResolver {
     const publicKey = await importJWK(jwk);
     // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
     await jwtVerify(data, publicKey);
-    const nonceVerification = await this.nonceValidation(holderDid, jwtPayload.nonce);
+    // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
+    // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar 
+    // es el token entero para que la validación tuviera más datos?
+    const nonceVerification = await this.nonceValidation(holderDidUrl, jwtPayload.nonce);
     if (!nonceVerification.valid) {
       throw new InvalidRequest(
         `Descriptor ${descriptorId} invalid nonce specified${nonceVerification.error ?
