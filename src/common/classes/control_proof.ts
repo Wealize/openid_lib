@@ -18,6 +18,12 @@ export abstract class ControlProof {
    * Allows to obtain the DID of the user that generated the proof
    */
   abstract getAssociatedIdentifier(): string;
+
+  /**
+   * Allows to obtain the nonce included in the proof
+   */
+  abstract getInnerNonce(): string;
+
   /**
    * Express the proof as a object that contains only the attributes
    */
@@ -88,6 +94,15 @@ class JwtControlProof extends ControlProof {
       this.clientIdentifier = obtainDid(header.kid, (payload as JwtPayload).iss);
     }
     return this.clientIdentifier;
+  }
+
+  getInnerNonce(): string {
+    const { payload } = decodeToken(this.jwt);
+    const jwtPayload = payload as JwtPayload;
+    if (!jwtPayload.nonce) {
+      throw new InvalidProof(`"nonce" parameter is not specified`);
+    }
+    return jwtPayload.nonce
   }
 
   async verifyProof(
