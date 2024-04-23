@@ -17,6 +17,7 @@ export declare class W3CVcIssuer {
     private cNonceRetrieval;
     private getVcSchema;
     private getCredentialData;
+    private resolveCredentialSubject?;
     /**
      * Constructor of the issuer
      * @param metadata Issuer metadata
@@ -30,7 +31,7 @@ export declare class W3CVcIssuer {
      * include in the VC
      * It can also be used to specify if the user should follow the deferred flow
      */
-    constructor(metadata: IssuerMetadata, didResolver: Resolver, issuerDid: string, signCallback: VcIssuerTypes.VcSignCallback, cNonceRetrieval: VcIssuerTypes.ChallengeNonceRetrieval, getVcSchema: VcIssuerTypes.GetCredentialSchema, getCredentialData: VcIssuerTypes.GetCredentialData);
+    constructor(metadata: IssuerMetadata, didResolver: Resolver, issuerDid: string, signCallback: VcIssuerTypes.VcSignCallback, cNonceRetrieval: VcIssuerTypes.ChallengeNonceRetrieval, getVcSchema: VcIssuerTypes.GetCredentialSchema, getCredentialData: VcIssuerTypes.GetCredentialData, resolveCredentialSubject?: VcIssuerTypes.ResolveCredentialSubject | undefined);
     /**
      * Allows to verify a JWT Access Token in string format
      * @param token The access token

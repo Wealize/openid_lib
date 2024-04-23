@@ -59,6 +59,17 @@ export interface ExtendedCredentialDataOrDeferred extends CredentialDataOrDeferr
 }
 
 /**
+ * Function type that resolve credential subject
+ * @param accessTokenSubject
+ * @param proofIssuer
+ * @returns Credential Subject
+ */
+export type ResolveCredentialSubject = (
+  accessTokenSubject: string,
+  proofIssuer: string
+) => Promise<string>
+
+/**
  * Function type that allows to recover the challenge nonce expected for a control proof
  * @param clientId: The client identifier in a control proof
  * @returns The expected challenge nonce in string format
