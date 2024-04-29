@@ -146,7 +146,7 @@ export class W3CVcIssuer {
     let credentialSubject = proofAssociatedClient;
     if (this.resolveCredentialSubject) {
       credentialSubject = await this.resolveCredentialSubject(jwtPayload.sub!, proofAssociatedClient);
-    } 
+    }
     const credentialDataOrDeferred = await this.getCredentialData(
       credentialRequest.types,
       credentialSubject
@@ -209,7 +209,9 @@ export class W3CVcIssuer {
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV1> {
     const now = new Date().toISOString();
-    const vcId = `vc:${this.metadata.credential_issuer}#${uuidv4()}`;
+    // TODO: It could be interested to include the issuer URI in the VC ID, like represented below
+    // const vcId = `${this.metadata.credential_issuer}#vc:${uuidv4()}`;
+    const vcId = `${uuidv4()}`;
     return {
       "@context": CONTEXT_VC_DATA_MODEL_1,
       type,
