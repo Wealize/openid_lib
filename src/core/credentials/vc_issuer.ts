@@ -209,7 +209,7 @@ export class W3CVcIssuer {
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV1> {
     const now = new Date().toISOString();
-    const vcId = `${this.metadata.credential_issuer}#${uuidv4()}`;
+    const vcId = `urn:uuid:${uuidv4()}`;
     return {
       "@context": CONTEXT_VC_DATA_MODEL_1,
       type,
@@ -248,7 +248,7 @@ export class W3CVcIssuer {
     vcData: Record<string, any>,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV2> {
-    const vcId = `${this.metadata.credential_issuer}#${uuidv4()}`;
+    const vcId = `urn:uuid:${uuidv4()}`;
     return {
       "@context": CONTEXT_VC_DATA_MODEL_2,
       type,

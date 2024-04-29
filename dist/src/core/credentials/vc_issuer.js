@@ -130,7 +130,7 @@ export class W3CVcIssuer {
     generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) {
         return __awaiter(this, void 0, void 0, function* () {
             const now = new Date().toISOString();
-            const vcId = `${this.metadata.credential_issuer}#${uuidv4()}`;
+            const vcId = `urn:uuid:${uuidv4()}`;
             return {
                 "@context": CONTEXT_VC_DATA_MODEL_1,
                 type,
@@ -152,7 +152,7 @@ export class W3CVcIssuer {
     }
     generateW3CDataForV2(type, schema, subject, vcData, optionalParameters) {
         return __awaiter(this, void 0, void 0, function* () {
-            const vcId = `${this.metadata.credential_issuer}#${uuidv4()}`;
+            const vcId = `urn:uuid:${uuidv4()}`;
             return {
                 "@context": CONTEXT_VC_DATA_MODEL_2,
                 type,
