@@ -250,7 +250,7 @@ export class W3CVcIssuer {
     vcData: Record<string, any>,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV2> {
-    const vcId = `vc:${this.metadata.credential_issuer}#${uuidv4()}`;
+    const vcId = `${uuidv4()}`;
     return {
       "@context": CONTEXT_VC_DATA_MODEL_2,
       type,
