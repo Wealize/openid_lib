@@ -55,6 +55,7 @@ export declare class W3CVcIssuer {
      */
     generateCredentialResponse(acessToken: string | Jwt, credentialRequest: CredentialRequest, dataModel: W3CDataModel, optionalParamaters?: VcIssuerTypes.GenerateCredentialReponseOptionalParams): Promise<CredentialResponse>;
     generateVcDirectMode(did: string, dataModel: W3CDataModel, types: string[], format: W3CVerifiableCredentialFormats, optionalParamaters?: VcIssuerTypes.BaseOptionalParams): Promise<CredentialResponse>;
+    private generateTimeStamps;
     private generateW3CDataForV1;
     private generateW3CDataForV2;
     private generateW3CCredential;

@@ -19,7 +19,10 @@ import {
   IssuerMetadata
 } from "../../common/interfaces/issuer_metadata.interface.js";
 import {
-  W3CVcSchemaDefinition, W3CVerifiableCredential, W3CVerifiableCredentialV1, W3CVerifiableCredentialV2,
+  W3CVcSchemaDefinition,
+  W3CVerifiableCredential,
+  W3CVerifiableCredentialV1,
+  W3CVerifiableCredentialV2,
 } from "../../common/interfaces/w3c_verifiable_credential.interface";
 import {
   decodeToken,
@@ -34,9 +37,11 @@ import {
   InsufficienteParamaters,
   InternalError,
   InvalidCredentialRequest,
+  InvalidDataProvided,
   InvalidToken
 } from "../../common/classes/index.js";
 import { areDidUrlsSameDid } from '../../common/utils/did.utils.js';
+import { CredentialDataOrDeferred } from './types.js';
 
 /**
  * W3C credentials issuer in both deferred and In-Time flows
@@ -160,7 +165,7 @@ export class W3CVcIssuer {
         credentialRequest.types,
         await this.getVcSchema(credentialRequest.types),
         credentialSubject,
-        credentialDataOrDeferred.data,
+        credentialDataOrDeferred,
         credentialRequest.format,
         dataModel,
         optionalParamaters
@@ -191,7 +196,7 @@ export class W3CVcIssuer {
         types,
         await this.getVcSchema(types),
         did,
-        credentialDataOrDeferred.data,
+        credentialDataOrDeferred,
         format,
         dataModel,
         optionalParamaters
@@ -201,25 +206,42 @@ export class W3CVcIssuer {
     }
   }
 
+  private generateTimeStamps(data: CredentialDataOrDeferred) {
+    let expirationDate = undefined;
+    const now = Date.now();
+    if (data.validUntil) {
+      expirationDate = data.validUntil;
+    }
+    if (data.expiresIn && expirationDate) {
+      throw new InvalidDataProvided(
+        `"expiresIn paramater and "validUntil" parameter can't be provided at the same time"`
+      );
+    } else if (data.expiresIn && !expirationDate) {
+      expirationDate = new Date(now + data.expiresIn).toISOString();
+    }
+    return {
+      now: new Date(now).toISOString(),
+      expirationDate,
+      nbf: data.nbf
+    }
+  }
+
   private async generateW3CDataForV1(
     type: string[],
     schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
-    vcData: Record<string, any>,
+    vcData: CredentialDataOrDeferred,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV1> {
-    const now = new Date().toISOString();
+    const timestamps = this.generateTimeStamps(vcData);
     const vcId = `urn:uuid:${uuidv4()}`;
     return {
       "@context": CONTEXT_VC_DATA_MODEL_1,
       type,
       credentialSchema: schema,
-      issuanceDate: now,
-      validFrom: now,
-      expirationDate: (optionalParameters && optionalParameters.getValidUntil) ?
-        await optionalParameters.getValidUntil(
-          type
-        ) : undefined,
+      issuanceDate: timestamps.now,
+      validFrom: timestamps.nbf ?? timestamps.now,
+      expirationDate: timestamps.expirationDate,
       id: vcId,
       credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
         await optionalParameters.getCredentialStatus(
@@ -228,7 +250,7 @@ export class W3CVcIssuer {
           subject
         ) : undefined,
       issuer: this.issuerDid,
-      issued: now,
+      issued: timestamps.now,
       termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
         await optionalParameters.getTermsOfUse(
           type,
@@ -236,7 +258,7 @@ export class W3CVcIssuer {
         ) : undefined,
       credentialSubject: {
         id: subject,
-        ...vcData
+        ...vcData.data
       }
     }
   }
@@ -249,15 +271,13 @@ export class W3CVcIssuer {
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV2> {
     const vcId = `urn:uuid:${uuidv4()}`;
+    const timestamps = this.generateTimeStamps(vcData);
     return {
       "@context": CONTEXT_VC_DATA_MODEL_2,
       type,
       credentialSchema: schema,
-      validFrom: new Date().toISOString(),
-      validUntil: (optionalParameters && optionalParameters.getValidUntil) ?
-        await optionalParameters.getValidUntil(
-          type
-        ) : undefined,
+      validFrom: timestamps.nbf ?? timestamps.now,
+      validUntil: timestamps.expirationDate,
       id: vcId,
       credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
         await optionalParameters.getCredentialStatus(
@@ -273,7 +293,7 @@ export class W3CVcIssuer {
       issuer: this.issuerDid,
       credentialSubject: {
         id: subject,
-        ...vcData
+        ...vcData.data
       }
     }
   }
@@ -282,7 +302,8 @@ export class W3CVcIssuer {
     type: string[],
     schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
-    vcData: Record<string, any>,
+    // vcData: Record<string, any>,
+    vcData: CredentialDataOrDeferred,
     format: W3CVerifiableCredentialFormats,
     dataModel: W3CDataModel,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
@@ -331,7 +352,7 @@ export class W3CVcIssuer {
       exchangeResult.types,
       await this.getVcSchema(exchangeResult.types),
       exchangeResult.data?.id!,
-      exchangeResult.data!,
+      exchangeResult,
       exchangeResult.format,
       dataModel,
       optionalParameters

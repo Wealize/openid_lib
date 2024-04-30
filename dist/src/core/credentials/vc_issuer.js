@@ -13,7 +13,7 @@ import { CONTEXT_VC_DATA_MODEL_1, CONTEXT_VC_DATA_MODEL_2, C_NONCE_EXPIRATION_TI
 import { W3CDataModel } from "../../common/formats/index.js";
 import { decodeToken, verifyJwtWithExpAndAudience } from "../../common/utils/jwt.utils.js";
 import { VcFormatter } from './formatters.js';
-import { InsufficienteParamaters, InternalError, InvalidCredentialRequest, InvalidToken } from "../../common/classes/index.js";
+import { InsufficienteParamaters, InternalError, InvalidCredentialRequest, InvalidDataProvided, InvalidToken } from "../../common/classes/index.js";
 import { areDidUrlsSameDid } from '../../common/utils/did.utils.js';
 /**
  * W3C credentials issuer in both deferred and In-Time flows
@@ -103,7 +103,7 @@ export class W3CVcIssuer {
                 };
             }
             else if (credentialDataOrDeferred.data) {
-                return this.generateW3CCredential(credentialRequest.types, yield this.getVcSchema(credentialRequest.types), credentialSubject, credentialDataOrDeferred.data, credentialRequest.format, dataModel, optionalParamaters);
+                return this.generateW3CCredential(credentialRequest.types, yield this.getVcSchema(credentialRequest.types), credentialSubject, credentialDataOrDeferred, credentialRequest.format, dataModel, optionalParamaters);
             }
             else {
                 throw new InternalError("No credential data or deferred code received");
@@ -120,57 +120,78 @@ export class W3CVcIssuer {
                 };
             }
             else if (credentialDataOrDeferred.data) {
-                return this.generateW3CCredential(types, yield this.getVcSchema(types), did, credentialDataOrDeferred.data, format, dataModel, optionalParamaters);
+                return this.generateW3CCredential(types, yield this.getVcSchema(types), did, credentialDataOrDeferred, format, dataModel, optionalParamaters);
             }
             else {
                 throw new InternalError("No credential data or deferred code received");
             }
         });
     }
+    generateTimeStamps(data) {
+        let expirationDate = undefined;
+        const now = Date.now();
+        if (data.validUntil) {
+            expirationDate = data.validUntil;
+        }
+        if (data.expiresIn && expirationDate) {
+            throw new InvalidDataProvided(`"expiresIn paramater and "validUntil" parameter can't be provided at the same time"`);
+        }
+        else if (data.expiresIn && !expirationDate) {
+            expirationDate = new Date(now + data.expiresIn).toISOString();
+        }
+        return {
+            now: new Date(now).toISOString(),
+            expirationDate,
+            nbf: data.nbf
+        };
+    }
     generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const now = new Date().toISOString();
+            const timestamps = this.generateTimeStamps(vcData);
             const vcId = `urn:uuid:${uuidv4()}`;
             return {
                 "@context": CONTEXT_VC_DATA_MODEL_1,
                 type,
                 credentialSchema: schema,
-                issuanceDate: now,
-                validFrom: now,
-                expirationDate: (optionalParameters && optionalParameters.getValidUntil) ?
-                    yield optionalParameters.getValidUntil(type) : undefined,
+                issuanceDate: timestamps.now,
+                validFrom: (_a = timestamps.nbf) !== null && _a !== void 0 ? _a : timestamps.now,
+                expirationDate: timestamps.expirationDate,
                 id: vcId,
                 credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
                     yield optionalParameters.getCredentialStatus(type, vcId, subject) : undefined,
                 issuer: this.issuerDid,
-                issued: now,
+                issued: timestamps.now,
                 termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
                     yield optionalParameters.getTermsOfUse(type, subject) : undefined,
-                credentialSubject: Object.assign({ id: subject }, vcData)
+                credentialSubject: Object.assign({ id: subject }, vcData.data)
             };
         });
     }
     generateW3CDataForV2(type, schema, subject, vcData, optionalParameters) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const vcId = `urn:uuid:${uuidv4()}`;
+            const timestamps = this.generateTimeStamps(vcData);
             return {
                 "@context": CONTEXT_VC_DATA_MODEL_2,
                 type,
                 credentialSchema: schema,
-                validFrom: new Date().toISOString(),
-                validUntil: (optionalParameters && optionalParameters.getValidUntil) ?
-                    yield optionalParameters.getValidUntil(type) : undefined,
+                validFrom: (_a = timestamps.nbf) !== null && _a !== void 0 ? _a : timestamps.now,
+                validUntil: timestamps.expirationDate,
                 id: vcId,
                 credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
                     yield optionalParameters.getCredentialStatus(type, vcId, subject) : undefined,
                 termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
                     yield optionalParameters.getTermsOfUse(type, subject) : undefined,
                 issuer: this.issuerDid,
-                credentialSubject: Object.assign({ id: subject }, vcData)
+                credentialSubject: Object.assign({ id: subject }, vcData.data)
             };
         });
     }
-    generateW3CCredential(type, schema, subject, vcData, format, dataModel, optionalParameters) {
+    generateW3CCredential(type, schema, subject, 
+    // vcData: Record<string, any>,
+    vcData, format, dataModel, optionalParameters) {
         return __awaiter(this, void 0, void 0, function* () {
             const formatter = VcFormatter.fromVcFormat(format, dataModel);
             const content = dataModel === W3CDataModel.V1 ?
@@ -209,7 +230,7 @@ export class W3CVcIssuer {
             if (exchangeResult.deferredCode) {
                 return { acceptance_token: exchangeResult.deferredCode };
             }
-            return this.generateW3CCredential(exchangeResult.types, yield this.getVcSchema(exchangeResult.types), (_a = exchangeResult.data) === null || _a === void 0 ? void 0 : _a.id, exchangeResult.data, exchangeResult.format, dataModel, optionalParameters);
+            return this.generateW3CCredential(exchangeResult.types, yield this.getVcSchema(exchangeResult.types), (_a = exchangeResult.data) === null || _a === void 0 ? void 0 : _a.id, exchangeResult, exchangeResult.format, dataModel, optionalParameters);
         });
     }
     checkCredentialTypesAndFormat(types, format) {
