@@ -82,7 +82,7 @@ export interface CredentialDataOrDeferred {
     /** The expiration time in UTC and in ISO string format. Can't be combined with expiresIn */
     validUntil?: string;
     /** For how long will be valid the VC. Can't be combined with validUntil */
-    expiresIn?: number;
+    expiresInSeconds?: number;
     /** When the VC will be valid */
     nbf?: string;
 }

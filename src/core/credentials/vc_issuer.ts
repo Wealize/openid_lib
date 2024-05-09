@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
 import { Resolver } from "did-resolver";
 import { JWK } from "jose";
 import { Jwt, JwtPayload } from "jsonwebtoken";
@@ -209,21 +210,30 @@ export class W3CVcIssuer {
   private generateTimeStamps(data: CredentialDataOrDeferred) {
     let expirationDate = undefined;
     const now = Date.now();
-    if (data.validUntil) {
-      expirationDate = data.validUntil;
-    }
-    if (data.expiresIn && expirationDate) {
+    if (data.validUntil && data.expiresInSeconds) {
       throw new InvalidDataProvided(
-        `"expiresIn paramater and "validUntil" parameter can't be provided at the same time"`
+        `"expiresIn" parameter and "validUntil" parameter can't be provided at the same time`
       );
-    } else if (data.expiresIn && !expirationDate) {
-      expirationDate = new Date(now + data.expiresIn).toISOString();
+    } else if (data.validUntil) {
+      const tmp = moment(data.validUntil);
+      if (!tmp.isValid()) {
+        throw new InvalidDataProvided(
+          `"validUntil" parameter is not a valid date`
+        );
+      }
+      expirationDate = tmp.utc().format();
+    } else if (data.expiresInSeconds) {
+      expirationDate = new Date(now + data.expiresInSeconds * 1000).toISOString();
     }
     return {
       now: new Date(now).toISOString(),
       expirationDate,
       nbf: data.nbf
     }
+  }
+
+  private generateVcId() {
+    return `urn:uuid:${uuidv4()}`;
   }
 
   private async generateW3CDataForV1(
@@ -234,7 +244,7 @@ export class W3CVcIssuer {
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV1> {
     const timestamps = this.generateTimeStamps(vcData);
-    const vcId = `urn:uuid:${uuidv4()}`;
+    const vcId = this.generateVcId();
     return {
       "@context": CONTEXT_VC_DATA_MODEL_1,
       type,
@@ -270,7 +280,7 @@ export class W3CVcIssuer {
     vcData: Record<string, any>,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV2> {
-    const vcId = `urn:uuid:${uuidv4()}`;
+    const vcId = this.generateVcId();
     const timestamps = this.generateTimeStamps(vcData);
     return {
       "@context": CONTEXT_VC_DATA_MODEL_2,

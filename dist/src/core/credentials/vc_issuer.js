@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
 import { ControlProof } from "../../common/classes/control_proof.js";
 import { CONTEXT_VC_DATA_MODEL_1, CONTEXT_VC_DATA_MODEL_2, C_NONCE_EXPIRATION_TIME } from "../../common/constants/index.js";
 import { W3CDataModel } from "../../common/formats/index.js";
@@ -130,14 +131,18 @@ export class W3CVcIssuer {
     generateTimeStamps(data) {
         let expirationDate = undefined;
         const now = Date.now();
-        if (data.validUntil) {
-            expirationDate = data.validUntil;
+        if (data.validUntil && data.expiresInSeconds) {
+            throw new InvalidDataProvided(`"expiresIn" parameter and "validUntil" parameter can't be provided at the same time`);
         }
-        if (data.expiresIn && expirationDate) {
-            throw new InvalidDataProvided(`"expiresIn paramater and "validUntil" parameter can't be provided at the same time"`);
+        else if (data.validUntil) {
+            const tmp = moment(data.validUntil);
+            if (!tmp.isValid()) {
+                throw new InvalidDataProvided(`"validUntil" parameter is not a valid date`);
+            }
+            expirationDate = tmp.utc().format();
         }
-        else if (data.expiresIn && !expirationDate) {
-            expirationDate = new Date(now + data.expiresIn).toISOString();
+        else if (data.expiresInSeconds) {
+            expirationDate = new Date(now + data.expiresInSeconds * 1000).toISOString();
         }
         return {
             now: new Date(now).toISOString(),
@@ -145,11 +150,14 @@ export class W3CVcIssuer {
             nbf: data.nbf
         };
     }
+    generateVcId() {
+        return `urn:uuid:${uuidv4()}`;
+    }
     generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const timestamps = this.generateTimeStamps(vcData);
-            const vcId = `urn:uuid:${uuidv4()}`;
+            const vcId = this.generateVcId();
             return {
                 "@context": CONTEXT_VC_DATA_MODEL_1,
                 type,
@@ -171,7 +179,7 @@ export class W3CVcIssuer {
     generateW3CDataForV2(type, schema, subject, vcData, optionalParameters) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const vcId = `urn:uuid:${uuidv4()}`;
+            const vcId = this.generateVcId();
             const timestamps = this.generateTimeStamps(vcData);
             return {
                 "@context": CONTEXT_VC_DATA_MODEL_2,
