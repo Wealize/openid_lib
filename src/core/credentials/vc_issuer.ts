@@ -209,14 +209,24 @@ export class W3CVcIssuer {
 
   private generateTimeStamps(data: CredentialDataOrDeferred) {
     let expirationDate = undefined;
-    const nbf = moment(data.nbf);
+    let nbf = undefined;
+    if (data.nbf) {
+      const tmp = moment(data.nbf, true);
+      if (tmp.isValid()) {
+        nbf = tmp.utc().format();
+      } else {
+        throw new InvalidDataProvided(
+          `Invalid specified date for "nbf" parameter`
+        )
+      }
+    }
     const now = Date.now();
     if (data.validUntil && data.expiresInSeconds) {
       throw new InvalidDataProvided(
         `"expiresIn" parameter and "validUntil" parameter can't be provided at the same time`
       );
     } else if (data.validUntil) {
-      const tmp = moment(data.validUntil);
+      const tmp = moment(data.validUntil, true);
       if (!tmp.isValid()) {
         throw new InvalidDataProvided(
           `"validUntil" parameter is not a valid date`
@@ -229,7 +239,7 @@ export class W3CVcIssuer {
     return {
       now: new Date(now).toISOString(),
       expirationDate,
-      nbf: nbf.isValid() ? nbf.utc().format() : undefined
+      nbf
     }
   }
 
