@@ -83,7 +83,7 @@ class JwtVcFormatter extends VcFormatter {
       token.iat = expressDateInSeconds(iat);
     }
     if (vc.expirationDate) {
-      token.exp = Date.parse(vc.validUntil);
+      token.exp = expressDateInSeconds(vc.expirationDate);
     }
     return token;
   }
