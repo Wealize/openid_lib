@@ -209,6 +209,7 @@ export class W3CVcIssuer {
 
   private generateTimeStamps(data: CredentialDataOrDeferred) {
     let expirationDate = undefined;
+    const nbf = moment(data.nbf);
     const now = Date.now();
     if (data.validUntil && data.expiresInSeconds) {
       throw new InvalidDataProvided(
@@ -228,7 +229,7 @@ export class W3CVcIssuer {
     return {
       now: new Date(now).toISOString(),
       expirationDate,
-      nbf: data.nbf
+      nbf: nbf.isValid() ? nbf.utc().format() : undefined
     }
   }
 

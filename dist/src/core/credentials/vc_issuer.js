@@ -130,6 +130,7 @@ export class W3CVcIssuer {
     }
     generateTimeStamps(data) {
         let expirationDate = undefined;
+        const nbf = moment(data.nbf);
         const now = Date.now();
         if (data.validUntil && data.expiresInSeconds) {
             throw new InvalidDataProvided(`"expiresIn" parameter and "validUntil" parameter can't be provided at the same time`);
@@ -147,7 +148,7 @@ export class W3CVcIssuer {
         return {
             now: new Date(now).toISOString(),
             expirationDate,
-            nbf: data.nbf
+            nbf: nbf.isValid() ? nbf.utc().format() : undefined
         };
     }
     generateVcId() {
