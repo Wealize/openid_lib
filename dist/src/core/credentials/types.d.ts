@@ -79,6 +79,12 @@ export interface CredentialDataOrDeferred {
      * A deferred code that can be exchange for a VC
      */
     deferredCode?: string;
+    /** The expiration time in UTC and in ISO string format. Can't be combined with expiresIn */
+    validUntil?: string;
+    /** For how long will be valid the VC. Can't be combined with validUntil */
+    expiresInSeconds?: number;
+    /** When the VC will be valid */
+    nbf?: string;
 }
 /**
  *
@@ -94,13 +100,6 @@ export interface GenerateCredentialReponseOptionalParams extends BaseOptionalPar
  * and exchangeAcceptanceTokenForVc VcIssuer methods
  */
 export interface BaseOptionalParams {
-    /**
-     * Function that allows to obtain until which date the VC to generate is valid.
-     * If not specified, then the VC won't have an expiration date
-     * @param types The types of the credential
-     * @returns The expiration time in UTC and in ISO string format
-     */
-    getValidUntil?: (types: string[]) => Promise<string>;
     /**
      * Function type that allows to generate the "credentialStatus" attribute of a VC
      * @param types Types of the VC to generate
