@@ -1,3 +1,4 @@
+import { JWK } from "jose";
 import { JWA_ALGS } from "../../common/constants/index.js";
 import { AuthzResponseMode } from "../../common/formats/index.js";
 import { DIFPresentationDefinition } from "../../common/index.js";
@@ -89,6 +90,7 @@ export interface GenerateAccessTokenOptionalParameters {
      * accompanied by an optional error message
      */
     codeVerifierCallback?: (clientId: string, codeVerifier?: string) => Promise<VerificationResult>;
+    retrieveClientAssertionPublicKeys?: (clientId: string) => Promise<JWK>;
     cNonceToEmploy?: string;
     cNonceExp?: number;
     accessTokenExp?: number;

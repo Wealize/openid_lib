@@ -1,5 +1,7 @@
 import { AuthzResponseMode } from "../formats/index.js";
-import { DIFPresentationDefinition } from "../interfaces/presentation_definition.interface.js";
+import {
+  DIFPresentationDefinition
+} from "../interfaces/presentation_definition.interface.js";
 
 /**
  * Define an authorisation request that expects an VP token as "response_type"

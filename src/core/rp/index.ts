@@ -524,19 +524,38 @@ export class OpenIDReliyingParty {
               ": " + verificationResult.error : '.'}`
           );
         }
-        if (!optionalParamaters.codeVerifierCallback) {
-          throw new InsufficienteParamaters(
-            `No "code_verifier" verification callback was provided.`
+        if (tokenRequest.client_assertion_type &&
+          tokenRequest.client_assertion_type ===
+          "urn:ietf:params:oauth:client-assertion-type:jwt-bearer") {
+          if (!tokenRequest.client_assertion) {
+            throw new InvalidRequest(`No "client_assertion" was provided`)
+          }
+          if (!optionalParamaters.retrieveClientAssertionPublicKeys) {
+            throw new InsufficienteParamaters(
+              `No "retrieveClientAssertionPublickKeys" callback was provided`
+            )
+          }
+          const keys = await optionalParamaters.retrieveClientAssertionPublicKeys(clientId);
+          await verifyJwtWithExpAndAudience(
+            tokenRequest.client_assertion,
+            keys,
+            this.metadata.issuer
           );
-        }
-        verificationResult = await optionalParamaters.codeVerifierCallback(
-          tokenRequest.client_id,
-          tokenRequest.code_verifier
-        );
-        if (!verificationResult.valid) {
-          throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
-            ": " + verificationResult.error : '.'}`
+        } else {
+          if (!optionalParamaters.codeVerifierCallback) {
+            throw new InsufficienteParamaters(
+              `No "code_verifier" verification callback was provided.`
+            );
+          }
+          verificationResult = await optionalParamaters.codeVerifierCallback(
+            tokenRequest.client_id,
+            tokenRequest.code_verifier
           );
+          if (!verificationResult.valid) {
+            throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
+              ": " + verificationResult.error : '.'}`
+            );
+          }
         }
         break;
       case "urn:ietf:params:oauth:grant-type:pre-authorized_code":
@@ -567,7 +586,6 @@ export class OpenIDReliyingParty {
           );
         }
         throw new InternalError("Uninplemented");
-        break;
     }
     const cNonce = (optionalParamaters &&
       optionalParamaters.cNonceToEmploy) ?
