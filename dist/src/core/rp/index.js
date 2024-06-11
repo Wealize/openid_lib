@@ -150,6 +150,7 @@ export class OpenIDReliyingParty {
         return __awaiter(this, void 0, void 0, function* () {
             // TODO: RESPONSE MODE SHOULD BE CHECKED
             let params;
+            let jwk = undefined;
             if (!request.request) {
                 params = request;
             }
@@ -172,7 +173,7 @@ export class OpenIDReliyingParty {
                 if (!header.kid) {
                     throw new InvalidRequest("No kid specify in JWT header");
                 }
-                const jwk = selectJwkFromSet(keys, header.kid);
+                jwk = selectJwkFromSet(keys, header.kid);
                 try {
                     yield verifyJwtWithExpAndAudience(request.request, jwk, this.metadata.issuer);
                 }
@@ -220,7 +221,8 @@ export class OpenIDReliyingParty {
             }
             return {
                 validatedClientMetadata,
-                authzRequest: params
+                authzRequest: params,
+                serviceWalletJWK: jwk
             };
         });
     }

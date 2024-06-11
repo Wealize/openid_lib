@@ -116,6 +116,11 @@ export interface GenerateAccessTokenOptionalParameters {
     clientId: string,
     codeVerifier?: string
   ) => Promise<VerificationResult>,
+  /**
+   * Allows to obtain the JWK used by a service client in the Authz phase
+   * @param clientId The identifier of the client
+   * @returns The JWK previously used by that client during the authz phase
+   */
   retrieveClientAssertionPublicKeys?: (
     clientId: string
   ) => Promise<JWK>,

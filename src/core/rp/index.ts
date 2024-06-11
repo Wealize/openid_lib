@@ -76,6 +76,10 @@ export interface VerifiedBaseAuthzRequest {
    * Verified authz request
    */
   authzRequest: AuthzRequest,
+  /**
+   * JWK used by the service Wallet
+   */
+  serviceWalletJWK?: JWK
 }
 
 interface VerifiedIdTokenResponse {
@@ -270,6 +274,7 @@ export class OpenIDReliyingParty {
   ): Promise<VerifiedBaseAuthzRequest> {
     // TODO: RESPONSE MODE SHOULD BE CHECKED
     let params: AuthzRequest;
+    let jwk: JWK | undefined = undefined;
     if (!request.request) {
       params = request;
     } else {
@@ -295,7 +300,7 @@ export class OpenIDReliyingParty {
       if (!header.kid) {
         throw new InvalidRequest("No kid specify in JWT header");
       }
-      const jwk = selectJwkFromSet(keys, header.kid);
+      jwk = selectJwkFromSet(keys, header.kid);
       try {
         await verifyJwtWithExpAndAudience(
           request.request,
@@ -361,7 +366,8 @@ export class OpenIDReliyingParty {
     }
     return {
       validatedClientMetadata,
-      authzRequest: params
+      authzRequest: params,
+      serviceWalletJWK: jwk
     }
   }
 

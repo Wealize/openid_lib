@@ -1,3 +1,4 @@
+import { JWK } from "jose";
 import { DIDDocument, Resolvable, Resolver } from "did-resolver";
 import { AuthServerMetadata } from "../../common/interfaces/auth_server_metadata.interface.js";
 import { AuthzRequest, AuthzRequestWithJWT } from "../../common/interfaces/authz_request.interface.js";
@@ -19,6 +20,10 @@ export interface VerifiedBaseAuthzRequest {
      * Verified authz request
      */
     authzRequest: AuthzRequest;
+    /**
+     * JWK used by the service Wallet
+     */
+    serviceWalletJWK?: JWK;
 }
 interface VerifiedIdTokenResponse {
     didDocument: DIDDocument;
