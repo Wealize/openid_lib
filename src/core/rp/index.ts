@@ -675,7 +675,7 @@ async function fetchJWKs(url: string): Promise<JWK[]> {
   try {
     const response = await fetch(url);
     const jwks: any = await response.json();
-    if (jwks.keys) {
+    if (!jwks.keys) {
       throw new InvalidRequest("No 'keys' paramater found");
     }
     return jwks['keys'];

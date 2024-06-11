@@ -465,7 +465,7 @@ function fetchJWKs(url) {
         try {
             const response = yield fetch(url);
             const jwks = yield response.json();
-            if (jwks.keys) {
+            if (!jwks.keys) {
                 throw new InvalidRequest("No 'keys' paramater found");
             }
             return jwks['keys'];
