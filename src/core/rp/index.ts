@@ -229,6 +229,9 @@ export class OpenIDReliyingParty {
       nonce: additionalParameters.nonce,
       client_id: this.metadata.issuer
     };
+    if (additionalParameters.state) {
+      requestParams.state = additionalParameters.state;
+    }
     if (additionalParameters.presentation_definition) {
       requestParams.presentation_definition =
         additionalParameters.presentation_definition;
