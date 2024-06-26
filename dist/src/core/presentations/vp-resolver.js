@@ -134,7 +134,7 @@ export class VpResolver {
                 const jwk = getAssertionMethodJWKKeys(didDocument, header.kid);
                 publicKey = yield importJWK(jwk);
                 try {
-                    yield jwtVerify(data, publicKey);
+                    yield jwtVerify(data, publicKey, { clockTolerance: 5 });
                 }
                 catch (error) {
                     throw new InvalidRequest(`Descriptor "${descriptorId}" JWT verification failed`);
@@ -241,7 +241,7 @@ export class VpResolver {
             const jwk = getAuthentificationJWKKeys(didDocument, header.kid);
             const publicKey = yield importJWK(jwk);
             // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
-            yield jwtVerify(data, publicKey);
+            yield jwtVerify(data, publicKey, { clockTolerance: 5 });
             // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
             // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar 
             // es el token entero para que la validación tuviera más datos?

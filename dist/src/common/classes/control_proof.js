@@ -113,7 +113,7 @@ class JwtControlProof extends ControlProof {
                 throw new InvalidProof(error.message);
             }
             const publicKey = yield importJWK(publicKeyJwk);
-            yield jwtVerify(this.jwt, publicKey);
+            yield jwtVerify(this.jwt, publicKey, { clockTolerance: 5 });
         });
     }
 }

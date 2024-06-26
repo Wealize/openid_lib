@@ -144,7 +144,7 @@ class JwtControlProof extends ControlProof {
       throw new InvalidProof(error.message);
     }
     const publicKey = await importJWK(publicKeyJwk);
-    await jwtVerify(this.jwt, publicKey);
+    await jwtVerify(this.jwt, publicKey, { clockTolerance: 5 });
   }
 
 }
