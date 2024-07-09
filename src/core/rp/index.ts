@@ -76,6 +76,10 @@ export interface VerifiedBaseAuthzRequest {
    * Verified authz request
    */
   authzRequest: AuthzRequest,
+  /**
+   * JWK used by the service Wallet
+   */
+  serviceWalletJWK?: JWK
 }
 
 interface VerifiedIdTokenResponse {
@@ -273,6 +277,7 @@ export class OpenIDReliyingParty {
   ): Promise<VerifiedBaseAuthzRequest> {
     // TODO: RESPONSE MODE SHOULD BE CHECKED
     let params: AuthzRequest;
+    let jwk: JWK | undefined = undefined;
     if (!request.request) {
       params = request;
     } else {
@@ -298,7 +303,7 @@ export class OpenIDReliyingParty {
       if (!header.kid) {
         throw new InvalidRequest("No kid specify in JWT header");
       }
-      const jwk = selectJwkFromSet(keys, header.kid);
+      jwk = selectJwkFromSet(keys, header.kid);
       try {
         await verifyJwtWithExpAndAudience(
           request.request,
@@ -364,7 +369,8 @@ export class OpenIDReliyingParty {
     }
     return {
       validatedClientMetadata,
-      authzRequest: params
+      authzRequest: params,
+      serviceWalletJWK: jwk
     }
   }
 
@@ -527,19 +533,38 @@ export class OpenIDReliyingParty {
               ": " + verificationResult.error : '.'}`
           );
         }
-        if (!optionalParamaters.codeVerifierCallback) {
-          throw new InsufficienteParamaters(
-            `No "code_verifier" verification callback was provided.`
+        if (tokenRequest.client_assertion_type &&
+          tokenRequest.client_assertion_type ===
+          "urn:ietf:params:oauth:client-assertion-type:jwt-bearer") {
+          if (!tokenRequest.client_assertion) {
+            throw new InvalidRequest(`No "client_assertion" was provided`)
+          }
+          if (!optionalParamaters.retrieveClientAssertionPublicKeys) {
+            throw new InsufficienteParamaters(
+              `No "retrieveClientAssertionPublickKeys" callback was provided`
+            )
+          }
+          const keys = await optionalParamaters.retrieveClientAssertionPublicKeys(clientId);
+          await verifyJwtWithExpAndAudience(
+            tokenRequest.client_assertion,
+            keys,
+            this.metadata.issuer
           );
-        }
-        verificationResult = await optionalParamaters.codeVerifierCallback(
-          tokenRequest.client_id,
-          tokenRequest.code_verifier
-        );
-        if (!verificationResult.valid) {
-          throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
-            ": " + verificationResult.error : '.'}`
+        } else {
+          if (!optionalParamaters.codeVerifierCallback) {
+            throw new InsufficienteParamaters(
+              `No "code_verifier" verification callback was provided.`
+            );
+          }
+          verificationResult = await optionalParamaters.codeVerifierCallback(
+            tokenRequest.client_id,
+            tokenRequest.code_verifier
           );
+          if (!verificationResult.valid) {
+            throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
+              ": " + verificationResult.error : '.'}`
+            );
+          }
         }
         break;
       case "urn:ietf:params:oauth:grant-type:pre-authorized_code":
@@ -570,7 +595,6 @@ export class OpenIDReliyingParty {
           );
         }
         throw new InternalError("Uninplemented");
-        break;
     }
     const cNonce = (optionalParamaters &&
       optionalParamaters.cNonceToEmploy) ?
@@ -654,7 +678,7 @@ async function fetchJWKs(url: string): Promise<JWK[]> {
   try {
     const response = await fetch(url);
     const jwks: any = await response.json();
-    if (jwks.keys) {
+    if (!jwks.keys) {
       throw new InvalidRequest("No 'keys' paramater found");
     }
     return jwks['keys'];

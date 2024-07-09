@@ -1,3 +1,4 @@
+import { JWK } from "jose";
 import { JWA_ALGS } from "../../common/constants/index.js";
 import { AuthzResponseMode } from "../../common/formats/index.js";
 import { DIFPresentationDefinition } from "../../common/index.js";
@@ -89,6 +90,12 @@ export interface GenerateAccessTokenOptionalParameters {
      * accompanied by an optional error message
      */
     codeVerifierCallback?: (clientId: string, codeVerifier?: string) => Promise<VerificationResult>;
+    /**
+     * Allows to obtain the JWK used by a service client in the Authz phase
+     * @param clientId The identifier of the client
+     * @returns The JWK previously used by that client during the authz phase
+     */
+    retrieveClientAssertionPublicKeys?: (clientId: string) => Promise<JWK>;
     cNonceToEmploy?: string;
     cNonceExp?: number;
     accessTokenExp?: number;

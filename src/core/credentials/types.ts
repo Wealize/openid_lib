@@ -148,7 +148,7 @@ export interface BaseOptionalParams {
     types: string[],
     credentialId: string,
     holder: string
-  ) => Promise<W3CCredentialStatus>;
+  ) => Promise<W3CCredentialStatus | W3CCredentialStatus[]>;
   /**
    * 
    * @param types 
@@ -158,7 +158,7 @@ export interface BaseOptionalParams {
   getTermsOfUse?: (
     types: string[],
     holder: string
-  ) => Promise<W3CTermsOfUse>;
+  ) => Promise<W3CTermsOfUse | W3CTermsOfUse[]>;
   /**
    * Challenge nonce to send with the credential response
    */

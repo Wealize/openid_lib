@@ -18,8 +18,8 @@ export interface W3CVerifiableCredentialV1 {
   validFrom?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   expirationDate?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   id?: string;
-  credentialStatus?: W3CCredentialStatus;
-  termsOfUse?: W3CTermsOfUse;
+  credentialStatus?: W3CCredentialStatus | W3CCredentialStatus[];
+  termsOfUse?: W3CTermsOfUse | W3CTermsOfUse[];
   description?: string;
   credentialSubject: W3CSingleCredentialSubject;
   proof?: EmbeddedProof;
@@ -38,8 +38,8 @@ export interface W3CVerifiableCredentialV2 {
   validFrom?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   validUntil?: string; // Date timestamp. Example: "2010-01-01T19:23:24Z",
   id?: string;
-  credentialStatus?: W3CCredentialStatus;
-  termsOfUse?: W3CTermsOfUse;
+  credentialStatus?: W3CCredentialStatus | W3CCredentialStatus[];
+  termsOfUse?: W3CTermsOfUse | W3CTermsOfUse[];
   description?: string;
   credentialSubject: W3CSingleCredentialSubject;
   proof?: EmbeddedProof;

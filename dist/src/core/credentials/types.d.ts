@@ -106,14 +106,14 @@ export interface BaseOptionalParams {
      * @param credentialId The identifier of the VC
      * @param holder The identifier of the holder of the VC
      */
-    getCredentialStatus?: (types: string[], credentialId: string, holder: string) => Promise<W3CCredentialStatus>;
+    getCredentialStatus?: (types: string[], credentialId: string, holder: string) => Promise<W3CCredentialStatus | W3CCredentialStatus[]>;
     /**
      *
      * @param types
      * @param holder
      * @returns
      */
-    getTermsOfUse?: (types: string[], holder: string) => Promise<W3CTermsOfUse>;
+    getTermsOfUse?: (types: string[], holder: string) => Promise<W3CTermsOfUse | W3CTermsOfUse[]>;
     /**
      * Challenge nonce to send with the credential response
      */

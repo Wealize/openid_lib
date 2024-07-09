@@ -16,8 +16,8 @@ export interface W3CVerifiableCredentialV1 {
     validFrom?: string;
     expirationDate?: string;
     id?: string;
-    credentialStatus?: W3CCredentialStatus;
-    termsOfUse?: W3CTermsOfUse;
+    credentialStatus?: W3CCredentialStatus | W3CCredentialStatus[];
+    termsOfUse?: W3CTermsOfUse | W3CTermsOfUse[];
     description?: string;
     credentialSubject: W3CSingleCredentialSubject;
     proof?: EmbeddedProof;
@@ -34,8 +34,8 @@ export interface W3CVerifiableCredentialV2 {
     validFrom?: string;
     validUntil?: string;
     id?: string;
-    credentialStatus?: W3CCredentialStatus;
-    termsOfUse?: W3CTermsOfUse;
+    credentialStatus?: W3CCredentialStatus | W3CCredentialStatus[];
+    termsOfUse?: W3CTermsOfUse | W3CTermsOfUse[];
     description?: string;
     credentialSubject: W3CSingleCredentialSubject;
     proof?: EmbeddedProof;

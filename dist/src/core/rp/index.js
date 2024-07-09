@@ -153,6 +153,7 @@ export class OpenIDReliyingParty {
         return __awaiter(this, void 0, void 0, function* () {
             // TODO: RESPONSE MODE SHOULD BE CHECKED
             let params;
+            let jwk = undefined;
             if (!request.request) {
                 params = request;
             }
@@ -175,7 +176,7 @@ export class OpenIDReliyingParty {
                 if (!header.kid) {
                     throw new InvalidRequest("No kid specify in JWT header");
                 }
-                const jwk = selectJwkFromSet(keys, header.kid);
+                jwk = selectJwkFromSet(keys, header.kid);
                 try {
                     yield verifyJwtWithExpAndAudience(request.request, jwk, this.metadata.issuer);
                 }
@@ -223,7 +224,8 @@ export class OpenIDReliyingParty {
             }
             return {
                 validatedClientMetadata,
-                authzRequest: params
+                authzRequest: params,
+                serviceWalletJWK: jwk
             };
         });
     }
@@ -344,13 +346,27 @@ export class OpenIDReliyingParty {
                         throw new InvalidGrant(`Invalid "${tokenRequest.grant_type}" provided${verificationResult.error ?
                             ": " + verificationResult.error : '.'}`);
                     }
-                    if (!optionalParamaters.codeVerifierCallback) {
-                        throw new InsufficienteParamaters(`No "code_verifier" verification callback was provided.`);
+                    if (tokenRequest.client_assertion_type &&
+                        tokenRequest.client_assertion_type ===
+                            "urn:ietf:params:oauth:client-assertion-type:jwt-bearer") {
+                        if (!tokenRequest.client_assertion) {
+                            throw new InvalidRequest(`No "client_assertion" was provided`);
+                        }
+                        if (!optionalParamaters.retrieveClientAssertionPublicKeys) {
+                            throw new InsufficienteParamaters(`No "retrieveClientAssertionPublickKeys" callback was provided`);
+                        }
+                        const keys = yield optionalParamaters.retrieveClientAssertionPublicKeys(clientId);
+                        yield verifyJwtWithExpAndAudience(tokenRequest.client_assertion, keys, this.metadata.issuer);
                     }
-                    verificationResult = yield optionalParamaters.codeVerifierCallback(tokenRequest.client_id, tokenRequest.code_verifier);
-                    if (!verificationResult.valid) {
-                        throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
-                            ": " + verificationResult.error : '.'}`);
+                    else {
+                        if (!optionalParamaters.codeVerifierCallback) {
+                            throw new InsufficienteParamaters(`No "code_verifier" verification callback was provided.`);
+                        }
+                        verificationResult = yield optionalParamaters.codeVerifierCallback(tokenRequest.client_id, tokenRequest.code_verifier);
+                        if (!verificationResult.valid) {
+                            throw new InvalidGrant(`Invalid code_verifier provided${verificationResult.error ?
+                                ": " + verificationResult.error : '.'}`);
+                        }
                     }
                     break;
                 case "urn:ietf:params:oauth:grant-type:pre-authorized_code":
@@ -373,7 +389,6 @@ export class OpenIDReliyingParty {
                         throw new InsufficienteParamaters(`Grant type "vp_token" requires the "vp_token" parameter`);
                     }
                     throw new InternalError("Uninplemented");
-                    break;
             }
             const cNonce = (optionalParamaters &&
                 optionalParamaters.cNonceToEmploy) ?
@@ -453,7 +468,7 @@ function fetchJWKs(url) {
         try {
             const response = yield fetch(url);
             const jwks = yield response.json();
-            if (jwks.keys) {
+            if (!jwks.keys) {
                 throw new InvalidRequest("No 'keys' paramater found");
             }
             return jwks['keys'];
