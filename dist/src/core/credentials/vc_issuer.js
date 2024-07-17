@@ -128,58 +128,76 @@ export class W3CVcIssuer {
             }
         });
     }
-    generateTimeStamps(data) {
-        let expirationDate = undefined;
-        let nbf = undefined;
-        if (data.nbf) {
-            const tmp = moment(data.nbf, true);
-            if (tmp.isValid()) {
-                nbf = tmp.utc().format();
+    // TODO: valorar homogeneizar comportamiento entre V1 y V2. La idea sería quitar iss o nbf y dejar uno solo. 
+    // Esto se adaptaría mejor a V2, y en V1 pondríamos el mismo valor. Esto implica también cambiar 'CredentialDataOrDeferred'
+    generateCredentialTimeStamps(data) {
+        if (data.validUntil && data.expiresInSeconds) {
+            throw new InvalidDataProvided(`"expiresInSeconds" and "validUntil" can't be defined at the same time`);
+        }
+        const issuanceDate = (() => {
+            const iss = data.iss ? moment(data.iss, true) : moment();
+            if (!iss.isValid()) {
+                throw new InvalidDataProvided(`Invalid specified date for "iss" parameter`);
             }
-            else {
+            return iss;
+        })();
+        const validFrom = (() => {
+            const nbf = data.nbf ? moment(data.nbf, true) : issuanceDate.clone();
+            if (!nbf.isValid()) {
                 throw new InvalidDataProvided(`Invalid specified date for "nbf" parameter`);
             }
-        }
-        const now = Date.now();
-        if (data.validUntil && data.expiresInSeconds) {
-            throw new InvalidDataProvided(`"expiresIn" parameter and "validUntil" parameter can't be provided at the same time`);
-        }
-        else if (data.validUntil) {
-            const tmp = moment(data.validUntil, true);
-            if (!tmp.isValid()) {
-                throw new InvalidDataProvided(`"validUntil" parameter is not a valid date`);
+            if (nbf.isBefore(issuanceDate)) {
+                throw new InvalidDataProvided(`"validFrom" can not be before "issuanceDate"`);
             }
-            expirationDate = tmp.utc().format();
-        }
-        else if (data.expiresInSeconds) {
-            expirationDate = new Date(now + data.expiresInSeconds * 1000).toISOString();
-        }
+            return nbf;
+        })();
+        const expirationDate = (() => {
+            const exp = (() => {
+                if (data.validUntil) {
+                    return moment(data.validUntil, true);
+                }
+                else if (data.expiresInSeconds) {
+                    return issuanceDate.clone().add(data.expiresInSeconds, 'seconds');
+                }
+                else {
+                    return undefined;
+                }
+            })();
+            if (exp) {
+                if (!exp.isValid()) {
+                    throw new InvalidDataProvided(`Invalid specified date for "expirationDate" parameter`);
+                }
+                if (exp.isBefore(validFrom)) {
+                    throw new InvalidDataProvided(`"expirationDate" can not be before "validFrom"`);
+                }
+            }
+            return exp;
+        })();
         return {
-            now: new Date(now).toISOString(),
-            expirationDate,
-            nbf
+            issuanceDate: issuanceDate.utc().toISOString(),
+            validFrom: validFrom.utc().toISOString(),
+            expirationDate: expirationDate ? expirationDate.utc().toISOString() : undefined,
         };
     }
     generateVcId() {
         return `urn:uuid:${uuidv4()}`;
     }
     generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const timestamps = this.generateTimeStamps(vcData);
+            const timestamps = this.generateCredentialTimeStamps(vcData);
             const vcId = this.generateVcId();
             return {
                 "@context": CONTEXT_VC_DATA_MODEL_1,
                 type,
                 credentialSchema: schema,
-                issuanceDate: timestamps.now,
-                validFrom: (_a = timestamps.nbf) !== null && _a !== void 0 ? _a : timestamps.now,
+                issuanceDate: timestamps.issuanceDate,
+                validFrom: timestamps.validFrom,
                 expirationDate: timestamps.expirationDate,
                 id: vcId,
                 credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
                     yield optionalParameters.getCredentialStatus(type, vcId, subject) : undefined,
                 issuer: this.issuerDid,
-                issued: timestamps.now,
+                issued: timestamps.issuanceDate,
                 termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
                     yield optionalParameters.getTermsOfUse(type, subject) : undefined,
                 credentialSubject: Object.assign({ id: subject }, vcData.data)
@@ -187,15 +205,14 @@ export class W3CVcIssuer {
         });
     }
     generateW3CDataForV2(type, schema, subject, vcData, optionalParameters) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const vcId = this.generateVcId();
-            const timestamps = this.generateTimeStamps(vcData);
+            const timestamps = this.generateCredentialTimeStamps(vcData);
             return {
                 "@context": CONTEXT_VC_DATA_MODEL_2,
                 type,
                 credentialSchema: schema,
-                validFrom: (_a = timestamps.nbf) !== null && _a !== void 0 ? _a : timestamps.now,
+                validFrom: timestamps.validFrom,
                 validUntil: timestamps.expirationDate,
                 id: vcId,
                 credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
