@@ -207,10 +207,12 @@ export class W3CVcIssuer {
     }
   }
 
-  // TODO: valorar homogeneizar comportamiento entre V1 y V2. La idea sería quitar iss o nbf y dejar uno solo. 
-  // Esto se adaptaría mejor a V2, y en V1 pondríamos el mismo valor. Esto implica también cambiar 'CredentialDataOrDeferred'
-  // Valorar esto con su relación con el campo 'iss' del token. En V2, podríamos tener un validFrom a futuro, pero el 'iss'
-  // del token podría ser la fecha del momento actual.
+  // TODO: valorar quitar iss de 'CredentialDataOrDeferred' y homogeneizar comportamiento entre V1 y V2
+  // El motivo es que V1 incluye un campo issuanceDate, y además EBSI está obligando a que sea igual al 'iat' del token. 
+  // Sin embargo, en V2 ese campo no existe. La propusta sería:
+  // - En V2, validFrom se asocia con nbf, y iat sería Date.now(). Según esto, en formatDataModel2, iat debería ajustarse a 
+  //   Date.now() y valorar quitar el nbf o también asignarlo a Date.now(). Notar diferencia entre info de la credencial y del token
+  // - En V1, validFrom se asocia con nbf, issued y issuanceDate y iat con Date.now()
   private generateCredentialTimeStamps(data: CredentialDataOrDeferred) {
     if (data.validUntil && data.expiresInSeconds) {
       throw new InvalidDataProvided(`"expiresInSeconds" and "validUntil" can't be defined at the same time`);
