@@ -108,12 +108,14 @@ export interface CredentialDataOrDeferred {
    * A deferred code that can be exchange for a VC
    */
   deferredCode?: string,
-  /** The expiration time in UTC and in ISO string format. Can't be combined with expiresIn */
+  /** The expiration time in UTC and in ISO format. Can't be combined with expiresIn */
   validUntil?: string,
   /** For how long will be valid the VC. Can't be combined with validUntil */
   expiresInSeconds?: number,
   /** When the VC will be valid */
   nbf?: string,
+  /** Issuance in ISO format. If not defined, the current datetime is taken */
+  iss?: string
 }
 
 /**

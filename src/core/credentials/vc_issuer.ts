@@ -207,39 +207,61 @@ export class W3CVcIssuer {
     }
   }
 
-  private generateTimeStamps(data: CredentialDataOrDeferred) {
-    let expirationDate = undefined;
-    let nbf = undefined;
-    if (data.nbf) {
-      const tmp = moment(data.nbf, true);
-      if (tmp.isValid()) {
-        nbf = tmp.utc().format();
-      } else {
-        throw new InvalidDataProvided(
-          `Invalid specified date for "nbf" parameter`
-        )
-      }
-    }
-    const now = Date.now();
+  // TODO: valorar quitar iss de 'CredentialDataOrDeferred' y homogeneizar comportamiento entre V1 y V2
+  // El motivo es que V1 incluye un campo issuanceDate, y además EBSI está obligando a que sea igual al 'iat' del token. 
+  // Sin embargo, en V2 ese campo no existe. La propusta sería:
+  // - En V2, validFrom se asocia con nbf, y iat sería Date.now(). Según esto, en formatDataModel2, iat debería ajustarse a 
+  //   Date.now() y valorar quitar el nbf o también asignarlo a Date.now(). Notar diferencia entre info de la credencial y del token
+  // - En V1, validFrom se asocia con nbf, issued y issuanceDate y iat con Date.now()
+  private generateCredentialTimeStamps(data: CredentialDataOrDeferred) {
     if (data.validUntil && data.expiresInSeconds) {
-      throw new InvalidDataProvided(
-        `"expiresIn" parameter and "validUntil" parameter can't be provided at the same time`
-      );
-    } else if (data.validUntil) {
-      const tmp = moment(data.validUntil, true);
-      if (!tmp.isValid()) {
-        throw new InvalidDataProvided(
-          `"validUntil" parameter is not a valid date`
-        );
-      }
-      expirationDate = tmp.utc().format();
-    } else if (data.expiresInSeconds) {
-      expirationDate = new Date(now + data.expiresInSeconds * 1000).toISOString();
+      throw new InvalidDataProvided(`"expiresInSeconds" and "validUntil" can't be defined at the same time`);
     }
+
+    const issuanceDate = (() => {
+      const iss = data.iss ? moment(data.iss, true) : moment();
+      if (!iss.isValid()) {
+        throw new InvalidDataProvided(`Invalid specified date for "iss" parameter`);
+      }
+      return iss;
+    })();
+
+    const validFrom = (() => {
+      const nbf = data.nbf ? moment(data.nbf, true) : issuanceDate.clone();
+      if (!nbf.isValid()) {
+        throw new InvalidDataProvided(`Invalid specified date for "nbf" parameter`);
+      }
+      if (nbf.isBefore(issuanceDate)) {
+        throw new InvalidDataProvided(`"validFrom" can not be before "issuanceDate"`);
+      }
+      return nbf;
+    })();
+
+    const expirationDate = (() => {
+      const exp = (() => {
+        if (data.validUntil) {
+          return moment(data.validUntil, true);
+        } else if (data.expiresInSeconds) {
+          return issuanceDate.clone().add(data.expiresInSeconds, 'seconds');
+        } else {
+          return undefined;
+        }
+      })();
+      if (exp) {
+        if (!exp.isValid()) {
+          throw new InvalidDataProvided(`Invalid specified date for "expirationDate" parameter`);
+        }
+        if (exp.isBefore(validFrom)) {
+          throw new InvalidDataProvided(`"expirationDate" can not be before "validFrom"`);
+        }
+      }
+      return exp;
+    })();
+
     return {
-      now: new Date(now).toISOString(),
-      expirationDate,
-      nbf
+      issuanceDate: issuanceDate.utc().toISOString(),
+      validFrom: validFrom.utc().toISOString(),
+      expirationDate: expirationDate ? expirationDate.utc().toISOString() : undefined,
     }
   }
 
@@ -254,14 +276,14 @@ export class W3CVcIssuer {
     vcData: CredentialDataOrDeferred,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV1> {
-    const timestamps = this.generateTimeStamps(vcData);
+    const timestamps = this.generateCredentialTimeStamps(vcData);
     const vcId = this.generateVcId();
     return {
       "@context": CONTEXT_VC_DATA_MODEL_1,
       type,
       credentialSchema: schema,
-      issuanceDate: timestamps.now,
-      validFrom: timestamps.nbf ?? timestamps.now,
+      issuanceDate: timestamps.issuanceDate,
+      validFrom: timestamps.validFrom,
       expirationDate: timestamps.expirationDate,
       id: vcId,
       credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
@@ -271,7 +293,7 @@ export class W3CVcIssuer {
           subject
         ) : undefined,
       issuer: this.issuerDid,
-      issued: timestamps.now,
+      issued: timestamps.issuanceDate,
       termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
         await optionalParameters.getTermsOfUse(
           type,
@@ -288,16 +310,16 @@ export class W3CVcIssuer {
     type: string[],
     schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
-    vcData: Record<string, any>,
+    vcData: CredentialDataOrDeferred,
     optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<W3CVerifiableCredentialV2> {
     const vcId = this.generateVcId();
-    const timestamps = this.generateTimeStamps(vcData);
+    const timestamps = this.generateCredentialTimeStamps(vcData);
     return {
       "@context": CONTEXT_VC_DATA_MODEL_2,
       type,
       credentialSchema: schema,
-      validFrom: timestamps.nbf ?? timestamps.now,
+      validFrom: timestamps.validFrom,
       validUntil: timestamps.expirationDate,
       id: vcId,
       credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
