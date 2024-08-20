@@ -6,11 +6,19 @@
 export declare abstract class StateManager {
     /**
      * Save a chunck of data in a space reserved with the indicated ID
-     * @param id The ID that identified the chunk data
+     * @param id The ID that identifies the chunk data
      * @param data The data to store
      */
     abstract saveState(id: string, data: any): Promise<void>;
+    /**
+     * Allows to get a previously saved data with the indicated ID
+     * @param id The ID that identifies the data to obtain
+     */
     abstract getState(id: string): Promise<any | undefined>;
+    /**
+     * Allows to delete a previously saved data with the indicated ID
+     * @param id The ID that identifies the data to delete
+     */
     abstract deleteState(id: string): Promise<void>;
 }
 /**
