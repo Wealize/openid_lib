@@ -35,4 +35,4 @@ export type CompactVc = string;
 /**
  * The result of a verification process, with an optional error message
  */
-export type VerificationResult = { valid: boolean, error?: string };
+export type VerificationResult = { valid: boolean, error?: string }; // TODO: DELETE IT

@@ -1,4 +1,4 @@
-import { InternalError } from "../../common/classes/index.js";
+import { InternalNonceError } from "../../common/classes/index.js";
 import {
   W3CDataModel,
   W3CVerifiableCredentialFormats
@@ -38,9 +38,9 @@ export abstract class VcFormatter {
       return new JwtVcFormatter(dataModel);
     } else if (format === "jwt_vc_json-ld" || format === "ldp_vc") {
       // TODO:
-      throw new InternalError("Unimplemented");
+      throw new InternalNonceError("Unimplemented");
     } else {
-      throw new InternalError("Unsupported format");
+      throw new InternalNonceError("Unsupported format");
     }
   }
 

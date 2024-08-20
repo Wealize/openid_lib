@@ -47,12 +47,12 @@ import {
   obtainDid
 } from "../../common/utils/index.js";
 import {
-  InternalError,
+  InternalNonceError,
   InvalidRequest
 } from "../../common/classes/error/index.js";
 import {
   CredentialAdditionalVerification,
-  NonceVerification,
+  NonceAndStateVerification,
   VpExtractedData
 } from "./types";
 
@@ -79,7 +79,7 @@ export class VpResolver {
    * @param externalValidation Callback that will be used to request external 
    * verification of any detected VC. This verification should focus on 
    * validating issues related to the trust framework and the use case.
-   * @param nonceValidation Callback the nonces specified in any JWT VP
+   * @param nonceAndStateValidation Callback the nonces specified in any JWT VP
    * @param vcSignatureVerification Flag indicating whether the signatures of the VCs 
    * included in the VP should be verified. To that regard, the DID Resolver provided must 
    * be able to generate the needed DID Documents
@@ -88,7 +88,7 @@ export class VpResolver {
     private didResolver: Resolver,
     private audience: string,
     private externalValidation: CredentialAdditionalVerification,
-    private nonceValidation: NonceVerification,
+    private nonceAndStateValidation: NonceAndStateVerification,
     private vcSignatureVerification: boolean = false
   ) {
     this.jwtCache = {};
@@ -236,8 +236,8 @@ export class VpResolver {
       dataModelVersion,
       publicKey
     );
-    if (!verificationResult.valid) {
-      throw new InvalidRequest(verificationResult.error!);
+    if (verificationResult.isError()) {
+      throw new InvalidRequest(verificationResult.unwrapError().message);
     }
     this.jwtCache[data] = {
       data: payload as JwtVcPayload,
@@ -271,7 +271,7 @@ export class VpResolver {
     jwa: JWA_ALGS
   }> {
     if (checkIfLdFormat(format)) {
-      throw new InternalError("LD Format are not supported right now");
+      throw new InternalNonceError("LD Format are not supported right now");
     }
     switch (format) {
       case "jwt_vc":
@@ -283,7 +283,7 @@ export class VpResolver {
       case "jwt_vc_json-ld":
       case "ldp_vc":
       case "ldp_vp":
-        throw new InternalError("LD formats are not supported right now");
+        throw new InternalNonceError("LD formats are not supported right now");
     }
   }
 
@@ -345,14 +345,13 @@ export class VpResolver {
     // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
     // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar 
     // es el token entero para que la validación tuviera más datos?
-    const nonceVerification = await this.nonceValidation(holderDidUrl, jwtPayload.nonce);
-    if (!nonceVerification.valid) {
-      throw new InvalidRequest(
-        `Descriptor ${descriptorId} invalid nonce specified${nonceVerification.error ?
-          `: ${nonceVerification.error}`
-          : '.'
-        }`
-      );
+    const nonceVerification = await this.nonceAndStateValidation(
+      holderDidUrl,
+      jwtPayload.nonce,
+      jwtPayload.state
+    );
+    if (nonceVerification.isError()) {
+      throw new InvalidRequest(nonceVerification.unwrapError().message);
     }
     this.vpHolder = holderDid;
     this.jwtCache[data] = {
@@ -431,7 +430,7 @@ export class VpResolver {
     }
     if (("proof_type") in formatData) {
       // TODO: NOT SUPPORTED FOR NOW
-      throw new InternalError("JLD not supported right now");
+      throw new InternalNonceError("JLD not supported right now");
     }
     if (("alg") in formatData) {
       return formatData.alg;
@@ -445,6 +444,9 @@ export class VpResolver {
     expectedFormats: LdFormat & JwtFormat,
     endObjectFormats: LdFormat & JwtFormat
   ): Promise<JwtVcPayload> {
+    let currentTraversalObject = data;
+    let lastJwa: JWA_ALGS;
+    let lastFormat;
     const resolveDescriptor = async () => {
       if (currentDescriptor!.id && currentDescriptor!.id !== mainId) {
         throw new InvalidRequest(
@@ -478,9 +480,6 @@ export class VpResolver {
     if (!currentDescriptor.id) {
       throw new InvalidRequest("Each input descriptor must have an ID");
     }
-    let currentTraversalObject = data;
-    let lastJwa: JWA_ALGS;
-    let lastFormat;
     do {
       await resolveDescriptor();
       lastFormat = currentDescriptor.format;

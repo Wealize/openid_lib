@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { P, match } from 'ts-pattern';
 import moment from 'moment';
 import { Resolver } from "did-resolver";
 import { JWK } from "jose";
@@ -24,7 +25,7 @@ import {
   W3CVerifiableCredential,
   W3CVerifiableCredentialV1,
   W3CVerifiableCredentialV2,
-} from "../../common/interfaces/w3c_verifiable_credential.interface";
+} from "../../common/interfaces/w3c_verifiable_credential.interface.js";
 import {
   decodeToken,
   verifyJwtWithExpAndAudience
@@ -35,14 +36,18 @@ import {
 } from "../../common/interfaces/credential_response.interface.js";
 import * as VcIssuerTypes from "./types.js";
 import {
-  InsufficienteParamaters,
-  InternalError,
+  InternalNonceError,
   InvalidCredentialRequest,
   InvalidDataProvided,
+  InvalidProof,
   InvalidToken
 } from "../../common/classes/index.js";
 import { areDidUrlsSameDid } from '../../common/utils/did.utils.js';
-import { CredentialDataOrDeferred } from './types.js';
+import {
+  CredentialDataManager,
+} from './credential_data_manager.js';
+import { arraysAreEqual } from '../../common/utils/array.utils.js';
+import { NonceManager } from '../nonce/index.js';
 
 /**
  * W3C credentials issuer in both deferred and In-Time flows
@@ -66,17 +71,15 @@ export class W3CVcIssuer {
     private didResolver: Resolver,
     private issuerDid: string,
     private signCallback: VcIssuerTypes.VcSignCallback,
-    private cNonceRetrieval: VcIssuerTypes.ChallengeNonceRetrieval,
-    private getVcSchema: VcIssuerTypes.GetCredentialSchema,
-    private getCredentialData: VcIssuerTypes.GetCredentialData,
-    private resolveCredentialSubject?: VcIssuerTypes.ResolveCredentialSubject
+    private nonceManager: NonceManager,
+    private credentialDataManager: CredentialDataManager
   ) { }
 
   /**
    * Allows to verify a JWT Access Token in string format
    * @param token The access token
    * @param publicKeyJwkAuthServer The public key that should verify the token 
-   * @param tokenVerifyCallback A callback that can be used to verify to perform an 
+   * @param tokenVerifyCallback A callback that can be used to perform an 
    * additional verification of the contents of the token
    * @returns Access token in JWT format
    * @throws If data provided is incorrect
@@ -111,30 +114,15 @@ export class W3CVcIssuer {
    * the OID4VCI specification
    * @param acessToken The access token needed to perform the operation 
    * @param credentialRequest The credential request sent by an user
-   * @param optionalParamaters A set of optional parameters that are only 
-   * required if the
-   * token is provided in string format and that allows to verify it
+   * @param dataModel The W3 VC Data Model version
    * @returns A credential response with a VC or a deferred code
    * @throws If data provided is incorrect
    */
   async generateCredentialResponse(
-    acessToken: string | Jwt,
+    acessToken: Jwt,
     credentialRequest: CredentialRequest,
     dataModel: W3CDataModel,
-    optionalParamaters?: VcIssuerTypes.GenerateCredentialReponseOptionalParams
   ): Promise<CredentialResponse> {
-    if (typeof acessToken === "string") {
-      if (!optionalParamaters || !optionalParamaters.tokenVerification) {
-        throw new InsufficienteParamaters(
-          `"tokenVerification" optional parameter must be set when acessToken is in string format`
-        );
-      }
-      acessToken = await this.verifyAccessToken(
-        acessToken,
-        optionalParamaters.tokenVerification.publicKeyJwkAuthServer,
-        optionalParamaters.tokenVerification.tokenVerifyCallback
-      );
-    }
     this.checkCredentialTypesAndFormat(credentialRequest.types, credentialRequest.format);
     const controlProof = ControlProof.fromJSON(credentialRequest.proof);
     const proofAssociatedClient = controlProof.getAssociatedIdentifier();
@@ -144,67 +132,96 @@ export class W3CVcIssuer {
         "Access Token was issued for a different identifier that the one that sign the proof"
       );
     }
-    const cNonce = await this.cNonceRetrieval(jwtPayload.sub!);
-    await controlProof.verifyProof(cNonce,
-      this.metadata.credential_issuer,
-      this.didResolver
-    );
-    let credentialSubject = proofAssociatedClient;
-    if (this.resolveCredentialSubject) {
-      credentialSubject = await this.resolveCredentialSubject(jwtPayload.sub!, proofAssociatedClient);
+    const innerNonce = jwtPayload.nonce as string;
+    const cNonceResult = await this.nonceManager.getChallengeNonce(innerNonce);
+    if (cNonceResult.isError()) {
+      throw new InvalidProof("Invalid provided nonce for control proof");
     }
-    const credentialDataOrDeferred = await this.getCredentialData(
-      credentialRequest.types,
-      credentialSubject
-    );
-    if (credentialDataOrDeferred.deferredCode) {
-      return {
-        acceptance_token: credentialDataOrDeferred.deferredCode
-      }
-    } else if (credentialDataOrDeferred.data) {
-      return this.generateW3CCredential(
-        credentialRequest.types,
-        await this.getVcSchema(credentialRequest.types),
-        credentialSubject,
-        credentialDataOrDeferred,
-        credentialRequest.format,
-        dataModel,
-        optionalParamaters
+    const cNonce = cNonceResult.unwrap();
+    if (cNonce.timestamp + cNonce.expirationTime <= Date.now()) {
+      this.nonceManager.deleteNonce(innerNonce);
+      throw new InvalidCredentialRequest("Challenge nonce has expired");
+    }
+    match(cNonce)
+      .with({ operationType: { type: "Verification" } }, (_) => {
+        throw new InvalidCredentialRequest("Invalid provided nonce");
+      })
+      .with({ operationType: { type: "Issuance", vcTypes: { type: "Know", vcTypes: P.select() } } }, (types) => {
+        if (!arraysAreEqual(types, credentialRequest.types)) {
+          throw new InvalidCredentialRequest(
+            "The provided token does not allow for the issuance of a VC of the specified types"
+          );
+        }
+      })
+      .otherwise(() => {
+        throw new InternalNonceError("Unexpected behaviour detected at nonce matching");
+      });
+    if (cNonce.operationType)
+      await controlProof.verifyProof(
+        innerNonce,
+        this.metadata.credential_issuer,
+        this.didResolver
       );
-    } else {
-      throw new InternalError("No credential data or deferred code received");
-    }
+    const credentialSubject = await this.credentialDataManager.resolveCredentialSubject(
+      jwtPayload.sub!,
+      proofAssociatedClient
+    );
+    return await this.credentialResponseMatch(
+      credentialRequest.types,
+      credentialSubject,
+      credentialRequest.format,
+      dataModel,
+    );
   }
 
+  private async credentialResponseMatch(
+    types: string[],
+    credentialSubject: string,
+    format: W3CVerifiableCredentialFormats,
+    dataModel: W3CDataModel,
+  ) {
+    const credentialDataOrDeferred = await this.credentialDataManager.getCredentialData(
+      types,
+      credentialSubject
+    );
+    return match(credentialDataOrDeferred)
+      .with({ type: "InTime" }, async (data) => this.generateW3CCredential(
+        types,
+        data.schema,
+        credentialSubject,
+        data,
+        format,
+        dataModel,
+      ))
+      .with({ type: "Deferred" }, (data) => {
+        return {
+          acceptance_token: data.deferredCode
+        }
+      })
+      .exhaustive();
+  }
+
+  /**
+   * Allows for the generation of a VC without an Access Token
+   * @param did The DID if the holder of the VC
+   * @param dataModel The W3 VC Data Model version
+   * @param types The types of the VCs
+   * @param format The format of the VC
+   * @returns A credential response with the VC
+   */
   async generateVcDirectMode(
     did: string,
     dataModel: W3CDataModel,
     types: string[],
     format: W3CVerifiableCredentialFormats,
-    optionalParamaters?: VcIssuerTypes.BaseOptionalParams
   ): Promise<CredentialResponse> {
     this.checkCredentialTypesAndFormat(types, format);
-    const credentialDataOrDeferred = await this.getCredentialData(
+    return await this.credentialResponseMatch(
       types,
-      did
+      did,
+      format,
+      dataModel,
     );
-    if (credentialDataOrDeferred.deferredCode) {
-      return {
-        acceptance_token: credentialDataOrDeferred.deferredCode
-      }
-    } else if (credentialDataOrDeferred.data) {
-      return this.generateW3CCredential(
-        types,
-        await this.getVcSchema(types),
-        did,
-        credentialDataOrDeferred,
-        format,
-        dataModel,
-        optionalParamaters
-      );
-    } else {
-      throw new InternalError("No credential data or deferred code received");
-    }
   }
 
   // TODO: valorar quitar iss de 'CredentialDataOrDeferred' y homogeneizar comportamiento entre V1 y V2
@@ -213,7 +230,7 @@ export class W3CVcIssuer {
   // - En V2, validFrom se asocia con nbf, y iat sería Date.now(). Según esto, en formatDataModel2, iat debería ajustarse a 
   //   Date.now() y valorar quitar el nbf o también asignarlo a Date.now(). Notar diferencia entre info de la credencial y del token
   // - En V1, validFrom se asocia con nbf, issued y issuanceDate y iat con Date.now()
-  private generateCredentialTimeStamps(data: CredentialDataOrDeferred) {
+  private generateCredentialTimeStamps(data: VcIssuerTypes.CredentialMetadata) {
     if (data.validUntil && data.expiresInSeconds) {
       throw new InvalidDataProvided(`"expiresInSeconds" and "validUntil" can't be defined at the same time`);
     }
@@ -269,14 +286,13 @@ export class W3CVcIssuer {
     return `urn:uuid:${uuidv4()}`;
   }
 
-  private async generateW3CDataForV1(
+  private generateW3CDataForV1(
     type: string[],
     schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
-    vcData: CredentialDataOrDeferred,
-    optionalParameters?: VcIssuerTypes.BaseOptionalParams,
-  ): Promise<W3CVerifiableCredentialV1> {
-    const timestamps = this.generateCredentialTimeStamps(vcData);
+    vcData: VcIssuerTypes.InTimeCredentialData,
+  ): W3CVerifiableCredentialV1 {
+    const timestamps = this.generateCredentialTimeStamps(vcData.metadata);
     const vcId = this.generateVcId();
     return {
       "@context": CONTEXT_VC_DATA_MODEL_1,
@@ -286,19 +302,10 @@ export class W3CVcIssuer {
       validFrom: timestamps.validFrom,
       expirationDate: timestamps.expirationDate,
       id: vcId,
-      credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
-        await optionalParameters.getCredentialStatus(
-          type,
-          vcId,
-          subject
-        ) : undefined,
+      credentialStatus: vcData.status,
       issuer: this.issuerDid,
       issued: timestamps.issuanceDate,
-      termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
-        await optionalParameters.getTermsOfUse(
-          type,
-          subject
-        ) : undefined,
+      termsOfUse: vcData.termfOfUse,
       credentialSubject: {
         id: subject,
         ...vcData.data
@@ -306,15 +313,14 @@ export class W3CVcIssuer {
     }
   }
 
-  private async generateW3CDataForV2(
+  private generateW3CDataForV2(
     type: string[],
     schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
-    vcData: CredentialDataOrDeferred,
-    optionalParameters?: VcIssuerTypes.BaseOptionalParams,
-  ): Promise<W3CVerifiableCredentialV2> {
+    vcData: VcIssuerTypes.InTimeCredentialData,
+  ): W3CVerifiableCredentialV2 {
     const vcId = this.generateVcId();
-    const timestamps = this.generateCredentialTimeStamps(vcData);
+    const timestamps = this.generateCredentialTimeStamps(vcData.metadata);
     return {
       "@context": CONTEXT_VC_DATA_MODEL_2,
       type,
@@ -322,17 +328,8 @@ export class W3CVcIssuer {
       validFrom: timestamps.validFrom,
       validUntil: timestamps.expirationDate,
       id: vcId,
-      credentialStatus: (optionalParameters && optionalParameters.getCredentialStatus) ?
-        await optionalParameters.getCredentialStatus(
-          type,
-          vcId,
-          subject
-        ) : undefined,
-      termsOfUse: (optionalParameters && optionalParameters.getTermsOfUse) ?
-        await optionalParameters.getTermsOfUse(
-          type,
-          subject
-        ) : undefined,
+      credentialStatus: vcData.status,
+      termsOfUse: vcData.termfOfUse,
       issuer: this.issuerDid,
       credentialSubject: {
         id: subject,
@@ -345,25 +342,37 @@ export class W3CVcIssuer {
     type: string[],
     schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
     subject: string,
-    // vcData: Record<string, any>,
-    vcData: CredentialDataOrDeferred,
+    vcData: VcIssuerTypes.InTimeCredentialData,
     format: W3CVerifiableCredentialFormats,
     dataModel: W3CDataModel,
-    optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<CredentialResponse> {
     const formatter = VcFormatter.fromVcFormat(format, dataModel);
     const content: W3CVerifiableCredential = dataModel === W3CDataModel.V1 ?
-      await this.generateW3CDataForV1(type, schema, subject, vcData, optionalParameters) :
-      await this.generateW3CDataForV2(type, schema, subject, vcData, optionalParameters)
+      this.generateW3CDataForV1(type, schema, subject, vcData) :
+      this.generateW3CDataForV2(type, schema, subject, vcData)
     const vcPreSign = formatter.formatVc(content);
     const signedVc = await this.signCallback(format, vcPreSign);
+    // Generate a new nonce
+    const nonce = uuidv4();
+    const expirationTime = C_NONCE_EXPIRATION_TIME // TODO: Make it configurable
+    this.nonceManager.saveNonce(nonce, {
+      timestamp: Date.now(),
+      sub: subject,
+      operationType: {
+        type: 'Issuance',
+        vcTypes: {
+          type: "Know",
+          vcTypes: type,
+        }
+      },
+      type: 'ChallengeNonce',
+      expirationTime
+    });
     return {
       format: format,
       credential: signedVc,
-      c_nonce: (optionalParameters &&
-        optionalParameters.cNonceToEmploy) ? optionalParameters.cNonceToEmploy : uuidv4(),
-      c_nonce_expires_in: (optionalParameters &&
-        optionalParameters.cNonceExp) ? optionalParameters.cNonceExp : C_NONCE_EXPIRATION_TIME
+      c_nonce: nonce,
+      c_nonce_expires_in: expirationTime // TODO: This could be interesting to be configurable
     }
   }
 
@@ -371,35 +380,36 @@ export class W3CVcIssuer {
    * Allows to exchange a deferred code for a VC
    * @param acceptanceToken The deferred code sent by the issuer in a 
    * previous instance
-   * @param deferredExchangeCallback A callback to verify the deferred code
-   * @param optionalParameters A set of optional parameters that allow to 
-   * specify certain 
-   * data of the VC generated
+   * @param dataModel The W3C VC Data Model version
    * @returns A credential response with the VC generated or a new 
    * (or the same) deferred code
    */
   async exchangeAcceptanceTokenForVc(
     acceptanceToken: string,
-    deferredExchangeCallback: VcIssuerTypes.DeferredExchangeCallback,
     dataModel: W3CDataModel,
-    optionalParameters?: VcIssuerTypes.BaseOptionalParams,
   ): Promise<CredentialResponse> {
-    const exchangeResult = await deferredExchangeCallback(acceptanceToken);
-    if ("error" in exchangeResult) {
-      throw new InvalidToken(`Invalid acceptance token: ${exchangeResult.error}`);
-    }
-    if (exchangeResult.deferredCode) {
-      return { acceptance_token: exchangeResult.deferredCode };
-    }
-    return this.generateW3CCredential(
-      exchangeResult.types,
-      await this.getVcSchema(exchangeResult.types),
-      exchangeResult.data?.id!,
-      exchangeResult,
-      exchangeResult.format,
-      dataModel,
-      optionalParameters
+    const exchangeResult = await this.credentialDataManager.deferredExchange(
+      acceptanceToken
     );
+    if (exchangeResult.isError()) {
+      throw new InvalidToken(`Invalid acceptance token: ${exchangeResult.unwrapError().message}`);
+    }
+    const credentialDataResponse = exchangeResult.unwrap();
+    return match(credentialDataResponse)
+      .with({ type: "InTime" }, async (data) => this.generateW3CCredential(
+        data.data.types,
+        data.schema,
+        data.data.credentialSubject,
+        data,
+        data.format,
+        dataModel,
+      ))
+      .with({ type: "Deferred" }, (data) => {
+        return {
+          acceptance_token: data.deferredCode
+        }
+      })
+      .exhaustive();
   }
 
   private checkCredentialTypesAndFormat(

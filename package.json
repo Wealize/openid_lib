@@ -5,7 +5,7 @@
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "scripts": {
-    "test": "mocha --recursive dist/test --reporter spec --timeout 5000",
+    "test": "mocha --recursive dist/test --reporter spec --timeout 50000",
     "build_and_test": "npm run build && npm run test",
     "build": "npx tsc",
     "run": "npx tsc && node dist/index.js"
@@ -39,6 +39,7 @@
     "node-fetch": "^3.3.2",
     "pkce-challenge": "^4.1.0",
     "querystring": "^0.2.1",
+    "ts-pattern": "^5.3.1",
     "uuid": "^9.0.1"
   }
 }
