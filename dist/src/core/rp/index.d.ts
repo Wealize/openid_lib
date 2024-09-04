@@ -163,3 +163,4 @@ export declare class OpenIDReliyingParty {
     private resolveClientMetadata;
 }
 export * from "./types.js";
+export * from "./builder.js";

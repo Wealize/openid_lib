@@ -734,3 +734,4 @@ function selectJwkFromSet(jwks, kid) {
     return jwk;
 }
 export * from "./types.js";
+export * from "./builder.js";
