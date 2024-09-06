@@ -129,15 +129,14 @@ export declare class OpenIDReliyingParty {
      * associated token issuer.
      * @throws If data provided is incorrect
      */
-    verifyIdTokenResponse(idTokenResponse: IdTokenResponse): Promise<RpTypes.VerifiedIdTokenResponse>;
+    verifyIdTokenResponse(idTokenResponse: IdTokenResponse, checkTokenSignature?: boolean): Promise<RpTypes.VerifiedIdTokenResponse>;
     /**
      * Allows to verify an VP Token Response sent by a client
      * @param vpTokenResponse The authorisation response to verify
      * @param presentationDefinition The presentation definition to use to
      * verify the VP
-     * @param vcSignatureVerification A callback that can be used to perform additional
-     * verification of any of the VC extracted from the VP. This can be used to check
-     * the status of any VC and its terms of use.
+     * @param vcSignatureVerification A flag that can be used to specify if the signature
+     * of the VC should be checked. True by default
      * @returns The verified VP Token Response with holder DID and the data
      * extracted from the VCs of the VP
      * @throws If data provided is incorrect
