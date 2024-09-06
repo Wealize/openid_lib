@@ -102,7 +102,11 @@ export interface VerifiedIdTokenResponse {
   /**
    * The DID Document of the entity that sign the token
    */
-  didDocument: DIDDocument;
+  didDocument?: DIDDocument;
+  /**
+   * The subject identifier. In most cases coincide with the ID of the DID Document
+   */
+  subject: string,
   /**
    * The verified token
    */

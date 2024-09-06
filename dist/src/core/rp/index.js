@@ -458,14 +458,15 @@ export class OpenIDReliyingParty {
                 && !this.metadata.id_token_signing_alg_values_supported.includes(header.alg)) {
                 throw new InvalidRequest("Unsuported signing alg for ID Token");
             }
-            const didResolution = yield this.didResolver.resolve(jwtPayload.iss);
-            if (didResolution.didResolutionMetadata.error) {
-                throw new UnauthorizedClient(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error}: ${didResolution.didResolutionMetadata.message}`);
-            }
-            const didDocument = didResolution.didDocument;
-            const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
+            let didDocument = undefined;
             try {
                 if (checkTokenSignature) {
+                    const didResolution = yield this.didResolver.resolve(jwtPayload.iss);
+                    if (didResolution.didResolutionMetadata.error) {
+                        throw new UnauthorizedClient(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error}: ${didResolution.didResolutionMetadata.message}`);
+                    }
+                    didDocument = didResolution.didDocument;
+                    const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
                     yield verifyJwtWithExpAndAudience(idTokenResponse.id_token, publicKeyJwk, this.metadata.issuer);
                 }
                 else {
@@ -485,6 +486,7 @@ export class OpenIDReliyingParty {
             return {
                 token: idTokenResponse.id_token,
                 didDocument,
+                subject: jwtPayload.sub,
                 authzCode,
                 state: holderState,
                 redirectUri: redirectUri

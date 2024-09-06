@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import fetch from 'node-fetch';
 import { JwtPayload } from "jsonwebtoken";
 import { verifyChallenge } from "pkce-challenge";
-import { Resolvable, Resolver } from "did-resolver";
+import { DIDDocument, Resolvable, Resolver } from "did-resolver";
 import {
   AuthServerMetadata
 } from "../../common/interfaces/auth_server_metadata.interface.js";
@@ -651,17 +651,18 @@ export class OpenIDReliyingParty {
       && !this.metadata.id_token_signing_alg_values_supported.includes(header.alg as JWA_ALGS)) {
       throw new InvalidRequest("Unsuported signing alg for ID Token");
     }
-    const didResolution = await this.didResolver.resolve(jwtPayload.iss);
-    if (didResolution.didResolutionMetadata.error) {
-      throw new UnauthorizedClient(
-        `Did resolution failed. Error ${didResolution.didResolutionMetadata.error
-        }: ${didResolution.didResolutionMetadata.message}`
-      );
-    }
-    const didDocument = didResolution.didDocument!;
-    const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
+    let didDocument: DIDDocument | undefined = undefined;
     try {
       if (checkTokenSignature) {
+        const didResolution = await this.didResolver.resolve(jwtPayload.iss);
+        if (didResolution.didResolutionMetadata.error) {
+          throw new UnauthorizedClient(
+            `Did resolution failed. Error ${didResolution.didResolutionMetadata.error
+            }: ${didResolution.didResolutionMetadata.message}`
+          );
+        }
+        didDocument = didResolution.didDocument!;
+        const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
         await verifyJwtWithExpAndAudience(
           idTokenResponse.id_token,
           publicKeyJwk,
@@ -692,6 +693,7 @@ export class OpenIDReliyingParty {
     return {
       token: idTokenResponse.id_token,
       didDocument,
+      subject: jwtPayload.sub,
       authzCode,
       state: holderState,
       redirectUri: redirectUri
