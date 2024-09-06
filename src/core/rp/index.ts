@@ -475,6 +475,9 @@ export class OpenIDReliyingParty {
     let params: AuthzRequest;
     let jwk: JWK | undefined = undefined;
     if (!request.request) {
+      if (!request.code_challenge || !request.code_challenge_method) {
+        throw new InvalidRequest("A code_challenge is required")
+      }
       params = request;
     } else {
       // TODO: ADD REQUEST_URI PARAMETER
@@ -604,7 +607,7 @@ export class OpenIDReliyingParty {
       }
       match(prevNonce.clientData)
         .with({ type: "HolderWallet" }, (data) => {
-          // TODO: We have to keep in mid the derivations
+          // TODO: We have to keep in mind the derivations
           if (!this.subjectComparison(data.clientId, subject)) {
             throw new InvalidRequest(
               "The iss parameter does not coincide with the previously stated client id"
@@ -628,11 +631,15 @@ export class OpenIDReliyingParty {
    */
   async verifyIdTokenResponse(
     idTokenResponse: IdTokenResponse,
+    checkTokenSignature: boolean = true
   ): Promise<RpTypes.VerifiedIdTokenResponse> {
     const { header, payload } = decodeToken(idTokenResponse.id_token);
     const jwtPayload = payload as JwtPayload;
+    if (!jwtPayload.sub) {
+      throw new InvalidRequest("Id Token must contain 'sub' atribute");
+    }
     if (!jwtPayload.iss) {
-      throw new InvalidRequest("Id Token must contain iss atribute");
+      throw new InvalidRequest("Id Token must contain 'iss' atribute");
     }
     if (!header.kid) {
       throw new InvalidRequest("No kid paramater found in ID Token");
@@ -654,11 +661,20 @@ export class OpenIDReliyingParty {
     const didDocument = didResolution.didDocument!;
     const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
     try {
-      await verifyJwtWithExpAndAudience(
-        idTokenResponse.id_token,
-        publicKeyJwk,
-        this.metadata.issuer
-      );
+      if (checkTokenSignature) {
+        await verifyJwtWithExpAndAudience(
+          idTokenResponse.id_token,
+          publicKeyJwk,
+          this.metadata.issuer
+        );
+      } else {
+        if (!jwtPayload.exp || jwtPayload.exp < Math.floor(Date.now() / 1000)) {
+          throw new InvalidRequest("JWT is expired or does not have exp parameter");
+        }
+        if (!jwtPayload.aud || jwtPayload.aud !== this.metadata.issuer) {
+          throw new InvalidRequest("JWT audience is invalid or is not defined");
+        }
+      }
     } catch (error: any) {
       throw new AccessDenied(error.message);
     }
@@ -687,9 +703,8 @@ export class OpenIDReliyingParty {
    * @param vpTokenResponse The authorisation response to verify
    * @param presentationDefinition The presentation definition to use to 
    * verify the VP
-   * @param vcSignatureVerification A callback that can be used to perform additional 
-   * verification of any of the VC extracted from the VP. This can be used to check 
-   * the status of any VC and its terms of use.
+   * @param vcSignatureVerification A flag that can be used to specify if the signature
+   * of the VC should be checked. True by default
    * @returns The verified VP Token Response with holder DID and the data 
    * extracted from the VCs of the VP
    * @throws If data provided is incorrect
