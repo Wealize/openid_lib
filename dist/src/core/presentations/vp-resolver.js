@@ -41,6 +41,8 @@ export class VpResolver {
         this.vcSignatureVerification = vcSignatureVerification;
         this.jwtCache = {};
     }
+    emitError(error) {
+    }
     /**
      * Verify a Verifiable Presentation
      * @param vp Any data structure in which the VP is located

@@ -15,7 +15,7 @@ import { decodeToken, verifyJwtWithExpAndAudience } from "../../common/utils/jwt
 import { AUTHZ_TOKEN_EXPIRATION_TIME, DEFAULT_SCOPE, OPENID_CREDENTIAL_AUTHZ_DETAILS_TYPE, } from "../../common/constants/index.js";
 import { IdTokenRequest } from "../../common/classes/id_token_request.js";
 import { getAuthentificationJWKKeys } from "../../common/utils/did_document.js";
-import { AccessDenied, InsufficienteParamaters, InternalNonceError, InvalidGrant, InvalidRequest, InvalidScope, UnauthorizedClient, UnsupportedGrantType } from "../../common/classes/index.js";
+import { AccessDenied, InsufficienteParamaters, InternalNonceError, InvalidGrant, InvalidRequest, InvalidScope, OpenIdError, UnauthorizedClient, UnsupportedGrantType } from "../../common/classes/index.js";
 import { VpResolver } from "../presentations/vp-resolver.js";
 import { VpTokenRequest } from "../../common/classes/vp_token_request.js";
 import { match } from "ts-pattern";
@@ -402,6 +402,7 @@ export class OpenIDReliyingParty {
     checkNonceStateForPostBaseAuthz(nonce, subject, expectedResponseType, state) {
         return __awaiter(this, void 0, void 0, function* () {
             let nonceState;
+            let redirectUri, holderState;
             const nonceResult = yield this.nonceManager.getPostBaseAuthzNonce(nonce);
             if (nonceResult.isError()) {
                 const nonceResult = yield this.nonceManager.getDirectRequestNonce(nonce);
@@ -410,6 +411,8 @@ export class OpenIDReliyingParty {
                 }
                 yield this.nonceManager.deleteNonce(nonce);
                 nonceState = nonceResult.unwrap();
+                redirectUri = undefined;
+                holderState = undefined;
             }
             else {
                 const prevNonce = nonceResult.unwrap();
@@ -418,7 +421,6 @@ export class OpenIDReliyingParty {
                 }
                 match(prevNonce.clientData)
                     .with({ type: "HolderWallet" }, (data) => {
-                    // TODO: We have to keep in mind the derivations
                     if (!this.subjectComparison(data.clientId, subject)) {
                         throw new InvalidRequest("The iss parameter does not coincide with the previously stated client id");
                     }
@@ -427,8 +429,14 @@ export class OpenIDReliyingParty {
                     throw new InvalidRequest("Invalid state parameter");
                 }
                 nonceState = prevNonce;
+                redirectUri = prevNonce.redirectUri;
+                holderState = prevNonce.state;
             }
-            return nonceState;
+            return {
+                nonceState: nonceState,
+                redirectUri,
+                holderState
+            };
         });
     }
     /**
@@ -442,28 +450,29 @@ export class OpenIDReliyingParty {
         return __awaiter(this, void 0, void 0, function* () {
             const { header, payload } = decodeToken(idTokenResponse.id_token);
             const jwtPayload = payload;
-            if (!jwtPayload.sub) {
-                throw new InvalidRequest("Id Token must contain 'sub' atribute");
-            }
             if (!jwtPayload.iss) {
                 throw new InvalidRequest("Id Token must contain 'iss' atribute");
-            }
-            if (!header.kid) {
-                throw new InvalidRequest("No kid paramater found in ID Token");
             }
             if (!jwtPayload.nonce) {
                 throw new InvalidRequest("No nonce paramater found in ID Token");
             }
+            const { nonceState, redirectUri, holderState } = yield this.checkNonceStateForPostBaseAuthz(jwtPayload.nonce, jwtPayload.iss, "id_token", jwtPayload.state);
+            if (!jwtPayload.sub) {
+                throw new InvalidRequest("Id Token must contain 'sub' atribute", redirectUri, holderState);
+            }
+            if (!header.kid) {
+                throw new InvalidRequest("No kid paramater found in ID Token", redirectUri, holderState);
+            }
             if (this.metadata.id_token_signing_alg_values_supported
                 && !this.metadata.id_token_signing_alg_values_supported.includes(header.alg)) {
-                throw new InvalidRequest("Unsuported signing alg for ID Token");
+                throw new InvalidRequest("Unsuported signing alg for ID Token", redirectUri, holderState);
             }
             let didDocument = undefined;
             try {
                 if (checkTokenSignature) {
                     const didResolution = yield this.didResolver.resolve(jwtPayload.iss);
                     if (didResolution.didResolutionMetadata.error) {
-                        throw new UnauthorizedClient(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error}: ${didResolution.didResolutionMetadata.message}`);
+                        throw new UnauthorizedClient(`Did resolution failed. Error ${didResolution.didResolutionMetadata.error}: ${didResolution.didResolutionMetadata.message}`, redirectUri, holderState);
                     }
                     didDocument = didResolution.didDocument;
                     const publicKeyJwk = getAuthentificationJWKKeys(didDocument, header.kid);
@@ -471,18 +480,17 @@ export class OpenIDReliyingParty {
                 }
                 else {
                     if (!jwtPayload.exp || jwtPayload.exp < Math.floor(Date.now() / 1000)) {
-                        throw new InvalidRequest("JWT is expired or does not have exp parameter");
+                        throw new InvalidRequest("JWT is expired or does not have exp parameter", redirectUri, holderState);
                     }
                     if (!jwtPayload.aud || jwtPayload.aud !== this.metadata.issuer) {
-                        throw new InvalidRequest("JWT audience is invalid or is not defined");
+                        throw new InvalidRequest("JWT audience is invalid or is not defined", redirectUri, holderState);
                     }
                 }
             }
             catch (error) {
-                throw new AccessDenied(error.message);
+                throw new AccessDenied(error.message, redirectUri, holderState);
             }
-            const prevNonce = yield this.checkNonceStateForPostBaseAuthz(jwtPayload.nonce, jwtPayload.iss, "id_token", jwtPayload.state);
-            const { authzCode, holderState, redirectUri } = yield this.processNonceForPostAuthz(prevNonce, jwtPayload.nonce, jwtPayload.iss);
+            const { authzCode, } = yield this.processNonceForPostAuthz(nonceState, jwtPayload.nonce, jwtPayload.iss);
             return {
                 token: idTokenResponse.id_token,
                 didDocument,
@@ -510,24 +518,40 @@ export class OpenIDReliyingParty {
             if (!this.vpCredentialVerificationCallback) {
                 throw new InternalNonceError("An VP Credential Verification callback must be provided in order to verify VPs");
             }
-            let prevNonce;
+            let nonceState = undefined;
+            let redirectUri, holderState = undefined;
             let clientId;
             let nonceValue;
-            const vpResolver = new VpResolver(this.didResolver, this.metadata.issuer, this.vpCredentialVerificationCallback, (subject, nonce, state) => __awaiter(this, void 0, void 0, function* () {
-                nonceValue = nonce;
-                prevNonce = yield this.checkNonceStateForPostBaseAuthz(nonce, subject, "vp_token", state);
-                clientId = subject;
-                return Result.Ok(null);
-            }), vcSignatureVerification);
-            const claimData = yield vpResolver.verifyPresentation(vpTokenResponse.vp_token, presentationDefinition, vpTokenResponse.presentation_submission);
-            const { authzCode, holderState, redirectUri } = yield this.processNonceForPostAuthz(prevNonce, nonceValue, clientId);
-            return {
-                token: vpTokenResponse.vp_token,
-                vpInternalData: claimData,
-                authzCode,
-                state: holderState,
-                redirectUri: redirectUri
-            };
+            try {
+                const vpResolver = new VpResolver(this.didResolver, this.metadata.issuer, this.vpCredentialVerificationCallback, (subject, nonce, state) => __awaiter(this, void 0, void 0, function* () {
+                    nonceValue = nonce;
+                    // TODO: Update this
+                    const tmp = yield this.checkNonceStateForPostBaseAuthz(nonce, subject, "vp_token", state);
+                    nonceState = tmp.nonceState;
+                    redirectUri = tmp.redirectUri;
+                    holderState = tmp.holderState;
+                    clientId = subject;
+                    return Result.Ok(null);
+                }), vcSignatureVerification);
+                const claimData = yield vpResolver.verifyPresentation(vpTokenResponse.vp_token, presentationDefinition, vpTokenResponse.presentation_submission);
+                const { authzCode, } = yield this.processNonceForPostAuthz(nonceState, nonceValue, clientId);
+                return {
+                    token: vpTokenResponse.vp_token,
+                    vpInternalData: claimData,
+                    authzCode,
+                    state: holderState,
+                    redirectUri: redirectUri
+                };
+            }
+            catch (e) {
+                if (e instanceof OpenIdError) {
+                    if (nonceState) {
+                        e.redirectUri = redirectUri;
+                        e.holderState = holderState;
+                    }
+                }
+                throw e;
+            }
         });
     }
     processNonceForPostAuthz(prevNonce, nonceValue, clientId) {

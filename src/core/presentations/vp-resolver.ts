@@ -48,7 +48,8 @@ import {
 } from "../../common/utils/index.js";
 import {
   InternalNonceError,
-  InvalidRequest
+  InvalidRequest,
+  OpenIdError
 } from "../../common/classes/error/index.js";
 import {
   CredentialAdditionalVerification,
@@ -71,7 +72,6 @@ export class VpResolver {
       alg: JWA_ALGS
     }>;
   private vpHolder: string | undefined;
-
   /**
    * Main constructor of this class
    * @param didResolver The DID Resolver to employ
@@ -92,6 +92,10 @@ export class VpResolver {
     private vcSignatureVerification: boolean = false
   ) {
     this.jwtCache = {};
+  }
+
+  emitError(error: OpenIdError) {
+
   }
 
   /**

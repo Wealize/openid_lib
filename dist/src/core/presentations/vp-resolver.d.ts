@@ -1,6 +1,7 @@
 import { Resolver } from "did-resolver";
 import { DIFPresentationDefinition } from "../../common/interfaces/presentation_definition.interface";
 import { DIFPresentationSubmission } from "../../common/interfaces/presentation_submission.interface";
+import { OpenIdError } from "../../common/classes/error/index.js";
 import { CredentialAdditionalVerification, NonceAndStateVerification, VpExtractedData } from "./types";
 /**
  * Component specialized in the verification of verifiable
@@ -28,6 +29,7 @@ export declare class VpResolver {
      * be able to generate the needed DID Documents
      */
     constructor(didResolver: Resolver, audience: string, externalValidation: CredentialAdditionalVerification, nonceAndStateValidation: NonceAndStateVerification, vcSignatureVerification?: boolean);
+    emitError(error: OpenIdError): void;
     /**
      * Verify a Verifiable Presentation
      * @param vp Any data structure in which the VP is located
