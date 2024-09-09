@@ -152,12 +152,12 @@ export declare class OpenIDReliyingParty {
      * the access token, an ID Token should be generated.
      * @param tokenSignCallback Callback that manages the signature of the token.
      * @param audience JWT "aud" to include in the generated access token
-     * @param authServerPublicKeyJwk The JWT to use by the authz server to generate
-     * the access token
+     * @param authServerPublicKeyJwk The JWK used by the authServer to verify
+     * the authz code
      * @returns Token response with the generated access token
      * @throws If data provided is incorrect
      */
-    generateAccessToken(tokenRequest: TokenRequest, generateIdToken: boolean, tokenSignCallback: RpTypes.TokenSignCallback, audience: string, authServerPublicKeyJwk: JWK): Promise<TokenResponse>;
+    generateAccessToken(tokenRequest: TokenRequest, generateIdToken: boolean, audience: string, authServerPublicKeyJwk: JWK): Promise<TokenResponse>;
     private validateClientMetadata;
     private resolveClientMetadata;
 }

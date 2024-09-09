@@ -875,15 +875,15 @@ export class OpenIDReliyingParty {
    * the access token, an ID Token should be generated.
    * @param tokenSignCallback Callback that manages the signature of the token.
    * @param audience JWT "aud" to include in the generated access token
-   * @param authServerPublicKeyJwk The JWT to use by the authz server to generate
-   * the access token
+   * @param authServerPublicKeyJwk The JWK used by the authServer to verify
+   * the authz code
    * @returns Token response with the generated access token
    * @throws If data provided is incorrect
    */
   async generateAccessToken(
     tokenRequest: TokenRequest,
     generateIdToken: boolean,
-    tokenSignCallback: RpTypes.TokenSignCallback,
+    // tokenSignCallback: RpTypes.TokenSignCallback,
     audience: string,
     authServerPublicKeyJwk: JWK,
   ): Promise<TokenResponse> {
@@ -920,7 +920,7 @@ export class OpenIDReliyingParty {
 
         match(prevNonce.clientData)
           .with({ type: "HolderWallet" }, async (data) => {
-            // TODO: Give an use to the code_challenge_method parameter
+            // TODO: Give an use to the code_challenge_method paramketer
             if (await verifyChallenge(tokenRequest.code_verifier!, data.codeChallenge!)) {
               throw new InvalidRequest("The code_verifie does not verify the challenge provided");
             }
@@ -985,13 +985,20 @@ export class OpenIDReliyingParty {
       nonceValue,
       prevNonce
     );
-    const token = await tokenSignCallback({
+    const token = await this.signCallback({
       aud: audience,
       iss: this.metadata.issuer,
       sub: clientId,
       exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000,
       nonce: nonce,
     });
+    // const token = await tokenSignCallback({
+    //   aud: audience,
+    //   iss: this.metadata.issuer,
+    //   sub: clientId,
+    //   exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000,
+    //   nonce: nonce,
+    // });
     await this.nonceManager.saveNonce(nonce, state);
     const result: TokenResponse = {
       access_token: token,
@@ -1001,7 +1008,7 @@ export class OpenIDReliyingParty {
       c_nonce_expires_in: this.generalConfiguration.cNonceExpirationTime
     };
     if (generateIdToken) {
-      result.id_token = await tokenSignCallback({
+      result.id_token = await this.signCallback({
         iss: this.metadata.issuer,
         sub: clientId,
         exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000,

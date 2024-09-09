@@ -889,23 +889,6 @@ async function generateVpToken(vc: string[], nonce: string) {
     .sign(keyLike);
 }
 
-async function generateAccessToken() {
-  const header = {
-    alg: "ES256",
-    kid: `${issuerDid}#${issuerKid}`
-  };
-  const keyLike = await importJWK(issuerJWK);
-  return await new SignJWT({
-    aud: authServerUrl,
-    iss: authServerUrl,
-    sub: holderDid,
-    nonce: "nonce"
-  })
-    .setProtectedHeader(header)
-    .setExpirationTime("15m")
-    .sign(keyLike);
-}
-
 async function generateTokenResponse(vc: string) {
   const rp = new OpenIdRPStepBuilder(
     generateDefaultAuthorisationServerMetadata(authServerUrl),
@@ -983,7 +966,7 @@ async function generateTokenResponse(vc: string) {
   return await rp.generateAccessToken(
     tokenRequest,
     false,
-    signCallback,
+    // signCallback,
     authServerUrl,
     issuerJWK
   );

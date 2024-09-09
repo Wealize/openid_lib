@@ -333,7 +333,7 @@ async function generateTokenResponse(vc: string) {
   return await rp.generateAccessToken(
     tokenRequest,
     false,
-    signCallback,
+    // signCallback,
     issuerUrl,
     authServerJWK
   );

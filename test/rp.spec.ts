@@ -152,7 +152,7 @@ describe("Reliying Party tests", async () => {
         const _tokenResponse = await rp.generateAccessToken(
           tokenRequest,
           false,
-          signCallback,
+          // signCallback,
           authServerUrl,
           authServerJWK
         );
@@ -390,7 +390,7 @@ describe("Reliying Party tests", async () => {
         await rp.generateAccessToken(
           tokenRequest,
           false,
-          signCallback,
+          // signCallback,
           authServerUrl,
           authServerJWK
         );
@@ -444,7 +444,7 @@ describe("Reliying Party tests", async () => {
         const _tokenResponse = await rp.generateAccessToken(
           tokenRequest,
           false,
-          signCallback,
+          // signCallback,
           authServerUrl,
           authServerJWK
         );
@@ -506,7 +506,7 @@ describe("Reliying Party tests", async () => {
         const _tokenResponse = await rp.generateAccessToken(
           tokenRequest,
           false,
-          signCallback,
+          // signCallback,
           authServerUrl,
           authServerJWK
         );
@@ -533,7 +533,7 @@ describe("Reliying Party tests", async () => {
       await rp.generateAccessToken(
         tokenRequest,
         false,
-        signCallback,
+        // signCallback,
         authServerUrl,
         authServerJWK
       );
