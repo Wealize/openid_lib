@@ -347,6 +347,7 @@ describe("VP Verification tests", async () => {
           type: "Raw",
           presentationDefinition: presentationDefinition
         },
+        authServerUrl + "/direct_post"
       );
       const vpResponse = {
         presentation_submission: presentationSubmission,

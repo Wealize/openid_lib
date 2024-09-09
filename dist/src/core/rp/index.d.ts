@@ -94,7 +94,7 @@ export declare class OpenIDReliyingParty {
      * issues related to the content of the VP Token.
      * @returns A VP Token Request
      */
-    directVpTokenRequestForVerification(presentationDefinition: RpTypes.PresentationDefinitionLocation, additionalParameters?: RpTypes.CreateTokenRequestOptionalParams): Promise<VpTokenRequest>;
+    directVpTokenRequestForVerification(presentationDefinition: RpTypes.PresentationDefinitionLocation, redirectUri: string, additionalParameters?: RpTypes.CreateTokenRequestOptionalParams): Promise<VpTokenRequest>;
     /**
      * Allows to create a new Authorisation request in which an VP Token
      * is requested

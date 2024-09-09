@@ -231,6 +231,7 @@ export class OpenIDReliyingParty {
    */
   async directVpTokenRequestForVerification(
     presentationDefinition: RpTypes.PresentationDefinitionLocation,
+    redirectUri: string,
     additionalParameters?: RpTypes.CreateTokenRequestOptionalParams,
   ) {
     // TODO: Refactor this method in the future. Too similar to createVpTokenRequest
@@ -256,7 +257,7 @@ export class OpenIDReliyingParty {
     const requestParams: VpTokenRequestParams = {
       response_type: "vp_token",
       scope: additionalParameters.scope!,
-      redirect_uri: "",
+      redirect_uri: redirectUri,
       response_mode: additionalParameters.responseMode,
       nonce: nonce,
       client_id: this.metadata.issuer

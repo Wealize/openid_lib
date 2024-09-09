@@ -131,7 +131,7 @@ export class OpenIDReliyingParty {
      * issues related to the content of the VP Token.
      * @returns A VP Token Request
      */
-    directVpTokenRequestForVerification(presentationDefinition, additionalParameters) {
+    directVpTokenRequestForVerification(presentationDefinition, redirectUri, additionalParameters) {
         return __awaiter(this, void 0, void 0, function* () {
             // TODO: Refactor this method in the future. Too similar to createVpTokenRequest
             additionalParameters = Object.assign({
@@ -153,7 +153,7 @@ export class OpenIDReliyingParty {
             const requestParams = {
                 response_type: "vp_token",
                 scope: additionalParameters.scope,
-                redirect_uri: "",
+                redirect_uri: redirectUri,
                 response_mode: additionalParameters.responseMode,
                 nonce: nonce,
                 client_id: this.metadata.issuer
