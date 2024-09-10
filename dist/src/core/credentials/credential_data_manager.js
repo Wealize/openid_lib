@@ -14,7 +14,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 export class CredentialDataManager {
     /**
      * Allows to obtain the true identifier of the credential subject. This method
-     * can be overwritten if needed and be useful when working with DID URL syntax
+     * can be overwritten if needed and can be useful when working with DID URL syntax
      * @param _accessTokenSubject The subject ID contained in an Access Token
      * @param proofIssuer The subject ID contained in a control proof
      * @returns

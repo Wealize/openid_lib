@@ -20,10 +20,11 @@ export declare abstract class CredentialDataManager {
      */
     abstract deferredExchange(acceptanceToken: string): Promise<Result<InTimeCredentialData & {
         format: W3CVerifiableCredentialFormats;
+        types: string[];
     } | DeferredCredentialData, Error>>;
     /**
      * Allows to obtain the true identifier of the credential subject. This method
-     * can be overwritten if needed and be useful when working with DID URL syntax
+     * can be overwritten if needed and can be useful when working with DID URL syntax
      * @param _accessTokenSubject The subject ID contained in an Access Token
      * @param proofIssuer The subject ID contained in a control proof
      * @returns

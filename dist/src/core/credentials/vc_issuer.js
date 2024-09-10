@@ -280,8 +280,8 @@ export class W3CVcIssuer {
             }
             const credentialDataResponse = exchangeResult.unwrap();
             return match(credentialDataResponse)
-                .with({ type: "InTime" }, (data) => __awaiter(this, void 0, void 0, function* () {
-                return this.generateW3CCredential(data.data.types, data.schema, data.data.credentialSubject, data, data.format, dataModel);
+                .with({ type: "InTime" }, (dataResponse) => __awaiter(this, void 0, void 0, function* () {
+                return this.generateW3CCredential(dataResponse.types, dataResponse.schema, dataResponse.data.id, dataResponse, dataResponse.format, dataModel);
             }))
                 .with({ type: "Deferred" }, (data) => {
                 return {

@@ -159,9 +159,10 @@ describe("VP Verification tests", async () => {
           }
         }
         async deferredExchange(
-          acceptanceToken: string
+          _acceptanceToken: string
         ): Promise<
-          Result<DeferredCredentialData | (InTimeCredentialData & { format: W3CVerifiableCredentialFormats; }), Error>
+          Result<DeferredCredentialData |
+            (InTimeCredentialData & { format: W3CVerifiableCredentialFormats, types: string[] }), Error>
         > {
           return Result.Ok({
             type: "InTime",
@@ -173,7 +174,8 @@ describe("VP Verification tests", async () => {
               type: "CustomType"
             },
             metadata: {},
-            format: "jwt_vc"
+            format: "jwt_vc",
+            types: ["CustomType"]
           })
         }
       }

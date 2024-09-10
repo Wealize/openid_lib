@@ -396,12 +396,12 @@ export class W3CVcIssuer {
     }
     const credentialDataResponse = exchangeResult.unwrap();
     return match(credentialDataResponse)
-      .with({ type: "InTime" }, async (data) => this.generateW3CCredential(
-        data.data.types,
-        data.schema,
-        data.data.credentialSubject,
-        data,
-        data.format,
+      .with({ type: "InTime" }, async (dataResponse) => this.generateW3CCredential(
+        dataResponse.types,
+        dataResponse.schema,
+        dataResponse.data.id!,
+        dataResponse,
+        dataResponse.format,
         dataModel,
       ))
       .with({ type: "Deferred" }, (data) => {
