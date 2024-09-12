@@ -24,7 +24,6 @@ import {
 import { Resolver } from "did-resolver";
 import { getResolver } from "@cef-ebsi/key-did-resolver";
 import { SignJWT, importJWK } from "jose";
-import { NonceManager } from "../src/core/nonce/index.js";
 import { MemoryStateManager } from "../src/core/state/index.js";
 import { Result } from "../src/common/classes/result.js";
 import { OpenIdRPStepBuilder } from "../src/core/rp/builder.js";
@@ -113,7 +112,7 @@ describe("VC Issuance tests", () => {
         .setProtectedHeader(header)
         .sign(keyLike);
     },
-    new NonceManager(memoryManager),
+    memoryManager,
     new class extends CredentialDataManager {
       async getCredentialData(types: string[], holder: string): Promise<CredentialDataResponse> {
         if (types.includes("DeferredVc")) {

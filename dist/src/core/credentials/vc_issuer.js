@@ -18,30 +18,18 @@ import { VcFormatter } from './formatters.js';
 import { InternalNonceError, InvalidCredentialRequest, InvalidDataProvided, InvalidProof, InvalidToken } from "../../common/classes/index.js";
 import { areDidUrlsSameDid } from '../../common/utils/did.utils.js';
 import { arraysAreEqual } from '../../common/utils/array.utils.js';
+import { NonceManager } from '../nonce/index.js';
 /**
  * W3C credentials issuer in both deferred and In-Time flows
  */
 export class W3CVcIssuer {
-    /**
-     * Constructor of the issuer
-     * @param metadata Issuer metadata
-     * @param didResolver Object that allows to resolve the DIDs found
-     * @param issuerDid The DID of the issuer
-     * @param signCallback Callback used to sign the VC generated
-     * @param cNonceRetrieval Callback to recover the challenge nonce expected
-     * for a control proof
-     * @param getVcSchema Callback to recover the schema associated with a VC
-     * @param getCredentialData Callback to recover the subject data to
-     * include in the VC
-     * It can also be used to specify if the user should follow the deferred flow
-     */
-    constructor(metadata, didResolver, issuerDid, signCallback, nonceManager, credentialDataManager) {
+    constructor(metadata, didResolver, issuerDid, signCallback, stateManager, credentialDataManager) {
         this.metadata = metadata;
         this.didResolver = didResolver;
         this.issuerDid = issuerDid;
         this.signCallback = signCallback;
-        this.nonceManager = nonceManager;
         this.credentialDataManager = credentialDataManager;
+        this.nonceManager = new NonceManager(stateManager);
     }
     /**
      * Allows to verify a JWT Access Token in string format
@@ -141,9 +129,9 @@ export class W3CVcIssuer {
         });
     }
     // TODO: valorar quitar iss de 'CredentialDataOrDeferred' y homogeneizar comportamiento entre V1 y V2
-    // El motivo es que V1 incluye un campo issuanceDate, y además EBSI está obligando a que sea igual al 'iat' del token. 
+    // El motivo es que V1 incluye un campo issuanceDate, y además EBSI está obligando a que sea igual al 'iat' del token.
     // Sin embargo, en V2 ese campo no existe. La propusta sería:
-    // - En V2, validFrom se asocia con nbf, y iat sería Date.now(). Según esto, en formatDataModel2, iat debería ajustarse a 
+    // - En V2, validFrom se asocia con nbf, y iat sería Date.now(). Según esto, en formatDataModel2, iat debería ajustarse a
     //   Date.now() y valorar quitar el nbf o también asignarlo a Date.now(). Notar diferencia entre info de la credencial y del token
     // - En V1, validFrom se asocia con nbf, issued y issuanceDate y iat con Date.now()
     generateCredentialTimeStamps(data) {

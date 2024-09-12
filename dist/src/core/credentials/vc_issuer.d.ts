@@ -7,7 +7,7 @@ import { IssuerMetadata } from "../../common/interfaces/issuer_metadata.interfac
 import { CredentialResponse } from "../../common/interfaces/credential_response.interface.js";
 import * as VcIssuerTypes from "./types.js";
 import { CredentialDataManager } from './credential_data_manager.js';
-import { NonceManager } from '../nonce/index.js';
+import { StateManager } from '../state/index.js';
 /**
  * W3C credentials issuer in both deferred and In-Time flows
  */
@@ -16,7 +16,6 @@ export declare class W3CVcIssuer {
     private didResolver;
     private issuerDid;
     private signCallback;
-    private nonceManager;
     private credentialDataManager;
     /**
      * Constructor of the issuer
@@ -31,7 +30,8 @@ export declare class W3CVcIssuer {
      * include in the VC
      * It can also be used to specify if the user should follow the deferred flow
      */
-    constructor(metadata: IssuerMetadata, didResolver: Resolver, issuerDid: string, signCallback: VcIssuerTypes.VcSignCallback, nonceManager: NonceManager, credentialDataManager: CredentialDataManager);
+    private nonceManager;
+    constructor(metadata: IssuerMetadata, didResolver: Resolver, issuerDid: string, signCallback: VcIssuerTypes.VcSignCallback, stateManager: StateManager, credentialDataManager: CredentialDataManager);
     /**
      * Allows to verify a JWT Access Token in string format
      * @param token The access token

@@ -14,7 +14,6 @@ import {
   IdTokenResponse,
   InTimeCredentialData,
   JWA_ALGS,
-  OpenIDReliyingParty,
   TokenRequest,
   W3CDataModel,
   W3CVcIssuer,
@@ -30,8 +29,7 @@ import { Resolver } from "did-resolver";
 import { SignJWT, importJWK } from "jose";
 import { OpenIdRPStepBuilder } from "../src/core/rp/builder.js";
 import { Result } from "../src/common/classes/result.js";
-import { MemoryStateManager, StateManager } from "../src/core/state/index.js";
-import { NonceManager } from "../src/core/nonce/index.js";
+import { MemoryStateManager } from "../src/core/state/index.js";
 import { JwtPayload } from "jsonwebtoken";
 
 const memoryManager = new MemoryStateManager();
@@ -136,7 +134,7 @@ describe("VP Verification tests", async () => {
           .setProtectedHeader(header)
           .sign(keyLike);
       },
-      new NonceManager(memoryManager),
+      memoryManager,
       new class extends CredentialDataManager {
         async getCredentialData(types: string[], holder: string): Promise<CredentialDataResponse> {
           if (types.includes("DeferredVc")) {
