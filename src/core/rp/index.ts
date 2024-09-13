@@ -624,7 +624,7 @@ export class OpenIDReliyingParty {
       }
       nonceState = prevNonce;
       redirectUri = prevNonce.redirectUri;
-      holderState = prevNonce.state;
+      holderState = prevNonce.holderState;
     }
     return {
       nonceState: nonceState,
