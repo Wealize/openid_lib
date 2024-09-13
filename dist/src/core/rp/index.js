@@ -105,7 +105,7 @@ export class OpenIDReliyingParty {
                 scope: DEFAULT_SCOPE,
                 expirationTime: this.generalConfiguration.idTokenExpirationTime
             }, additionalParameters);
-            const { nonce, state } = this.createNonceForPostBaseAuthz(redirectUri, requestPurpose, "id_token", additionalParameters.state);
+            const { nonce, state } = this.createNonceForPostBaseAuthz(requestPurpose, "id_token", additionalParameters.state);
             const requestParams = {
                 response_type: "id_token",
                 scope: additionalParameters.scope,
@@ -194,7 +194,7 @@ export class OpenIDReliyingParty {
                 scope: DEFAULT_SCOPE,
                 expirationTime: this.generalConfiguration.vpTokenExpirationTIme
             }, additionalParameters);
-            const { nonce, state } = this.createNonceForPostBaseAuthz(redirectUri, requestPurpose, "vp_token", additionalParameters.state);
+            const { nonce, state } = this.createNonceForPostBaseAuthz(requestPurpose, "vp_token", additionalParameters.state);
             const requestParams = {
                 response_type: "vp_token",
                 scope: additionalParameters.scope,
@@ -215,7 +215,7 @@ export class OpenIDReliyingParty {
             return new VpTokenRequest(requestParams, vpToken, clientAuthorizationEndpoint);
         });
     }
-    createNonceForPostBaseAuthz(redirectUri, purpose, responseType, state) {
+    createNonceForPostBaseAuthz(purpose, responseType, state) {
         const nonceState = match(purpose)
             .with({ type: "Issuance" }, (data) => {
             let vcTypes = {
@@ -236,7 +236,7 @@ export class OpenIDReliyingParty {
                     type: "PostBaseAuthz",
                     timestamp: Date.now(),
                     sub: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-                    redirectUri: redirectUri,
+                    redirectUri: data.verifiedBaseAuthzRequest.authzRequest.redirect_uri,
                     responseType: responseType,
                     state,
                     holderState: data.verifiedBaseAuthzRequest.authzRequest.state,
@@ -255,7 +255,7 @@ export class OpenIDReliyingParty {
                 type: "PostBaseAuthz",
                 timestamp: Date.now(),
                 sub: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-                redirectUri: redirectUri,
+                redirectUri: data.verifiedBaseAuthzRequest.authzRequest.redirect_uri,
                 responseType: responseType,
                 state,
                 holderState: data.verifiedBaseAuthzRequest.authzRequest.state,
@@ -285,7 +285,7 @@ export class OpenIDReliyingParty {
                     },
                     timestamp: Date.now(),
                     sub: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-                    redirectUri: redirectUri,
+                    redirectUri: data.verifiedBaseAuthzRequest.authzRequest.redirect_uri,
                     responseType: responseType,
                 };
             }
@@ -302,7 +302,7 @@ export class OpenIDReliyingParty {
                 },
                 timestamp: Date.now(),
                 sub: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-                redirectUri: redirectUri,
+                redirectUri: data.verifiedBaseAuthzRequest.authzRequest.redirect_uri,
                 responseType: responseType,
             };
         })

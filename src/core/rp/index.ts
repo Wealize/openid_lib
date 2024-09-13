@@ -187,7 +187,6 @@ export class OpenIDReliyingParty {
       ...additionalParameters
     };
     const { nonce, state } = this.createNonceForPostBaseAuthz(
-      redirectUri,
       requestPurpose,
       "id_token",
       additionalParameters.state
@@ -324,7 +323,6 @@ export class OpenIDReliyingParty {
       ...additionalParameters
     };
     const { nonce, state } = this.createNonceForPostBaseAuthz(
-      redirectUri,
       requestPurpose,
       "vp_token",
       additionalParameters.state
@@ -366,7 +364,6 @@ export class OpenIDReliyingParty {
   }
 
   private createNonceForPostBaseAuthz(
-    redirectUri: string,
     purpose: RpTypes.RequestPurpose,
     responseType: Extract<AuthzResponseType, "id_token" | "vp_token">,
     state?: string
@@ -391,7 +388,7 @@ export class OpenIDReliyingParty {
             type: "PostBaseAuthz",
             timestamp: Date.now(),
             sub: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-            redirectUri: redirectUri,
+            redirectUri: data.verifiedBaseAuthzRequest.authzRequest.redirect_uri,
             responseType: responseType,
             state,
             holderState: data.verifiedBaseAuthzRequest.authzRequest.state,
@@ -410,7 +407,7 @@ export class OpenIDReliyingParty {
           type: "PostBaseAuthz",
           timestamp: Date.now(),
           sub: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-          redirectUri: redirectUri,
+          redirectUri: data.verifiedBaseAuthzRequest.authzRequest.redirect_uri,
           responseType: responseType,
           state,
           holderState: data.verifiedBaseAuthzRequest.authzRequest.state,
@@ -440,7 +437,7 @@ export class OpenIDReliyingParty {
             },
             timestamp: Date.now(),
             sub: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-            redirectUri: redirectUri,
+            redirectUri: data.verifiedBaseAuthzRequest.authzRequest.redirect_uri,
             responseType: responseType,
           };
         }
@@ -457,7 +454,7 @@ export class OpenIDReliyingParty {
           },
           timestamp: Date.now(),
           sub: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-          redirectUri: redirectUri,
+          redirectUri: data.verifiedBaseAuthzRequest.authzRequest.redirect_uri,
           responseType: responseType,
         };
       })
