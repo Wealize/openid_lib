@@ -160,22 +160,23 @@ export class W3CVcIssuer {
       .otherwise(() => {
         throw new InternalNonceError("Unexpected behaviour detected at nonce matching");
       });
-    if (cNonce.operationType)
-      await controlProof.verifyProof(
-        innerNonce,
-        this.metadata.credential_issuer,
-        this.didResolver
-      );
+    await controlProof.verifyProof(
+      innerNonce,
+      this.metadata.credential_issuer,
+      this.didResolver
+    );
     const credentialSubject = await this.credentialDataManager.resolveCredentialSubject(
       jwtPayload.sub!,
       proofAssociatedClient
     );
-    return await this.credentialResponseMatch(
+    const credentialResponse = await this.credentialResponseMatch(
       credentialRequest.types,
       credentialSubject,
       credentialRequest.format,
       dataModel,
     );
+    this.nonceManager.deleteNonce(innerNonce);
+    return credentialResponse;
   }
 
   private async credentialResponseMatch(

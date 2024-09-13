@@ -93,10 +93,11 @@ export class W3CVcIssuer {
                 .otherwise(() => {
                 throw new InternalNonceError("Unexpected behaviour detected at nonce matching");
             });
-            if (cNonce.operationType)
-                yield controlProof.verifyProof(innerNonce, this.metadata.credential_issuer, this.didResolver);
+            yield controlProof.verifyProof(innerNonce, this.metadata.credential_issuer, this.didResolver);
             const credentialSubject = yield this.credentialDataManager.resolveCredentialSubject(jwtPayload.sub, proofAssociatedClient);
-            return yield this.credentialResponseMatch(credentialRequest.types, credentialSubject, credentialRequest.format, dataModel);
+            const credentialResponse = yield this.credentialResponseMatch(credentialRequest.types, credentialSubject, credentialRequest.format, dataModel);
+            this.nonceManager.deleteNonce(innerNonce);
+            return credentialResponse;
         });
     }
     credentialResponseMatch(types, credentialSubject, format, dataModel) {

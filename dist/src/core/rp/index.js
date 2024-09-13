@@ -623,6 +623,7 @@ export class OpenIDReliyingParty {
             let clientId;
             let prevNonce;
             let nonceValue;
+            let additionalParams = {};
             if (this.metadata.grant_types_supported
                 && !this.metadata.grant_types_supported.includes(tokenRequest.grant_type)) {
                 throw new UnsupportedGrantType(`Grant type "${tokenRequest.grant_type}" not supported`);
@@ -679,6 +680,9 @@ export class OpenIDReliyingParty {
                         throw new InvalidGrant(`Invalid "${tokenRequest.grant_type}" provided ${verificationResultPre.unwrapError().message}`);
                     }
                     clientId = verificationResultPre.unwrap();
+                    if (tokenRequest.user_pin) {
+                        additionalParams = { pin: tokenRequest.user_pin };
+                    }
                     break;
                 case "vp_token":
                     // TODO: PENDING
@@ -689,13 +693,7 @@ export class OpenIDReliyingParty {
             }
             const now = Date.now();
             const { nonce, state } = this.generateCNonce(now, clientId, this.generalConfiguration.cNonceExpirationTime * 1000, nonceValue, prevNonce);
-            const token = yield this.signCallback({
-                aud: audience,
-                iss: this.metadata.issuer,
-                sub: clientId,
-                exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000,
-                nonce: nonce,
-            });
+            const token = yield this.signCallback(Object.assign({ aud: audience, iss: this.metadata.issuer, sub: clientId, exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000, nonce: nonce }, additionalParams));
             // const token = await tokenSignCallback({
             //   aud: audience,
             //   iss: this.metadata.issuer,

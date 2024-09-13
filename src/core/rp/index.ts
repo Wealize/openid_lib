@@ -81,11 +81,11 @@ import {
 } from "../nonce/types.js";
 
 /**
- * Represents an entity acting as a Reliying Party. As such, it has the 
- * capability to process authorisation requests and to send others. 
+ * Represents an entity acting as a Reliying Party. As such, it has the
+ * capability to process authorisation requests and to send others.
  * It can also issue access tokens.
- * 
- * The "grant_type" "authorisation_code" and "pre-authorised_code" are supported 
+ *
+ * The "grant_type" "authorisation_code" and "pre-authorised_code" are supported
  * for authentication. The first one is always active. In order to facilitate the
  * building of the objects from this class, a builder has been developed.
  */
@@ -96,7 +96,7 @@ export class OpenIDReliyingParty {
  * that establish contact. This configuration is overwritten dynamically with the
  * data provided by these actors.
  * @param metadata Authorisation server metadata
- * @param didResolver Object responsible for obtaining the DID Documents 
+ * @param didResolver Object responsible for obtaining the DID Documents
  * of the DIDs that are detected.
  * @param signCallback Callback used to sign any required data.
  * @param scopeVerificationFlag Flag that control if the scope parameter
@@ -143,7 +143,7 @@ export class OpenIDReliyingParty {
   /**
    * Allows to add support for a new DID Method
    * @param methodName DID Method name
-   * @param resolver Object responsible for obtaining the DID Documents 
+   * @param resolver Object responsible for obtaining the DID Documents
    * related to the DID specified
    */
   addDidMethod(methodName: string, resolver: Resolvable) {
@@ -156,19 +156,19 @@ export class OpenIDReliyingParty {
   }
 
   /**
-   * Allows to create a new Authorisation request in which an ID Token 
+   * Allows to create a new Authorisation request in which an ID Token
    * is requested
-   * @param clientAuthorizationEndpoint Endpoint of the authorisation 
+   * @param clientAuthorizationEndpoint Endpoint of the authorisation
    * server of the client
    * @param audience "aud" parameter for the generated JWT.
-   * @param redirectUri URI to which the client should deliver the 
+   * @param redirectUri URI to which the client should deliver the
    * authorisation response to
    * @param requestPurpose Allows to specify if the end purpose of the token
    * is for a VC issuance or for a verification and also allows to set
    * a verified authz request.
-   * @param additionalParameters Additional parameters that handle 
+   * @param additionalParameters Additional parameters that handle
    * issues related to the content of the ID Token.
-   * @returns The ID Token Request 
+   * @returns The ID Token Request
    */
   async createIdTokenRequest(
     clientAuthorizationEndpoint: string,
@@ -223,9 +223,9 @@ export class OpenIDReliyingParty {
   /**
    * Method that allows to build an VP Token Request directly, without
    * the need of a previous Base Authz Request
-   * @param presentationDefinition The presentation definition to indicate to 
+   * @param presentationDefinition The presentation definition to indicate to
    * the user
-   * @param additionalParameters Additional parameters that handle 
+   * @param additionalParameters Additional parameters that handle
    * issues related to the content of the VP Token.
    * @returns A VP Token Request
    */
@@ -291,21 +291,21 @@ export class OpenIDReliyingParty {
   }
 
   /**
-   * Allows to create a new Authorisation request in which an VP Token 
+   * Allows to create a new Authorisation request in which an VP Token
    * is requested
-   * @param clientAuthorizationEndpoint Endpoint of the authorisation 
+   * @param clientAuthorizationEndpoint Endpoint of the authorisation
    * server of the client
    * @param audience "aud" parameter for the generated JWT.
-   * @param redirectUri URI to which the client should deliver the 
+   * @param redirectUri URI to which the client should deliver the
    * authorisation response to
    * @param presentationDefinition Allows to define how the presentation
    * definition is going to be specified for the user
    * @param requestPurpose Allows to specify if the end purpose of the token
    * is for a VC issuance or for a verification and also allows to set
    * a verified authz request.
-   * @param additionalParameters Additional parameters that handle 
+   * @param additionalParameters Additional parameters that handle
    * issues related to the content of the VP Token.
-   * @returns The VP Token Request 
+   * @returns The VP Token Request
    */
   async createVpTokenRequest(
     clientAuthorizationEndpoint: string,
@@ -466,7 +466,7 @@ export class OpenIDReliyingParty {
   }
 
   /**
-   * Allows to verify an authorisation request sent by a client 
+   * Allows to verify an authorisation request sent by a client
    * @param request The request sent by the client
    * @returns Verified Authz Reques with some of the client metadata extracted
    */
@@ -639,8 +639,8 @@ export class OpenIDReliyingParty {
   /**
    * Allows to verify an ID Token Response sent by a client
    * @param idTokenResponse The authorisation response to verify
-   * @returns The verified ID Token Response with the DID Document of the 
-   * associated token issuer. 
+   * @returns The verified ID Token Response with the DID Document of the
+   * associated token issuer.
    * @throws If data provided is incorrect
    */
   async verifyIdTokenResponse(
@@ -733,11 +733,11 @@ export class OpenIDReliyingParty {
   /**
    * Allows to verify an VP Token Response sent by a client
    * @param vpTokenResponse The authorisation response to verify
-   * @param presentationDefinition The presentation definition to use to 
+   * @param presentationDefinition The presentation definition to use to
    * verify the VP
    * @param vcSignatureVerification A flag that can be used to specify if the signature
    * of the VC should be checked. True by default
-   * @returns The verified VP Token Response with holder DID and the data 
+   * @returns The verified VP Token Response with holder DID and the data
    * extracted from the VCs of the VP
    * @throws If data provided is incorrect
    */
@@ -872,7 +872,7 @@ export class OpenIDReliyingParty {
   /**
    * Allows to generate a token response from a token request
    * @param tokenRequest The token request sent by the client
-   * @param generateIdToken Flag indicating whether, together with 
+   * @param generateIdToken Flag indicating whether, together with
    * the access token, an ID Token should be generated.
    * @param tokenSignCallback Callback that manages the signature of the token.
    * @param audience JWT "aud" to include in the generated access token
@@ -891,6 +891,7 @@ export class OpenIDReliyingParty {
     let clientId: string;
     let prevNonce: NonceState | undefined;
     let nonceValue: string | undefined;
+    let additionalParams: Record<string, any> = {};
     if (this.metadata.grant_types_supported
       && !this.metadata.grant_types_supported.includes(tokenRequest.grant_type)) {
       throw new UnsupportedGrantType(
@@ -918,7 +919,6 @@ export class OpenIDReliyingParty {
           throw new InvalidGrant("Invalid authorization code provided");
         }
         prevNonce = nonceResult.unwrap();
-
         match(prevNonce.clientData)
           .with({ type: "HolderWallet" }, async (data) => {
             // TODO: Give an use to the code_challenge_method paramketer
@@ -968,6 +968,9 @@ export class OpenIDReliyingParty {
           );
         }
         clientId = verificationResultPre.unwrap();
+        if (tokenRequest.user_pin) {
+          additionalParams = { pin: tokenRequest.user_pin };
+        }
         break;
       case "vp_token":
         // TODO: PENDING
@@ -992,6 +995,7 @@ export class OpenIDReliyingParty {
       sub: clientId,
       exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000,
       nonce: nonce,
+      ...additionalParams
     });
     // const token = await tokenSignCallback({
     //   aud: audience,
