@@ -5,11 +5,17 @@
  */
 export declare abstract class StateManager {
     /**
-     * Save a chunck of data in a space reserved with the indicated ID
+     * Save a chunk of data in a space reserved with the indicated ID
      * @param id The ID that identifies the chunk data
      * @param data The data to store
      */
     abstract saveState(id: string, data: any): Promise<void>;
+    /**
+     * Update a chunk of data in a space reserved with the indicated ID
+     * @param id The ID that identifies the chunk data
+     * @param data The data to store
+     */
+    abstract updateState(id: string, data: any): Promise<void>;
     /**
      * Allows to get a previously saved data with the indicated ID
      * @param id The ID that identifies the data to obtain
@@ -29,6 +35,7 @@ export declare class MemoryStateManager extends StateManager {
     private memory;
     constructor();
     saveState(id: string, data: any): Promise<void>;
+    updateState(id: string, data: any): Promise<void>;
     getState(id: string): Promise<any | undefined>;
     deleteState(id: string): Promise<void>;
 }

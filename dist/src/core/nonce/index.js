@@ -28,6 +28,11 @@ export class NonceManager {
             yield this.stateManager.saveState(id, data);
         });
     }
+    updateNonce(id, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.stateManager.updateState(id, data);
+        });
+    }
     /**
      * Allows to erase a nonce and its data
      * @param id The nonce to delete

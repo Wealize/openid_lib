@@ -15,6 +15,7 @@ export declare class NonceManager {
      * @param data The data associated to the nonce
      */
     saveNonce(id: string, data: NonceState): Promise<void>;
+    updateNonce(id: string, data: NonceState): Promise<void>;
     /**
      * Allows to erase a nonce and its data
      * @param id The nonce to delete

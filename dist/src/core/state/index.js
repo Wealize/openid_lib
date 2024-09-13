@@ -29,6 +29,11 @@ export class MemoryStateManager extends StateManager {
             this.memory[id] = data;
         });
     }
+    updateState(id, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.memory[id] = data;
+        });
+    }
     getState(id) {
         return this.memory[id];
     }

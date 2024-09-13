@@ -560,7 +560,7 @@ export class OpenIDReliyingParty {
                 .with({ type: "PostBaseAuthz" }, (data) => __awaiter(this, void 0, void 0, function* () {
                 const { nonce, state } = this.createNonceForPostAuthz(nonceValue, data, clientId);
                 if (data.operationType.type === "Issuance") {
-                    yield this.nonceManager.saveNonce(nonce, state);
+                    yield this.nonceManager.updateNonce(nonce, state);
                 }
                 return {
                     authzCode: yield this.signCallback({
@@ -694,14 +694,12 @@ export class OpenIDReliyingParty {
             const now = Date.now();
             const { nonce, state } = this.generateCNonce(now, clientId, this.generalConfiguration.cNonceExpirationTime * 1000, nonceValue, prevNonce);
             const token = yield this.signCallback(Object.assign({ aud: audience, iss: this.metadata.issuer, sub: clientId, exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000, nonce: nonce }, additionalParams));
-            // const token = await tokenSignCallback({
-            //   aud: audience,
-            //   iss: this.metadata.issuer,
-            //   sub: clientId,
-            //   exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000,
-            //   nonce: nonce,
-            // });
-            yield this.nonceManager.saveNonce(nonce, state);
+            if (prevNonce) {
+                yield this.nonceManager.updateNonce(nonce, state);
+            }
+            else {
+                yield this.nonceManager.saveNonce(nonce, state);
+            }
             const result = {
                 access_token: token,
                 token_type: "bearer",

@@ -20,7 +20,7 @@ import {
 } from "./types.js";
 
 /**
- * Class that allows the management of the nonces generated together 
+ * Class that allows the management of the nonces generated together
  * with their states using an interface that simulates a key-value database.
  */
 export class NonceManager {
@@ -34,6 +34,10 @@ export class NonceManager {
    */
   async saveNonce(id: string, data: NonceState) {
     await this.stateManager.saveState(id, data);
+  }
+
+  async updateNonce(id: string, data: NonceState) {
+    await this.stateManager.updateState(id, data);
   }
 
   /**

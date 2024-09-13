@@ -819,7 +819,7 @@ export class OpenIDReliyingParty {
           state
         } = this.createNonceForPostAuthz(nonceValue!, data, clientId);
         if (data.operationType.type === "Issuance") {
-          await this.nonceManager.saveNonce(nonce, state);
+          await this.nonceManager.updateNonce(nonce, state);
         }
         return {
           authzCode: await this.signCallback({
@@ -997,14 +997,11 @@ export class OpenIDReliyingParty {
       nonce: nonce,
       ...additionalParams
     });
-    // const token = await tokenSignCallback({
-    //   aud: audience,
-    //   iss: this.metadata.issuer,
-    //   sub: clientId,
-    //   exp: now + this.generalConfiguration.accessTokenExpirationTime * 1000,
-    //   nonce: nonce,
-    // });
-    await this.nonceManager.saveNonce(nonce, state);
+    if (prevNonce) {
+      await this.nonceManager.updateNonce(nonce, state);
+    } else {
+      await this.nonceManager.saveNonce(nonce, state);
+    }
     const result: TokenResponse = {
       access_token: token,
       token_type: "bearer",
