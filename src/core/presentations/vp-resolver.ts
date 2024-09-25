@@ -7,6 +7,7 @@ import {
   Schema,
   Validator
 } from "jsonschema";
+import { ajv } from "./validator.js";
 import {
   DIFPresentationDefinition,
   JwtFormat,
@@ -58,8 +59,8 @@ import {
 
 
 /**
- * Component specialized in the verification of verifiable 
- * submissions, for which it requires the original definition 
+ * Component specialized in the verification of verifiable
+ * submissions, for which it requires the original definition
  * and the submission delivered together with the VP.
  */
 export class VpResolver {
@@ -76,12 +77,12 @@ export class VpResolver {
    * Main constructor of this class
    * @param didResolver The DID Resolver to employ
    * @param audience The expected audience in the tokens that will be processed
-   * @param externalValidation Callback that will be used to request external 
-   * verification of any detected VC. This verification should focus on 
+   * @param externalValidation Callback that will be used to request external
+   * verification of any detected VC. This verification should focus on
    * validating issues related to the trust framework and the use case.
    * @param nonceValidation Callback the nonces specified in any JWT VP
-   * @param vcSignatureVerification Flag indicating whether the signatures of the VCs 
-   * included in the VP should be verified. To that regard, the DID Resolver provided must 
+   * @param vcSignatureVerification Flag indicating whether the signatures of the VCs
+   * included in the VP should be verified. To that regard, the DID Resolver provided must
    * be able to generate the needed DID Documents
    */
   constructor(
@@ -97,10 +98,10 @@ export class VpResolver {
   /**
    * Verify a Verifiable Presentation
    * @param vp Any data structure in which the VP is located
-   * @param definition The definition of the presentation to be 
+   * @param definition The definition of the presentation to be
    * used to verify the PV
    * @param submission The presentation submission submitted with the VP
-   * @returns Data extracted from the credentials contained 
+   * @returns Data extracted from the credentials contained
    * in the VP as indicated in the definition provided.
    */
   async verifyPresentation(
@@ -222,9 +223,9 @@ export class VpResolver {
         [vc.credentialSchema];
       for (const W3CSchema of schemaArray) {
         const schema = await this.getSchema(W3CSchema);
-        const validator = new Validator();
-        const validationResult = validator.validate(vc, schema);
-        if (validationResult.errors.length) {
+        const validateFunction = await ajv.compileAsync(schema);
+        const validationResult = validateFunction(vc);
+        if (!validationResult) {
           throw new InvalidRequest(
             "VC does not validate against its own schema specification"
           );
@@ -343,7 +344,7 @@ export class VpResolver {
     // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
     await jwtVerify(data, publicKey, { clockTolerance: 5 });
     // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
-    // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar 
+    // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar
     // es el token entero para que la validación tuviera más datos?
     const nonceVerification = await this.nonceValidation(holderDidUrl, jwtPayload.nonce);
     if (!nonceVerification.valid) {

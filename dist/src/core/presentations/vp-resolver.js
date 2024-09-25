@@ -11,6 +11,7 @@ import jsonpath from "jsonpath";
 import fetch from 'node-fetch';
 import { importJWK, jwtVerify } from "jose";
 import { Validator } from "jsonschema";
+import { ajv } from "./validator.js";
 import { W3CDataModel } from "../../common/formats/index.js";
 import { CONTEXT_VC_DATA_MODEL_1, CONTEXT_VC_DATA_MODEL_2, W3C_VP_TYPE } from "../../common/constants/index.js";
 import { decodeToken, didFromDidUrl, getAssertionMethodJWKKeys, getAuthentificationJWKKeys, obtainDid } from "../../common/utils/index.js";
@@ -147,9 +148,9 @@ export class VpResolver {
                     [vc.credentialSchema];
                 for (const W3CSchema of schemaArray) {
                     const schema = yield this.getSchema(W3CSchema);
-                    const validator = new Validator();
-                    const validationResult = validator.validate(vc, schema);
-                    if (validationResult.errors.length) {
+                    const validateFunction = yield ajv.compileAsync(schema);
+                    const validationResult = validateFunction(vc);
+                    if (!validationResult) {
                         throw new InvalidRequest("VC does not validate against its own schema specification");
                     }
                 }
@@ -243,7 +244,7 @@ export class VpResolver {
             // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
             yield jwtVerify(data, publicKey, { clockTolerance: 5 });
             // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
-            // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar 
+            // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar
             // es el token entero para que la validación tuviera más datos?
             const nonceVerification = yield this.nonceValidation(holderDidUrl, jwtPayload.nonce);
             if (!nonceVerification.valid) {
