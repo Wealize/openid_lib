@@ -90,6 +90,9 @@ export class W3CVcIssuer {
                     throw new InvalidCredentialRequest("The provided token does not allow for the issuance of a VC of the specified types");
                 }
             })
+                .with({ operationType: { type: "Issuance", vcTypes: { type: "Uknown" } } }, (_) => {
+                // Most probably generated from pre-auth flow
+            })
                 .otherwise(() => {
                 throw new InternalNonceError("Unexpected behaviour detected at nonce matching");
             });
@@ -268,7 +271,7 @@ export class W3CVcIssuer {
                 throw new InvalidToken(`Invalid acceptance token: ${exchangeResult.unwrapError().message}`);
             }
             const credentialDataResponse = exchangeResult.unwrap();
-            return match(credentialDataResponse)
+            return yield match(credentialDataResponse)
                 .with({ type: "InTime" }, (dataResponse) => __awaiter(this, void 0, void 0, function* () {
                 return this.generateW3CCredential(dataResponse.types, dataResponse.schema, dataResponse.data.id, dataResponse, dataResponse.format, dataModel);
             }))

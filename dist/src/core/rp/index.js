@@ -643,11 +643,11 @@ export class OpenIDReliyingParty {
                         throw new InvalidGrant("Invalid authorization code provided");
                     }
                     prevNonce = nonceResult.unwrap();
-                    match(prevNonce.clientData)
+                    yield match(prevNonce.clientData)
                         .with({ type: "HolderWallet" }, (data) => __awaiter(this, void 0, void 0, function* () {
                         // TODO: Give an use to the code_challenge_method paramketer
-                        if (yield verifyChallenge(tokenRequest.code_verifier, data.codeChallenge)) {
-                            throw new InvalidRequest("The code_verifie does not verify the challenge provided");
+                        if (!(yield verifyChallenge(tokenRequest.code_verifier, data.codeChallenge))) {
+                            throw new InvalidRequest("The code_verifier does not verify the challenge provided");
                         }
                         if (data.clientId !== jwtPayload.sub) {
                             throw new InvalidRequest("The token was issued for a diferent client id");

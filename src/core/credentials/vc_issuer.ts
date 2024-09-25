@@ -157,6 +157,9 @@ export class W3CVcIssuer {
           );
         }
       })
+      .with({ operationType: { type: "Issuance", vcTypes: { type: "Uknown" } } }, (_) => {
+        // Most probably generated from pre-auth flow
+      })
       .otherwise(() => {
         throw new InternalNonceError("Unexpected behaviour detected at nonce matching");
       });
@@ -400,7 +403,7 @@ export class W3CVcIssuer {
       throw new InvalidToken(`Invalid acceptance token: ${exchangeResult.unwrapError().message}`);
     }
     const credentialDataResponse = exchangeResult.unwrap();
-    return match(credentialDataResponse)
+    return await match(credentialDataResponse)
       .with({ type: "InTime" }, async (dataResponse) => this.generateW3CCredential(
         dataResponse.types,
         dataResponse.schema,
