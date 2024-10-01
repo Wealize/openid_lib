@@ -251,6 +251,10 @@ export class OpenIDReliyingParty {
                     }
                 };
             }
+            if (!data.verifiedBaseAuthzRequest.authzRequest.code_challenge
+                || !data.verifiedBaseAuthzRequest.authzRequest.code_challenge_method) {
+                throw new InvalidRequest("A code_challenge is required");
+            }
             return {
                 type: "PostBaseAuthz",
                 timestamp: Date.now(),
@@ -262,7 +266,7 @@ export class OpenIDReliyingParty {
                 clientData: {
                     type: "HolderWallet",
                     clientId: data.verifiedBaseAuthzRequest.authzRequest.client_id,
-                    codeChallenge: data.verifiedBaseAuthzRequest.authzRequest.code_challenge,
+                    codeChallenge: data.verifiedBaseAuthzRequest.authzRequest.code_challenge, // TODO: CHECK CODE CHALLENGE AND ERASE FORM AUTHZ
                     codeChallengeMethod: data.verifiedBaseAuthzRequest.authzRequest.code_challenge_method
                 },
                 operationType: {
@@ -320,12 +324,10 @@ export class OpenIDReliyingParty {
             let params;
             let jwk = undefined;
             if (!request.request) {
-                if (!request.code_challenge || !request.code_challenge_method) {
-                    throw new InvalidRequest("A code_challenge is required");
-                }
                 params = request;
             }
             else {
+                console.log("INIT VERIFY BASE AUTHZ");
                 // TODO: ADD REQUEST_URI PARAMETER
                 if (this.metadata.request_parameter_supported === false) {
                     throw new InvalidRequest("Unsuported request parameter");
