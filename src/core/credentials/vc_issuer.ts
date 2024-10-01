@@ -74,7 +74,8 @@ export class W3CVcIssuer {
     private issuerDid: string,
     private signCallback: VcIssuerTypes.VcSignCallback,
     stateManager: StateManager,
-    private credentialDataManager: CredentialDataManager
+    private credentialDataManager: CredentialDataManager,
+    private vcTypesContextRelationship?: Record<string, string>
   ) {
     this.nonceManager = new NonceManager(stateManager)
   }
@@ -346,6 +347,18 @@ export class W3CVcIssuer {
     }
   }
 
+  private extendsVcContext(content: W3CVerifiableCredential) {
+    if (!this.vcTypesContextRelationship) {
+      return;
+    }
+    const typesToExtend = Object.keys(this.vcTypesContextRelationship);
+    for (const type of content.type) {
+      if (typesToExtend.includes(type)) {
+        content['@context'].push(this.vcTypesContextRelationship[type]);
+      }
+    }
+  }
+
   private async generateW3CCredential(
     type: string[],
     schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
@@ -358,6 +371,7 @@ export class W3CVcIssuer {
     const content: W3CVerifiableCredential = dataModel === W3CDataModel.V1 ?
       this.generateW3CDataForV1(type, schema, subject, vcData) :
       this.generateW3CDataForV2(type, schema, subject, vcData)
+    this.extendsVcContext(content);
     const vcPreSign = formatter.formatVc(content);
     const signedVc = await this.signCallback(format, vcPreSign);
     // Generate a new nonce

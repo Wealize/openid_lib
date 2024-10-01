@@ -245,7 +245,7 @@ export class VpResolver {
             // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
             yield jwtVerify(data, publicKey, { clockTolerance: 5 });
             // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
-            // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar 
+            // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar
             // es el token entero para que la validación tuviera más datos?
             const nonceVerification = yield this.nonceAndStateValidation(holderDidUrl, jwtPayload.nonce, jwtPayload.state);
             if (nonceVerification.isError()) {

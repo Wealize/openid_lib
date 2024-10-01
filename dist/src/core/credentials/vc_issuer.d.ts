@@ -17,6 +17,7 @@ export declare class W3CVcIssuer {
     private issuerDid;
     private signCallback;
     private credentialDataManager;
+    private vcTypesContextRelationship?;
     /**
      * Constructor of the issuer
      * @param metadata Issuer metadata
@@ -31,7 +32,7 @@ export declare class W3CVcIssuer {
      * It can also be used to specify if the user should follow the deferred flow
      */
     private nonceManager;
-    constructor(metadata: IssuerMetadata, didResolver: Resolver, issuerDid: string, signCallback: VcIssuerTypes.VcSignCallback, stateManager: StateManager, credentialDataManager: CredentialDataManager);
+    constructor(metadata: IssuerMetadata, didResolver: Resolver, issuerDid: string, signCallback: VcIssuerTypes.VcSignCallback, stateManager: StateManager, credentialDataManager: CredentialDataManager, vcTypesContextRelationship?: Record<string, string> | undefined);
     /**
      * Allows to verify a JWT Access Token in string format
      * @param token The access token
@@ -66,6 +67,7 @@ export declare class W3CVcIssuer {
     private generateVcId;
     private generateW3CDataForV1;
     private generateW3CDataForV2;
+    private extendsVcContext;
     private generateW3CCredential;
     /**
      * Allows to exchange a deferred code for a VC

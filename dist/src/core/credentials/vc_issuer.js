@@ -23,12 +23,13 @@ import { NonceManager } from '../nonce/index.js';
  * W3C credentials issuer in both deferred and In-Time flows
  */
 export class W3CVcIssuer {
-    constructor(metadata, didResolver, issuerDid, signCallback, stateManager, credentialDataManager) {
+    constructor(metadata, didResolver, issuerDid, signCallback, stateManager, credentialDataManager, vcTypesContextRelationship) {
         this.metadata = metadata;
         this.didResolver = didResolver;
         this.issuerDid = issuerDid;
         this.signCallback = signCallback;
         this.credentialDataManager = credentialDataManager;
+        this.vcTypesContextRelationship = vcTypesContextRelationship;
         this.nonceManager = new NonceManager(stateManager);
     }
     /**
@@ -224,12 +225,24 @@ export class W3CVcIssuer {
             credentialSubject: Object.assign({ id: subject }, vcData.data)
         };
     }
+    extendsVcContext(content) {
+        if (!this.vcTypesContextRelationship) {
+            return;
+        }
+        const typesToExtend = Object.keys(this.vcTypesContextRelationship);
+        for (const type of content.type) {
+            if (typesToExtend.includes(type)) {
+                content['@context'].push(this.vcTypesContextRelationship[type]);
+            }
+        }
+    }
     generateW3CCredential(type, schema, subject, vcData, format, dataModel) {
         return __awaiter(this, void 0, void 0, function* () {
             const formatter = VcFormatter.fromVcFormat(format, dataModel);
             const content = dataModel === W3CDataModel.V1 ?
                 this.generateW3CDataForV1(type, schema, subject, vcData) :
                 this.generateW3CDataForV2(type, schema, subject, vcData);
+            this.extendsVcContext(content);
             const vcPreSign = formatter.formatVc(content);
             const signedVc = yield this.signCallback(format, vcPreSign);
             // Generate a new nonce

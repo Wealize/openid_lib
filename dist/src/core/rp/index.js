@@ -329,7 +329,6 @@ export class OpenIDReliyingParty {
                 params = request;
             }
             else {
-                console.log("INIT VERIFY BASE AUTHZ");
                 // TODO: ADD REQUEST_URI PARAMETER
                 if (this.metadata.request_parameter_supported === false) {
                     throw new InvalidRequest("Unsuported request parameter");
@@ -635,7 +634,6 @@ export class OpenIDReliyingParty {
             switch (tokenRequest.grant_type) {
                 case "authorization_code":
                     if (!tokenRequest.code) {
-                        console.log(tokenRequest);
                         throw new InvalidGrant(`Grant type "${tokenRequest.grant_type}" invalid parameters`);
                     }
                     yield verifyJwtWithExpAndAudience(tokenRequest.code, authServerPublicKeyJwk, this.metadata.issuer);
@@ -649,13 +647,16 @@ export class OpenIDReliyingParty {
                     prevNonce = nonceResult.unwrap();
                     yield match(prevNonce.clientData)
                         .with({ type: "HolderWallet" }, (data) => __awaiter(this, void 0, void 0, function* () {
-                        // TODO: Give an use to the code_challenge_method paramketer
+                        // TODO: Give an use to the code_challenge_method parameter
                         if (!(yield verifyChallenge(tokenRequest.code_verifier, data.codeChallenge))) {
                             throw new InvalidRequest("The code_verifier does not verify the challenge provided");
                         }
-                        if (data.clientId !== jwtPayload.sub) {
+                        if (!this.subjectComparison(data.clientId, jwtPayload.sub)) {
                             throw new InvalidRequest("The token was issued for a diferent client id");
                         }
+                        // if (data.clientId !== jwtPayload.sub) {
+                        //   throw new InvalidRequest("The token was issued for a diferent client id");
+                        // }
                     }))
                         .with({ type: "ServiceWallet" }, (data) => __awaiter(this, void 0, void 0, function* () {
                         if (tokenRequest.client_assertion_type &&
