@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import jsonpath from "jsonpath";
 import fetch from 'node-fetch';
 import { importJWK, jwtVerify } from "jose";
-import { Validator } from "jsonschema";
+import { ajv } from "./validator.js";
 import { W3CDataModel } from "../../common/formats/index.js";
 import { CONTEXT_VC_DATA_MODEL_1, CONTEXT_VC_DATA_MODEL_2, W3C_VP_TYPE } from "../../common/constants/index.js";
 import { decodeToken, didFromDidUrl, getAssertionMethodJWKKeys, getAuthentificationJWKKeys, obtainDid } from "../../common/utils/index.js";
@@ -70,7 +70,7 @@ export class VpResolver {
                     const rootFormats = definition.format;
                     const format = (_a = inputDescriptor.format) !== null && _a !== void 0 ? _a : rootFormats;
                     const vc = yield this.extractCredentialFromVp(vp, descriptor, rootFormats, format);
-                    const claimData = this.resolveInputDescriptor(inputDescriptor, vc);
+                    const claimData = yield this.resolveInputDescriptor(inputDescriptor, vc);
                     descriptorClaimsMap[inputDescriptor.id] = claimData;
                     idsAlreadyUsed.add(inputDescriptor.id);
                 }
@@ -147,9 +147,9 @@ export class VpResolver {
                     [vc.credentialSchema];
                 for (const W3CSchema of schemaArray) {
                     const schema = yield this.getSchema(W3CSchema);
-                    const validator = new Validator();
-                    const validationResult = validator.validate(vc, schema);
-                    if (validationResult.errors.length) {
+                    const validateFunction = yield ajv.compileAsync(schema);
+                    const validationResult = validateFunction(vc);
+                    if (!validationResult) {
                         throw new InvalidRequest("VC does not validate against its own schema specification");
                     }
                 }
@@ -243,7 +243,7 @@ export class VpResolver {
             // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
             yield jwtVerify(data, publicKey, { clockTolerance: 5 });
             // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
-            // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar 
+            // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar
             // es el token entero para que la validación tuviera más datos?
             const nonceVerification = yield this.nonceValidation(holderDidUrl, jwtPayload.nonce);
             if (!nonceVerification.valid) {
@@ -375,41 +375,43 @@ export class VpResolver {
     }
     resolveInputDescriptor(inputDescriptor, data) {
         var _a;
-        const result = {};
-        if (inputDescriptor.constraints.fields) {
-            for (const field of inputDescriptor.constraints.fields) {
-                if (!field.path.length) {
-                    throw new InvalidRequest("At least one path must be specified for each field specification");
-                }
-                let claimFound;
-                let validPath;
-                for (const path of field.path) {
-                    const tmp = jsonpath.query(data, path, 1);
-                    if (tmp.length) {
-                        if (field.filter) {
-                            const validator = new Validator();
-                            const validationResult = validator.validate(tmp[0], field.filter);
-                            if (!validationResult.errors.length) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = {};
+            if (inputDescriptor.constraints.fields) {
+                for (const field of inputDescriptor.constraints.fields) {
+                    if (!field.path.length) {
+                        throw new InvalidRequest("At least one path must be specified for each field specification");
+                    }
+                    let claimFound;
+                    let validPath;
+                    for (const path of field.path) {
+                        const tmp = jsonpath.query(data, path, 1);
+                        if (tmp.length) {
+                            if (field.filter) {
+                                const validateFunction = yield ajv.compileAsync(field.filter);
+                                const validationResult = validateFunction(tmp[0]);
+                                if (validationResult) {
+                                    claimFound = tmp[0];
+                                    validPath = path;
+                                    break;
+                                }
+                            }
+                            else {
                                 claimFound = tmp[0];
                                 validPath = path;
                                 break;
                             }
                         }
-                        else {
-                            claimFound = tmp[0];
-                            validPath = path;
-                            break;
-                        }
                     }
+                    if (claimFound === undefined && !field.optional) {
+                        throw new InvalidRequest(`Input descriptor ${inputDescriptor.id} not resolved`);
+                    }
+                    const entryId = (_a = field.id) !== null && _a !== void 0 ? _a : validPath;
+                    result[entryId] = claimFound;
                 }
-                if (claimFound === undefined && !field.optional) {
-                    throw new InvalidRequest(`Input descriptor ${inputDescriptor.id} not resolved`);
-                }
-                const entryId = (_a = field.id) !== null && _a !== void 0 ? _a : validPath;
-                result[entryId] = claimFound;
             }
-        }
-        return result;
+            return result;
+        });
     }
     findDefinitionInputDescriptor(definition, id) {
         const result = definition.input_descriptors.find((descriptor) => descriptor.id === id);
