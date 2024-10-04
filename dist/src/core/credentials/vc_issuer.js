@@ -99,14 +99,14 @@ export class W3CVcIssuer {
             });
             yield controlProof.verifyProof(innerNonce, this.metadata.credential_issuer, this.didResolver);
             const credentialSubject = yield this.credentialDataManager.resolveCredentialSubject(jwtPayload.sub, proofAssociatedClient);
-            const credentialResponse = yield this.credentialResponseMatch(credentialRequest.types, credentialSubject, jwtPayload.sub, credentialRequest.format, dataModel);
+            const credentialResponse = yield this.credentialResponseMatch(credentialRequest.types, credentialSubject, credentialRequest.format, dataModel);
             this.nonceManager.deleteNonce(innerNonce);
             return credentialResponse;
         });
     }
-    credentialResponseMatch(types, credentialSubject, accessTokenSubject, format, dataModel) {
+    credentialResponseMatch(types, credentialSubject, format, dataModel) {
         return __awaiter(this, void 0, void 0, function* () {
-            const credentialDataOrDeferred = yield this.credentialDataManager.getCredentialData(types, accessTokenSubject);
+            const credentialDataOrDeferred = yield this.credentialDataManager.getCredentialData(types, credentialSubject);
             return match(credentialDataOrDeferred)
                 .with({ type: "InTime" }, (data) => __awaiter(this, void 0, void 0, function* () {
                 return this.generateW3CCredential(types, data.schema, credentialSubject, data, format, dataModel);
@@ -130,7 +130,7 @@ export class W3CVcIssuer {
     generateVcDirectMode(did, dataModel, types, format) {
         return __awaiter(this, void 0, void 0, function* () {
             this.checkCredentialTypesAndFormat(types, format);
-            return yield this.credentialResponseMatch(types, did, did, format, dataModel);
+            return yield this.credentialResponseMatch(types, did, format, dataModel);
         });
     }
     // TODO: valorar quitar iss de 'CredentialDataOrDeferred' y homogeneizar comportamiento entre V1 y V2
