@@ -176,6 +176,7 @@ export class W3CVcIssuer {
     const credentialResponse = await this.credentialResponseMatch(
       credentialRequest.types,
       credentialSubject,
+      jwtPayload.sub!,
       credentialRequest.format,
       dataModel,
     );
@@ -186,12 +187,13 @@ export class W3CVcIssuer {
   private async credentialResponseMatch(
     types: string[],
     credentialSubject: string,
+    accessTokenSubject: string,
     format: W3CVerifiableCredentialFormats,
     dataModel: W3CDataModel,
   ) {
     const credentialDataOrDeferred = await this.credentialDataManager.getCredentialData(
       types,
-      credentialSubject
+      accessTokenSubject
     );
     return match(credentialDataOrDeferred)
       .with({ type: "InTime" }, async (data) => this.generateW3CCredential(
@@ -227,6 +229,7 @@ export class W3CVcIssuer {
     this.checkCredentialTypesAndFormat(types, format);
     return await this.credentialResponseMatch(
       types,
+      did,
       did,
       format,
       dataModel,
