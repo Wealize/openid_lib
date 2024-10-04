@@ -132,11 +132,6 @@ export class W3CVcIssuer {
     const controlProof = ControlProof.fromJSON(credentialRequest.proof);
     const proofAssociatedClient = controlProof.getAssociatedIdentifier();
     const jwtPayload = acessToken.payload as JwtPayload;
-    if (!areDidUrlsSameDid(proofAssociatedClient, jwtPayload.sub!)) {
-      throw new InvalidToken(
-        "Access Token was issued for a different identifier that the one that sign the proof"
-      );
-    }
     const innerNonce = jwtPayload.nonce as string;
     const cNonceResult = await this.nonceManager.getChallengeNonce(innerNonce);
     if (cNonceResult.isError()) {
@@ -152,6 +147,11 @@ export class W3CVcIssuer {
         throw new InvalidCredentialRequest("Invalid provided nonce");
       })
       .with({ operationType: { type: "Issuance", vcTypes: { type: "Know", vcTypes: P.select() } } }, (types) => {
+        if (!areDidUrlsSameDid(proofAssociatedClient, jwtPayload.sub!)) {
+          throw new InvalidToken(
+            "Access Token was issued for a different identifier that the one that sign the proof"
+          );
+        }
         if (!arraysAreEqual(types, credentialRequest.types)) {
           throw new InvalidCredentialRequest(
             "The provided token does not allow for the issuance of a VC of the specified types"
