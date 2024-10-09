@@ -77,8 +77,8 @@ class JwtControlProof extends ControlProof {
         return jwtPayload.nonce;
     }
     verifyProof(cNonce, audience, didResolver) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const { header, payload } = decodeToken(this.jwt);
             const jwtPayload = payload;
             if (!header.typ || header.typ !== "openid4vci-proof+jwt") {

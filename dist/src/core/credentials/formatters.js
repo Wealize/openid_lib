@@ -19,7 +19,6 @@ export class VcFormatter {
             return new JwtVcFormatter(dataModel);
         }
         else if (format === "jwt_vc_json-ld" || format === "ldp_vc") {
-            // TODO:
             throw new InternalError("Unimplemented");
         }
         else {

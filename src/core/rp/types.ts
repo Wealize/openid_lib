@@ -32,7 +32,7 @@ export type TokenSignCallback = (
  * @param header JWT Header of the ID Token
  * @param payload JWT payload if the ID Token
  * @param didDocument DID Document of the entity the token relates to
- * @returns Indication of whether the verification was successful 
+ * @returns Indication of whether the verification was successful
  * accompanied by an optional error message
  */
 export type IdTokenVerifyCallback = (
@@ -48,28 +48,28 @@ export type IdTokenVerifyCallback = (
 export type GetClientDefaultMetada = () => Promise<HolderMetadata>;
 
 /**
- * Defines an object type which allows to specify the optional parameters of 
+ * Defines an object type which allows to specify the optional parameters of
  * VerifyBaseAuthzRequest OpenIDReliyingParyy method
  */
 export type VerifyBaseAuthzRequestOptionalParams = {
   /**
    * Function for verifying the authorisation details of an authorisation request
    * @param authDetails Details to verify
-   * @returns Indication of whether the verification was successful 
+   * @returns Indication of whether the verification was successful
    * accompanied by an optional error message
    */
   authzDetailsVerifyCallback?: (authDetails: AuthorizationDetails) => Promise<VerificationResult>;
   /**
    * Function for verifying the scope of an authorisation request
    * @param scope The scope of the authz request
-   * @returns Indication of whether the verification was successful 
+   * @returns Indication of whether the verification was successful
    * accompanied by an optional error message
    */
   scopeVerifyCallback?: (scope: string) => Promise<VerificationResult>;
   /**
    * Function for verifying the "issuer_state" parameter of an authorisation request
    * @param state The state of the issuer sent in a Credential Offer
-   * @returns Indication of whether the verification was successful 
+   * @returns Indication of whether the verification was successful
    * accompanied by an optional error message
    */
   issuerStateVerifyCallback?: (state: string) => Promise<VerificationResult>;
@@ -84,7 +84,7 @@ export interface GenerateAccessTokenOptionalParameters {
    * Allows to verify the authorisation code sent with the token request
    * @param clientId The identifier of the client
    * @param code The code itself
-   * @returns Indication of whether the verification was successful 
+   * @returns Indication of whether the verification was successful
    * accompanied by an optional error message
    */
   authorizeCodeCallback?: (
@@ -96,7 +96,7 @@ export interface GenerateAccessTokenOptionalParameters {
    * @param clientId The identifier of the client
    * @param preCode The code itself
    * @param pin The PIN sent by the client
-   * @returns Indication of whether the verification was successful 
+   * @returns Indication of whether the verification was successful
    * accompanied by an optional error message
    */
   preAuthorizeCodeCallback?: (
@@ -105,11 +105,11 @@ export interface GenerateAccessTokenOptionalParameters {
     pin?: string
   ) => Promise<{ client_id?: string, error?: string }>;
   /**
-   * Allows to verify the "code_challenge" parameter sent by an user in 
+   * Allows to verify the "code_challenge" parameter sent by an user in
    * a previous authorisation request
    * @param clientId The identifier of the client
    * @param codeVerifier The code_verifier of the previously received challenge
-   * @returns Indication of whether the verification was successful 
+   * @returns Indication of whether the verification was successful
    * accompanied by an optional error message
    */
   codeVerifierCallback?: (
@@ -136,11 +136,11 @@ export interface GenerateAccessTokenOptionalParameters {
 export type CreateIdTokenRequestOptionalParams = {
   /**
    * Response mode to specify in the ID Token
-   * @defaultValue "direct_post" 
+   * @defaultValue "direct_post"
    */
   responseMode?: AuthzResponseMode;
   /**
-   * Additional payload to include in the JWT 
+   * Additional payload to include in the JWT
    */
   additionalPayload?: Record<string, any>;
   /**
@@ -170,11 +170,11 @@ export type CreateIdTokenRequestOptionalParams = {
 export type CreateVpTokenRequestOptionalParams = {
   /**
  * Response mode to specify in the ID Token
- * @defaultValue "direct_post" 
+ * @defaultValue "direct_post"
  */
   responseMode?: AuthzResponseMode;
   /**
-   * Additional payload to include in the JWT 
+   * Additional payload to include in the JWT
    */
   additionalPayload?: Record<string, any>;
   /**
@@ -198,7 +198,7 @@ export type CreateVpTokenRequestOptionalParams = {
   /**
    * The presentation definition to include in the JWT
    */
-  presentation_definition?: DIFPresentationDefinition; // TODO: Should be checked against metadata?
+  presentation_definition?: DIFPresentationDefinition;
   /**
    * The URI in which the presentation definition can be retrieved
    */
@@ -206,7 +206,7 @@ export type CreateVpTokenRequestOptionalParams = {
 }
 
 /**
- * Client metadata that has been processed to indicate which formats, signature 
+ * Client metadata that has been processed to indicate which formats, signature
  * algorithms and response types are supported.
  */
 export interface ValidatedClientMetadata {

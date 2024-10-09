@@ -78,7 +78,6 @@ export declare class OpenIDReliyingParty {
      * @returns The ID Token Request
      */
     createIdTokenRequest(clientAuthorizationEndpoint: string, audience: string, redirectUri: string, jwtSignCallback: RpTypes.TokenSignCallback, additionalParameters?: RpTypes.CreateIdTokenRequestOptionalParams): Promise<IdTokenRequest>;
-    createIdTokenRequestFromBaseAuthzRequest(): void;
     /**
      * Allows to create a new Authorisation request in which an VP Token
      * is requested

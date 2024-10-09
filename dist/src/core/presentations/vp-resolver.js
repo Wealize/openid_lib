@@ -51,8 +51,8 @@ export class VpResolver {
      * in the VP as indicated in the definition provided.
      */
     verifyPresentation(vp, definition, submission) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             try {
                 if (definition.id !== submission.definition_id) {
                     throw new InvalidRequest("The submission definition ID is incorrect");
@@ -141,7 +141,7 @@ export class VpResolver {
                 }
             }
             // Verify VC Schema
-            if (vc.credentialSchema) { // TODO: Analyze if we should force this
+            if (vc.credentialSchema) {
                 const schemaArray = Array.isArray(vc.credentialSchema) ?
                     vc.credentialSchema :
                     [vc.credentialSchema];
@@ -171,8 +171,6 @@ export class VpResolver {
     }
     getSchema(schema) {
         return __awaiter(this, void 0, void 0, function* () {
-            // WE ONLYE SUPPORT JSON SCHEMA FOR NOW
-            // TODO: WE SHOULD CHECK THE TYPE
             try {
                 const response = yield fetch(schema.id);
                 return yield response.json();
@@ -203,7 +201,6 @@ export class VpResolver {
     }
     deserializeJwtVp(data, validAlgs, descriptorId) {
         return __awaiter(this, void 0, void 0, function* () {
-            // TODO: It could be interesting to check against a json schema or with joi
             if (typeof data !== "string") {
                 throw new InvalidRequest("A JWT VP must be in string format");
             }
@@ -213,7 +210,6 @@ export class VpResolver {
             }
             const { header, payload } = decodeToken(data);
             if (!header.kid) {
-                // TODO: Define error type
                 throw new InvalidRequest(`Descriptor "${descriptorId}" JWT VP must contains a 'kid' parameter`);
             }
             if (!validAlgs.includes(header.alg)) {
@@ -224,7 +220,6 @@ export class VpResolver {
                 throw new InvalidRequest(`Descriptor ${descriptorId} is not a JWT VP`);
             }
             const vp = payload.vp;
-            // TODO: WE SHOULD CHECK THE @CONTEXT. SHOULD IT BE THE SAME AS THE VC?
             if (!vp.type.includes(W3C_VP_TYPE)) {
                 throw new InvalidRequest(`Descriptor ${descriptorId} JWT VP must be of type "${W3C_VP_TYPE}"`);
             }
@@ -240,11 +235,7 @@ export class VpResolver {
             const holderDid = didDocument.id;
             const jwk = getAuthentificationJWKKeys(didDocument, header.kid);
             const publicKey = yield importJWK(jwk);
-            // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
             yield jwtVerify(data, publicKey, { clockTolerance: 5 });
-            // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
-            // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar
-            // es el token entero para que la validación tuviera más datos?
             const nonceVerification = yield this.nonceValidation(holderDidUrl, jwtPayload.nonce);
             if (!nonceVerification.valid) {
                 throw new InvalidRequest(`Descriptor ${descriptorId} invalid nonce specified${nonceVerification.error ?
@@ -314,7 +305,6 @@ export class VpResolver {
             throw new InvalidRequest("Unexpected format detected");
         }
         if (("proof_type") in formatData) {
-            // TODO: NOT SUPPORTED FOR NOW
             throw new InternalError("JLD not supported right now");
         }
         if (("alg") in formatData) {
@@ -322,8 +312,7 @@ export class VpResolver {
         }
         throw new InvalidRequest("Unrecognized format detected");
     }
-    extractCredentialFromVp(data, // TODO: Revise in the future
-    descriptor, expectedFormats, endObjectFormats) {
+    extractCredentialFromVp(data, descriptor, expectedFormats, endObjectFormats) {
         return __awaiter(this, void 0, void 0, function* () {
             const resolveDescriptor = () => __awaiter(this, void 0, void 0, function* () {
                 var _a;
@@ -374,8 +363,8 @@ export class VpResolver {
         return jsonpath.query(data, path, 1);
     }
     resolveInputDescriptor(inputDescriptor, data) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const result = {};
             if (inputDescriptor.constraints.fields) {
                 for (const field of inputDescriptor.constraints.fields) {

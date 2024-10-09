@@ -1,4 +1,4 @@
-// TODO: "JWT_VC is a old identifier. It's there for compatibility"
+// "JWT_VC is a old identifier. It's there for compatibility"
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#format-profiles
 /**
  * THe valid formats for a W3C VC
@@ -7,7 +7,7 @@ export type W3CVerifiableCredentialFormats = "jwt_vc_json" |
   "jwt_vc_json-ld" |
   "ldp_vc" |
   "jwt_vc";
-// TODO: "JWT_VP is a old identifier. It's there for compatibility"
+// "JWT_VP is a old identifier. It's there for compatibility"
 /**
  * The valid formats for a W3C VP
  */

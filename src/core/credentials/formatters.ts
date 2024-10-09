@@ -27,7 +27,7 @@ export abstract class VcFormatter {
   /**
    * Generates a formatter instance based on the specified format
    * @param format The format to consider
-   * @param dataModel The W3C data model version 
+   * @param dataModel The W3C data model version
    * @returns A VcFormatter that allow to express unsigned VC in the specified format
    */
   static fromVcFormat(
@@ -37,7 +37,6 @@ export abstract class VcFormatter {
     if (format === "jwt_vc" || format === "jwt_vc_json") {
       return new JwtVcFormatter(dataModel);
     } else if (format === "jwt_vc_json-ld" || format === "ldp_vc") {
-      // TODO:
       throw new InternalError("Unimplemented");
     } else {
       throw new InternalError("Unsupported format");

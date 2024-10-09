@@ -18,7 +18,6 @@ import { getAuthentificationJWKKeys } from "../../common/utils/did_document.js";
 import { AccessDenied, InsufficienteParamaters, InternalError, InvalidGrant, InvalidRequest, InvalidScope, UnauthorizedClient, UnsupportedGrantType } from "../../common/classes/index.js";
 import { VpResolver } from "../presentations/vp-resolver.js";
 import { VpTokenRequest } from "../../common/classes/vp_token_request.js";
-// TODO: Maybe we need a build to support multiples resolver, or move that responsability to the user
 /**
  * Represents an entity acting as a Reliying Party. As such, it has the
  * capability to process authorisation requests and to send others.
@@ -91,9 +90,6 @@ export class OpenIDReliyingParty {
             return new IdTokenRequest(requestParams, idToken, clientAuthorizationEndpoint);
         });
     }
-    createIdTokenRequestFromBaseAuthzRequest() {
-        // TODO: PENDING
-    }
     /**
      * Allows to create a new Authorisation request in which an VP Token
      * is requested
@@ -151,14 +147,12 @@ export class OpenIDReliyingParty {
      */
     verifyBaseAuthzRequest(request, additionalParameters) {
         return __awaiter(this, void 0, void 0, function* () {
-            // TODO: RESPONSE MODE SHOULD BE CHECKED
             let params;
             let jwk = undefined;
             if (!request.request) {
                 params = request;
             }
             else {
-                // TODO: ADD REQUEST_URI PARAMETER
                 if (this.metadata.request_parameter_supported === false) {
                     throw new InvalidRequest("Unsuported request parameter");
                 }
@@ -287,9 +281,8 @@ export class OpenIDReliyingParty {
      * extracted from the VCs of the VP
      * @throws If data provided is incorrect
      */
-    verifyVpTokenResponse(vpTokenResponse, presentationDefinition, nonceVerificationCallback, vcSignatureVerification = true) {
-        return __awaiter(this, void 0, void 0, function* () {
-            // TODO: STUDY IF WE SHOULD COMPARE DEFINITION VP FORMATS WITH METADATA FORMATS
+    verifyVpTokenResponse(vpTokenResponse_1, presentationDefinition_1, nonceVerificationCallback_1) {
+        return __awaiter(this, arguments, void 0, function* (vpTokenResponse, presentationDefinition, nonceVerificationCallback, vcSignatureVerification = true) {
             const vpResolver = new VpResolver(this.didResolver, this.metadata.issuer, this.vpCredentialVerificationCallback, nonceVerificationCallback, vcSignatureVerification);
             const claimData = yield vpResolver.verifyPresentation(vpTokenResponse.vp_token, presentationDefinition, vpTokenResponse.presentation_submission);
             return {
@@ -309,7 +302,6 @@ export class OpenIDReliyingParty {
      * @returns Authorization response
      */
     createAuthzResponse(redirect_uri, code, state) {
-        // TODO: Maybe this method should be erased. For now, the user defined the code format and content.
         return new AuthorizationResponse(redirect_uri, code, state);
     }
     /**
@@ -384,7 +376,6 @@ export class OpenIDReliyingParty {
                     clientId = verificationResultPre.client_id;
                     break;
                 case "vp_token":
-                    // TODO: PENDING OF VP VERIFICATION METHOD
                     if (!tokenRequest.vp_token) {
                         throw new InsufficienteParamaters(`Grant type "vp_token" requires the "vp_token" parameter`);
                     }

@@ -1,5 +1,4 @@
 import { DidDocumentError } from "../classes/index.js";
-// TODO: In a DID Document the VerificationMethod can be expressed 
 // in differents formats other than JWK.
 // https://www.w3.org/TR/did-core/#verification-material
 /**

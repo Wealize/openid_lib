@@ -2,7 +2,7 @@ import { JWA_ALGS } from "../constants";
 import { W3CVerifiableCredentialFormats, W3CVerifiablePresentationFormats } from "../formats";
 
 /**
- * Data structure of a presentation definition according to 
+ * Data structure of a presentation definition according to
  * https://identity.foundation/presentation-exchange/spec/v2.0.0/#presentation-definition
  */
 export interface DIFPresentationDefinition {
@@ -53,7 +53,7 @@ export type LdFormat = {
   [key in keyof Pick<
     W3CVerifiableCredentialFormats & W3CVerifiablePresentationFormats,
     "jwt_vc_json-ld" | "ldp_vc" | "ldp_vp">
-  ]?: { proof_type: string } // TODO: When LD is adopted, add values from LD Registry https://w3c-ccg.github.io/ld-cryptosuite-registry/#ed25519
+  ]?: { proof_type: string }
 }
 
 /**

@@ -128,12 +128,6 @@ export class W3CVcIssuer {
             }
         });
     }
-    // TODO: valorar quitar iss de 'CredentialDataOrDeferred' y homogeneizar comportamiento entre V1 y V2
-    // El motivo es que V1 incluye un campo issuanceDate, y además EBSI está obligando a que sea igual al 'iat' del token. 
-    // Sin embargo, en V2 ese campo no existe. La propusta sería:
-    // - En V2, validFrom se asocia con nbf, y iat sería Date.now(). Según esto, en formatDataModel2, iat debería ajustarse a 
-    //   Date.now() y valorar quitar el nbf o también asignarlo a Date.now(). Notar diferencia entre info de la credencial y del token
-    // - En V1, validFrom se asocia con nbf, issued y issuanceDate y iat con Date.now()
     generateCredentialTimeStamps(data) {
         if (data.validUntil && data.expiresInSeconds) {
             throw new InvalidDataProvided(`"expiresInSeconds" and "validUntil" can't be defined at the same time`);
@@ -260,8 +254,8 @@ export class W3CVcIssuer {
      * (or the same) deferred code
      */
     exchangeAcceptanceTokenForVc(acceptanceToken, deferredExchangeCallback, dataModel, optionalParameters) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const exchangeResult = yield deferredExchangeCallback(acceptanceToken);
             if ("error" in exchangeResult) {
                 throw new InvalidToken(`Invalid acceptance token: ${exchangeResult.error}`);

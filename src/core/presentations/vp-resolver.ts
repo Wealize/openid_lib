@@ -214,7 +214,7 @@ export class VpResolver {
       }
     }
     // Verify VC Schema
-    if (vc.credentialSchema) { // TODO: Analyze if we should force this
+    if (vc.credentialSchema) {
       const schemaArray = Array.isArray(vc.credentialSchema) ?
         vc.credentialSchema :
         [vc.credentialSchema];
@@ -249,8 +249,6 @@ export class VpResolver {
   }
 
   private async getSchema(schema: W3CVcSchemaDefinition) {
-    // WE ONLYE SUPPORT JSON SCHEMA FOR NOW
-    // TODO: WE SHOULD CHECK THE TYPE
     try {
       const response = await fetch(schema.id);
       return await response.json() as SchemaObject;
@@ -293,7 +291,6 @@ export class VpResolver {
     data: JwtVpPayload,
     jwa: JWA_ALGS
   }> {
-    // TODO: It could be interesting to check against a json schema or with joi
     if (typeof data !== "string") {
       throw new InvalidRequest("A JWT VP must be in string format");
     }
@@ -303,7 +300,6 @@ export class VpResolver {
     }
     const { header, payload } = decodeToken(data);
     if (!header.kid) {
-      // TODO: Define error type
       throw new InvalidRequest(
         `Descriptor "${descriptorId}" JWT VP must contains a 'kid' parameter`
       );
@@ -318,7 +314,6 @@ export class VpResolver {
       throw new InvalidRequest(`Descriptor ${descriptorId} is not a JWT VP`);
     }
     const vp = (payload as JwtVpPayload).vp as W3CVerifiablePresentation;
-    // TODO: WE SHOULD CHECK THE @CONTEXT. SHOULD IT BE THE SAME AS THE VC?
     if (!vp.type.includes(W3C_VP_TYPE)) {
       throw new InvalidRequest(
         `Descriptor ${descriptorId} JWT VP must be of type "${W3C_VP_TYPE}"`
@@ -338,11 +333,7 @@ export class VpResolver {
     const holderDid = didDocument.id;
     const jwk = getAuthentificationJWKKeys(didDocument, header.kid);
     const publicKey = await importJWK(jwk);
-    // TODO: MOST PROBABLY WE SHOULD CATCH THE POSSIBLE EXCEPTION THAT THIS METHOD MAY THROW
     await jwtVerify(data, publicKey, { clockTolerance: 5 });
-    // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
-    // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar
-    // es el token entero para que la validación tuviera más datos?
     const nonceVerification = await this.nonceValidation(holderDidUrl, jwtPayload.nonce);
     if (!nonceVerification.valid) {
       throw new InvalidRequest(
@@ -428,7 +419,6 @@ export class VpResolver {
       throw new InvalidRequest("Unexpected format detected");
     }
     if (("proof_type") in formatData) {
-      // TODO: NOT SUPPORTED FOR NOW
       throw new InternalError("JLD not supported right now");
     }
     if (("alg") in formatData) {
@@ -438,7 +428,7 @@ export class VpResolver {
   }
 
   private async extractCredentialFromVp(
-    data: any, // TODO: Revise in the future
+    data: any,
     descriptor: DescriptorMap,
     expectedFormats: LdFormat & JwtFormat,
     endObjectFormats: LdFormat & JwtFormat

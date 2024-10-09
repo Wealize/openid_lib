@@ -2,7 +2,6 @@ import { DidDocumentError } from "../classes/index.js";
 import { DIDDocument } from "did-resolver";
 import { JWK } from "jose";
 
-// TODO: In a DID Document the VerificationMethod can be expressed 
 // in differents formats other than JWK.
 // https://www.w3.org/TR/did-core/#verification-material
 
@@ -11,8 +10,8 @@ import { JWK } from "jose";
  * @param didDocument The DID document from which to extract the key
  * @param methodIdentifier The verification method to search in the DID document
  * @returns The publick key associated in JWK format
- * @throws If the method identifier provided is not specified in a 
- * authentification relationship or if there is not verification method 
+ * @throws If the method identifier provided is not specified in a
+ * authentification relationship or if there is not verification method
  * with that ID. It can also throws if the method does not provide any JWK
  */
 export function getAuthentificationJWKKeys(
@@ -30,8 +29,8 @@ export function getAuthentificationJWKKeys(
  * @param didDocument The DID document from which to extract the key
  * @param methodIdentifier The verification method to search in the DID document
  * @returns The publick key associated in JWK format
- * @throws If the method identifier provided is not specified in a 
- * authentification relationship or if there is not verification method 
+ * @throws If the method identifier provided is not specified in a
+ * authentification relationship or if there is not verification method
  * with that ID. It can also throws if the method does not provide any JWK
  */
 export function getAssertionMethodJWKKeys(

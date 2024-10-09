@@ -51,13 +51,13 @@ export class W3CVcIssuer {
   /**
    * Constructor of the issuer
    * @param metadata Issuer metadata
-   * @param didResolver Object that allows to resolve the DIDs found 
+   * @param didResolver Object that allows to resolve the DIDs found
    * @param issuerDid The DID of the issuer
    * @param signCallback Callback used to sign the VC generated
-   * @param cNonceRetrieval Callback to recover the challenge nonce expected 
+   * @param cNonceRetrieval Callback to recover the challenge nonce expected
    * for a control proof
    * @param getVcSchema Callback to recover the schema associated with a VC
-   * @param getCredentialData Callback to recover the subject data to 
+   * @param getCredentialData Callback to recover the subject data to
    * include in the VC
    * It can also be used to specify if the user should follow the deferred flow
    */
@@ -75,8 +75,8 @@ export class W3CVcIssuer {
   /**
    * Allows to verify a JWT Access Token in string format
    * @param token The access token
-   * @param publicKeyJwkAuthServer The public key that should verify the token 
-   * @param tokenVerifyCallback A callback that can be used to verify to perform an 
+   * @param publicKeyJwkAuthServer The public key that should verify the token
+   * @param tokenVerifyCallback A callback that can be used to verify to perform an
    * additional verification of the contents of the token
    * @returns Access token in JWT format
    * @throws If data provided is incorrect
@@ -107,11 +107,11 @@ export class W3CVcIssuer {
   }
 
   /**
-   * Allows to generate a Credential Response in accordance to 
+   * Allows to generate a Credential Response in accordance to
    * the OID4VCI specification
-   * @param acessToken The access token needed to perform the operation 
+   * @param acessToken The access token needed to perform the operation
    * @param credentialRequest The credential request sent by an user
-   * @param optionalParamaters A set of optional parameters that are only 
+   * @param optionalParamaters A set of optional parameters that are only
    * required if the
    * token is provided in string format and that allows to verify it
    * @returns A credential response with a VC or a deferred code
@@ -207,12 +207,6 @@ export class W3CVcIssuer {
     }
   }
 
-  // TODO: valorar quitar iss de 'CredentialDataOrDeferred' y homogeneizar comportamiento entre V1 y V2
-  // El motivo es que V1 incluye un campo issuanceDate, y además EBSI está obligando a que sea igual al 'iat' del token. 
-  // Sin embargo, en V2 ese campo no existe. La propusta sería:
-  // - En V2, validFrom se asocia con nbf, y iat sería Date.now(). Según esto, en formatDataModel2, iat debería ajustarse a 
-  //   Date.now() y valorar quitar el nbf o también asignarlo a Date.now(). Notar diferencia entre info de la credencial y del token
-  // - En V1, validFrom se asocia con nbf, issued y issuanceDate y iat con Date.now()
   private generateCredentialTimeStamps(data: CredentialDataOrDeferred) {
     if (data.validUntil && data.expiresInSeconds) {
       throw new InvalidDataProvided(`"expiresInSeconds" and "validUntil" can't be defined at the same time`);
@@ -369,13 +363,13 @@ export class W3CVcIssuer {
 
   /**
    * Allows to exchange a deferred code for a VC
-   * @param acceptanceToken The deferred code sent by the issuer in a 
+   * @param acceptanceToken The deferred code sent by the issuer in a
    * previous instance
    * @param deferredExchangeCallback A callback to verify the deferred code
-   * @param optionalParameters A set of optional parameters that allow to 
-   * specify certain 
+   * @param optionalParameters A set of optional parameters that allow to
+   * specify certain
    * data of the VC generated
-   * @returns A credential response with the VC generated or a new 
+   * @returns A credential response with the VC generated or a new
    * (or the same) deferred code
    */
   async exchangeAcceptanceTokenForVc(
