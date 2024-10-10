@@ -11,11 +11,11 @@ import { JWK } from "jose";
 import { JwtHeader, JwtPayload } from "jsonwebtoken";
 
 /**
- * Function type that allows to verify the contents, but no the 
+ * Function type that allows to verify the contents, but no the
  * signature, of an acess token
  * @param header The JWT header of the token
  * @param payload The JWT payload of the token
- * @returns Verification that result that specify if it was successful 
+ * @returns Verification that result that specify if it was successful
  * and an optional error message
  */
 export type AccessTokenVerifyCallback = (
@@ -44,7 +44,7 @@ export type DeferredExchangeCallback = (
 ) => Promise<ExtendedCredentialDataOrDeferred | { error: string }>
 
 /**
- * Contains the subject data of a VC along with its type and format, 
+ * Contains the subject data of a VC along with its type and format,
  * It can also contains a deferred code
  */
 export interface ExtendedCredentialDataOrDeferred extends CredentialDataOrDeferred {
@@ -119,7 +119,7 @@ export interface CredentialDataOrDeferred {
 }
 
 /**
- * 
+ *
  */
 export interface GenerateCredentialReponseOptionalParams extends BaseOptionalParams {
   tokenVerification?: {
@@ -129,17 +129,10 @@ export interface GenerateCredentialReponseOptionalParams extends BaseOptionalPar
 }
 
 /**
- * Optional parameters that can be used in the generateCredentialResponse 
+ * Optional parameters that can be used in the generateCredentialResponse
  * and exchangeAcceptanceTokenForVc VcIssuer methods
  */
 export interface BaseOptionalParams {
-  // /**
-  //  * Function that allows to obtain until which date the VC to generate is valid.
-  //  * If not specified, then the VC won't have an expiration date
-  //  * @param types The types of the credential
-  //  * @returns The expiration time in UTC and in ISO string format
-  //  */
-  // getValidUntil?: (types: string[]) => Promise<string>;
   /**
    * Function type that allows to generate the "credentialStatus" attribute of a VC
    * @param types Types of the VC to generate
@@ -152,10 +145,10 @@ export interface BaseOptionalParams {
     holder: string
   ) => Promise<W3CCredentialStatus | W3CCredentialStatus[]>;
   /**
-   * 
-   * @param types 
-   * @param holder 
-   * @returns 
+   *
+   * @param types
+   * @param holder
+   * @returns
    */
   getTermsOfUse?: (
     types: string[],
