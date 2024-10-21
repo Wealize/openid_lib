@@ -81,22 +81,22 @@ export class W3CVcIssuer {
             }
             match(cNonce)
                 .with({ operationType: { type: "Verification" } }, (_) => {
-                    throw new InvalidCredentialRequest("Invalid provided nonce");
-                })
+                throw new InvalidCredentialRequest("Invalid provided nonce");
+            })
                 .with({ operationType: { type: "Issuance", vcTypes: { type: "Know", vcTypes: P.select() } } }, (types) => {
-                    if (!areDidUrlsSameDid(proofAssociatedClient, jwtPayload.sub)) {
-                        throw new InvalidToken("Access Token was issued for a different identifier that the one that sign the proof");
-                    }
-                    if (!arraysAreEqual(types, credentialRequest.types)) {
-                        throw new InvalidCredentialRequest("The provided token does not allow for the issuance of a VC of the specified types");
-                    }
-                })
+                if (!areDidUrlsSameDid(proofAssociatedClient, jwtPayload.sub)) {
+                    throw new InvalidToken("Access Token was issued for a different identifier that the one that sign the proof");
+                }
+                if (!arraysAreEqual(types, credentialRequest.types)) {
+                    throw new InvalidCredentialRequest("The provided token does not allow for the issuance of a VC of the specified types");
+                }
+            })
                 .with({ operationType: { type: "Issuance", vcTypes: { type: "Uknown" } } }, (_) => {
-                    // Most probably generated from pre-auth flow
-                })
+                // Most probably generated from pre-auth flow
+            })
                 .otherwise(() => {
-                    throw new InternalNonceError("Unexpected behaviour detected at nonce matching");
-                });
+                throw new InternalNonceError("Unexpected behaviour detected at nonce matching");
+            });
             yield controlProof.verifyProof(innerNonce, this.metadata.credential_issuer, this.didResolver);
             const credentialSubject = yield this.credentialDataManager.resolveCredentialSubject(jwtPayload.sub, proofAssociatedClient);
             const credentialResponse = yield this.credentialResponseMatch(credentialRequest.types, credentialSubject, credentialRequest.format, dataModel);
@@ -109,13 +109,13 @@ export class W3CVcIssuer {
             const credentialDataOrDeferred = yield this.credentialDataManager.getCredentialData(types, credentialSubject);
             return match(credentialDataOrDeferred)
                 .with({ type: "InTime" }, (data) => __awaiter(this, void 0, void 0, function* () {
-                    return this.generateW3CCredential(types, data.schema, credentialSubject, data, format, dataModel);
-                }))
+                return this.generateW3CCredential(types, data.schema, credentialSubject, data, format, dataModel);
+            }))
                 .with({ type: "Deferred" }, (data) => {
-                    return {
-                        acceptance_token: data.deferredCode
-                    };
-                })
+                return {
+                    acceptance_token: data.deferredCode
+                };
+            })
                 .exhaustive();
         });
     }
@@ -286,13 +286,13 @@ export class W3CVcIssuer {
             const credentialDataResponse = exchangeResult.unwrap();
             return yield match(credentialDataResponse)
                 .with({ type: "InTime" }, (dataResponse) => __awaiter(this, void 0, void 0, function* () {
-                    return this.generateW3CCredential(dataResponse.types, dataResponse.schema, dataResponse.data.id, dataResponse, dataResponse.format, dataModel);
-                }))
+                return this.generateW3CCredential(dataResponse.types, dataResponse.schema, dataResponse.data.id, dataResponse, dataResponse.format, dataModel);
+            }))
                 .with({ type: "Deferred" }, (data) => {
-                    return {
-                        acceptance_token: data.deferredCode
-                    };
-                })
+                return {
+                    acceptance_token: data.deferredCode
+                };
+            })
                 .exhaustive();
         });
     }
