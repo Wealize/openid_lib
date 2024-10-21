@@ -1,6 +1,7 @@
 export declare const ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME: number;
 export declare const VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME: number;
 export declare const C_NONCE_EXPIRATION_TIME: number;
+export declare const AUTHZ_TOKEN_EXPIRATION_TIME: number;
 export declare const ACCESS_TOKEN_EXPIRATION_TIME: number;
 export declare const DEFAULT_PKCE_LENGTH = 7;
 export declare const DEFAULT_SCOPE = "openid";

@@ -14,7 +14,7 @@ import { ajv } from "./validator.js";
 import { W3CDataModel } from "../../common/formats/index.js";
 import { CONTEXT_VC_DATA_MODEL_1, CONTEXT_VC_DATA_MODEL_2, W3C_VP_TYPE } from "../../common/constants/index.js";
 import { decodeToken, didFromDidUrl, getAssertionMethodJWKKeys, getAuthentificationJWKKeys, obtainDid } from "../../common/utils/index.js";
-import { InternalError, InvalidRequest } from "../../common/classes/error/index.js";
+import { InternalNonceError, InvalidRequest } from "../../common/classes/error/index.js";
 /**
  * Component specialized in the verification of verifiable
  * submissions, for which it requires the original definition
@@ -28,18 +28,20 @@ export class VpResolver {
      * @param externalValidation Callback that will be used to request external
      * verification of any detected VC. This verification should focus on
      * validating issues related to the trust framework and the use case.
-     * @param nonceValidation Callback the nonces specified in any JWT VP
+     * @param nonceAndStateValidation Callback the nonces specified in any JWT VP
      * @param vcSignatureVerification Flag indicating whether the signatures of the VCs
      * included in the VP should be verified. To that regard, the DID Resolver provided must
      * be able to generate the needed DID Documents
      */
-    constructor(didResolver, audience, externalValidation, nonceValidation, vcSignatureVerification = false) {
+    constructor(didResolver, audience, externalValidation, nonceAndStateValidation, vcSignatureVerification = false) {
         this.didResolver = didResolver;
         this.audience = audience;
         this.externalValidation = externalValidation;
-        this.nonceValidation = nonceValidation;
+        this.nonceAndStateValidation = nonceAndStateValidation;
         this.vcSignatureVerification = vcSignatureVerification;
         this.jwtCache = {};
+    }
+    emitError(error) {
     }
     /**
      * Verify a Verifiable Presentation
@@ -155,8 +157,8 @@ export class VpResolver {
                 }
             }
             const verificationResult = yield this.externalValidation(vc, dataModelVersion, publicKey);
-            if (!verificationResult.valid) {
-                throw new InvalidRequest(verificationResult.error);
+            if (verificationResult.isError()) {
+                throw new InvalidRequest(verificationResult.unwrapError().message);
             }
             this.jwtCache[data] = {
                 data: payload,
@@ -185,7 +187,7 @@ export class VpResolver {
     decodeAndParse(format, data, validAlgs, descriptorId) {
         return __awaiter(this, void 0, void 0, function* () {
             if (checkIfLdFormat(format)) {
-                throw new InternalError("LD Format are not supported right now");
+                throw new InternalNonceError("LD Format are not supported right now");
             }
             switch (format) {
                 case "jwt_vc":
@@ -197,7 +199,7 @@ export class VpResolver {
                 case "jwt_vc_json-ld":
                 case "ldp_vc":
                 case "ldp_vp":
-                    throw new InternalError("LD formats are not supported right now");
+                    throw new InternalNonceError("LD formats are not supported right now");
             }
         });
     }
@@ -245,11 +247,9 @@ export class VpResolver {
             // TODO: repensar la estructura de esta callback, el jwtNonce no lo usamos porque partimos
             // de que el nonceResponse viene de ese jwtNonce. Además, tal vez lo que deberíamos pasar
             // es el token entero para que la validación tuviera más datos?
-            const nonceVerification = yield this.nonceValidation(holderDidUrl, jwtPayload.nonce);
-            if (!nonceVerification.valid) {
-                throw new InvalidRequest(`Descriptor ${descriptorId} invalid nonce specified${nonceVerification.error ?
-                    `: ${nonceVerification.error}`
-                    : '.'}`);
+            const nonceVerification = yield this.nonceAndStateValidation(holderDidUrl, jwtPayload.nonce, jwtPayload.state);
+            if (nonceVerification.isError()) {
+                throw new InvalidRequest(nonceVerification.unwrapError().message);
             }
             this.vpHolder = holderDid;
             this.jwtCache[data] = {
@@ -315,7 +315,7 @@ export class VpResolver {
         }
         if (("proof_type") in formatData) {
             // TODO: NOT SUPPORTED FOR NOW
-            throw new InternalError("JLD not supported right now");
+            throw new InternalNonceError("JLD not supported right now");
         }
         if (("alg") in formatData) {
             return formatData.alg;
@@ -325,6 +325,9 @@ export class VpResolver {
     extractCredentialFromVp(data, // TODO: Revise in the future
     descriptor, expectedFormats, endObjectFormats) {
         return __awaiter(this, void 0, void 0, function* () {
+            let currentTraversalObject = data;
+            let lastJwa;
+            let lastFormat;
             const resolveDescriptor = () => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 if (currentDescriptor.id && currentDescriptor.id !== mainId) {
@@ -348,9 +351,6 @@ export class VpResolver {
             if (!currentDescriptor.id) {
                 throw new InvalidRequest("Each input descriptor must have an ID");
             }
-            let currentTraversalObject = data;
-            let lastJwa;
-            let lastFormat;
             do {
                 yield resolveDescriptor();
                 lastFormat = currentDescriptor.format;

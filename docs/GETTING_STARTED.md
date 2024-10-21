@@ -40,14 +40,17 @@ The library comes with a battery of tests written with Mocha and Chai. To run th
 
 ### State management
 
-The library does not manage any state, nor does it present any abstract interface or other elements that allow it to manage state indirectly. Instead, the user must provide the functionality related to state management by providing callbacks where appropriate.
+The library requires the implementation of an interface with which to handle the states derived from the protocol. This proposed interface simulates the use of a key-value database, but its actual implementation depends entirely on the user.
+The definition of this implementation is the first step to be taken in order to use the library and it is necessary both for the Authorization actions and for the issuance of credentials. The library offers a simple memory-based implementation that can be used for testing purposes, but is not recommended for production use. The name of this interface is ***StateManager***.
+
+The management of a state implies that the operations have an order in which they must be carried out to ensure their correct functioning. In this case, the order corresponds to that indicated by the protocol, so that an ID token cannot be verified if one has not been generated first, for example.
 
 ### Algorithms and object signature
 
 The library does not implement or support any cryptographic algorithms. Instead, this responsibility is left to the user. Consequently, the user is given the freedom to choose the solution that best suits the needs of the use case.
 
 ### Builders
-The library defines multiple builders that can be used to generate authorization requests, `credential offers`, authorization details and also the metadata of a credential issuer.
+The library defines multiple builders that can be used to generate authorization requests, `credential offers`, authorization details and also the metadata of a credential issuer. There is also a step builder that ca be used to create an instance of the RP.
 
 ### Relying Party
 
@@ -68,23 +71,26 @@ const rp = new OpenIDReliyingParty(
             "alg_values_supported": ["ES256"]
           }
         },
-        "scopes_supported": ["openid"],
-        "subject_types_supported": ["public"],
-        "id_token_signing_alg_values_supported": ["ES256"],
-        "request_object_signing_alg_values_supported": ["ES256"],
-        "subject_syntax_types_supported": [
-          "urn:ietf:params:oauth:jwk-thumbprint",
-          "did:key:jwk_jcs-pub"
-        ],
-        "id_token_types_supported": ["subject_signed_id_token"]
-      }
-    },
-    {
-      ...generateDefaultAuthorisationServerMetadata("https://issuer"),
-      grant_types_supported: ["authorization_code", "pre-authorised_code"]
-    },
-    new Resolver(getResolver())
-  );
+        "jwt_vc": {
+          "alg_values_supported": ["ES256"]
+        }
+      },
+      "scopes_supported": ["openid"],
+      "subject_types_supported": ["public"],
+      "id_token_signing_alg_values_supported": ["ES256"],
+      "request_object_signing_alg_values_supported": ["ES256"],
+      "subject_syntax_types_supported": [
+        "urn:ietf:params:oauth:jwk-thumbprint",
+        "did:key:jwk_jcs-pub"
+      ],
+      "id_token_types_supported": ["subject_signed_id_token"]
+    })
+    .withDidResolver(new Resolver(getResolver()))
+    .withTokenSignCallback((payload, algs) => {
+      return signCallback(payload, algs);
+    })
+    .withStateManager(new MemoryStateManager())
+    .build();
 ```
 
 The Relying Party class currently allows the following:
@@ -98,40 +104,23 @@ The Relying Party class currently allows the following:
 #### Verify Authz request with "code" as "response_type"
 ```ts
 let verifiedAuthzRequest = await rp.verifyBaseAuthzRequest(
-  authzRequest, // Request from client
-  {
-    // Optional verification callback
-    authzDetailsVerifyCallback: async (details) => {
-      if (details.types && !details.types.includes("TestVc")) {
-        return { valid: false, error: "Unssuported VC Type" };
-      }
-      return { valid: true };
-    }
-  }
+  authzRequest, // Authz Request from the client
 );
 ```
-It is also possible to supply two additional callbacks to check the scope value and the `issuer_state` value.
 
 #### Create ID Token Request
+In order to do so, first we need to verify an Authz Request as indicated in the previous example
 ```ts
-// Example with jose npm package
-const signCallback = async (payload: JwtPayload, _supportedAlgs?: JWA_ALGS[]) => {
-  const header = {
-    alg: "ES256",
-    kid: `${authServerDid}#${authServerKid}`
-  };
-  const keyLike = await importJWK(authServerJWK);
-  return await new SignJWT(payload)
-    .setProtectedHeader(header)
-    .setIssuedAt()
-    .sign(keyLike);
-};
 
+// Create ID Token Request
 const idTokenRequest = await rp.createIdTokenRequest(
   verifiedAuthzRequest.authzRequest.client_metadata?.authorization_endpoint!,
   verifiedAuthzRequest.authzRequest.client_id,
   authServerUrl + "/direct_post",
-  signCallback
+  {
+    type: "Issuance",
+    verifiedBaseAuthzRequest: verifiedAuthzRequest,
+  }
 );
 ```
 
@@ -152,11 +141,6 @@ export type CreateIdTokenRequestOptionalParams = {
    */
   state?: string;
   /**
-   * The nonce to indicate in the JWT.
-   * @defaultValue UUID randomly generated
-   */
-  nonce?: string;
-  /**
    * The expiration time of the JWT. Must be in seconds
    * @defaultValue 1 hour
    */
@@ -170,48 +154,32 @@ export type CreateIdTokenRequestOptionalParams = {
 
 #### Verify ID Token Response
 ```ts
-const _verifiedIdTokenResponse = await rp.verifyIdTokenResponse(
-  idTokenResponse,
-  async (_header, payload, didDocument) => {
-    if (!payload.nonce || payload.nonce !== idTokenRequest.requestParams.nonce!) {
-      return { valid: false, error: "Invalid nonce" };
-    }
-    if (didDocument.id !== holderDid) { // HolderDID being the expected DID
-      return { valid: false, error: "Unkown client id" }
-    }
-    return { valid: true }
-  }
+const verifiedIdTokenResponse = await rp.verifyIdTokenResponse(
+  idTokenResponse, // ID Token response sent by a user
 );
 ```
-The method does not define any optional parameters.
+The method also generates an authorization code, that can be exchange for an access token in the next step.
 
 #### Generate AccessToken / Token Response
 ```ts
+// Create Token Request
+const tokenRequest: TokenRequest = {
+  grant_type: "authorization_code",
+  client_id: holderDid,
+  code_verifier: codeVerifier,
+  code: verifiedIdTokenResponse.authzCode
+};
+// Create Token Response
 const _tokenResponse = await rp.generateAccessToken(
   tokenRequest,
-  false, // Indicate if the response should include an ID Token
+  false,
   signCallback,
   authServerUrl,
-  {
-    authorizeCodeCallback: async (_clientId, code) => {
-      if (code === "1453") {
-        return { valid: true };
-      }
-      return { valid: false, error: "Invalid authz code" };
-    },
-    codeVerifierCallback: async (_clientId, codeVerifier) => {
-      if (!codeVerifier || !await verifyChallenge(codeVerifier, authzRequest.code_challenge!)) {
-        return { valid: false, error: "Invalid code_verifier" };
-      }
-      return { valid: true }
-    },
-  }
+  authServerJWK
 );
 ```
 
-The method enables several optional parameters that must be supplied depending on the `grant_type` supported:
-- `authorization_code`: Must supply a callback for the verification of the code itself and a second one for the verification of the PKCE Challenge that must have been delivered by the user in a previous authorization request.
-- `pre-authorize_code`: It must supply a callback for the verification of the code itself that additionally receives the PIN sent by the user.
+The method support both the authorization_code grant type and also, the pre-authorize one. However, only the first one is avaible by default. In order to be able to use pre-authorization codes, the user must specify it during the building phase of the RP using the setp builder, which will require a callback to be provided to redeem these codes.
 
 #### Create VP Token Request
 ```ts

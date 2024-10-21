@@ -1,4 +1,4 @@
-import { InternalError } from "../../common/classes/index.js";
+import { InternalNonceError } from "../../common/classes/index.js";
 import { W3CDataModel } from "../../common/formats/index.js";
 import { expressDateInSeconds } from "../../common/utils/time.js";
 /**
@@ -20,10 +20,10 @@ export class VcFormatter {
         }
         else if (format === "jwt_vc_json-ld" || format === "ldp_vc") {
             // TODO:
-            throw new InternalError("Unimplemented");
+            throw new InternalNonceError("Unimplemented");
         }
         else {
-            throw new InternalError("Unsupported format");
+            throw new InternalNonceError("Unsupported format");
         }
     }
     /**

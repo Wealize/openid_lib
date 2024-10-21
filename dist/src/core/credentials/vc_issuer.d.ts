@@ -6,6 +6,8 @@ import { CredentialRequest } from "../../common/interfaces/credential_request.in
 import { IssuerMetadata } from "../../common/interfaces/issuer_metadata.interface.js";
 import { CredentialResponse } from "../../common/interfaces/credential_response.interface.js";
 import * as VcIssuerTypes from "./types.js";
+import { CredentialDataManager } from './credential_data_manager.js';
+import { StateManager } from '../state/index.js';
 /**
  * W3C credentials issuer in both deferred and In-Time flows
  */
@@ -14,10 +16,8 @@ export declare class W3CVcIssuer {
     private didResolver;
     private issuerDid;
     private signCallback;
-    private cNonceRetrieval;
-    private getVcSchema;
-    private getCredentialData;
-    private resolveCredentialSubject?;
+    private credentialDataManager;
+    private vcTypesContextRelationship?;
     /**
      * Constructor of the issuer
      * @param metadata Issuer metadata
@@ -31,12 +31,13 @@ export declare class W3CVcIssuer {
      * include in the VC
      * It can also be used to specify if the user should follow the deferred flow
      */
-    constructor(metadata: IssuerMetadata, didResolver: Resolver, issuerDid: string, signCallback: VcIssuerTypes.VcSignCallback, cNonceRetrieval: VcIssuerTypes.ChallengeNonceRetrieval, getVcSchema: VcIssuerTypes.GetCredentialSchema, getCredentialData: VcIssuerTypes.GetCredentialData, resolveCredentialSubject?: VcIssuerTypes.ResolveCredentialSubject | undefined);
+    private nonceManager;
+    constructor(metadata: IssuerMetadata, didResolver: Resolver, issuerDid: string, signCallback: VcIssuerTypes.VcSignCallback, stateManager: StateManager, credentialDataManager: CredentialDataManager, vcTypesContextRelationship?: Record<string, string> | undefined);
     /**
      * Allows to verify a JWT Access Token in string format
      * @param token The access token
      * @param publicKeyJwkAuthServer The public key that should verify the token
-     * @param tokenVerifyCallback A callback that can be used to verify to perform an
+     * @param tokenVerifyCallback A callback that can be used to perform an
      * additional verification of the contents of the token
      * @returns Access token in JWT format
      * @throws If data provided is incorrect
@@ -47,30 +48,35 @@ export declare class W3CVcIssuer {
      * the OID4VCI specification
      * @param acessToken The access token needed to perform the operation
      * @param credentialRequest The credential request sent by an user
-     * @param optionalParamaters A set of optional parameters that are only
-     * required if the
-     * token is provided in string format and that allows to verify it
+     * @param dataModel The W3 VC Data Model version
      * @returns A credential response with a VC or a deferred code
      * @throws If data provided is incorrect
      */
-    generateCredentialResponse(acessToken: string | Jwt, credentialRequest: CredentialRequest, dataModel: W3CDataModel, optionalParamaters?: VcIssuerTypes.GenerateCredentialReponseOptionalParams): Promise<CredentialResponse>;
-    generateVcDirectMode(did: string, dataModel: W3CDataModel, types: string[], format: W3CVerifiableCredentialFormats, optionalParamaters?: VcIssuerTypes.BaseOptionalParams): Promise<CredentialResponse>;
+    generateCredentialResponse(acessToken: Jwt, credentialRequest: CredentialRequest, dataModel: W3CDataModel): Promise<CredentialResponse>;
+    private credentialResponseMatch;
+    /**
+     * Allows for the generation of a VC without an Access Token
+     * @param did The DID if the holder of the VC
+     * @param dataModel The W3 VC Data Model version
+     * @param types The types of the VCs
+     * @param format The format of the VC
+     * @returns A credential response with the VC
+     */
+    generateVcDirectMode(did: string, dataModel: W3CDataModel, types: string[], format: W3CVerifiableCredentialFormats): Promise<CredentialResponse>;
     private generateCredentialTimeStamps;
     private generateVcId;
     private generateW3CDataForV1;
     private generateW3CDataForV2;
+    private extendsVcContext;
     private generateW3CCredential;
     /**
      * Allows to exchange a deferred code for a VC
      * @param acceptanceToken The deferred code sent by the issuer in a
      * previous instance
-     * @param deferredExchangeCallback A callback to verify the deferred code
-     * @param optionalParameters A set of optional parameters that allow to
-     * specify certain
-     * data of the VC generated
+     * @param dataModel The W3C VC Data Model version
      * @returns A credential response with the VC generated or a new
      * (or the same) deferred code
      */
-    exchangeAcceptanceTokenForVc(acceptanceToken: string, deferredExchangeCallback: VcIssuerTypes.DeferredExchangeCallback, dataModel: W3CDataModel, optionalParameters?: VcIssuerTypes.BaseOptionalParams): Promise<CredentialResponse>;
+    exchangeAcceptanceTokenForVc(acceptanceToken: string, dataModel: W3CDataModel): Promise<CredentialResponse>;
     private checkCredentialTypesAndFormat;
 }
