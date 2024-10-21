@@ -3,10 +3,7 @@ import fetch from 'node-fetch';
 import { JwtPayload } from "jsonwebtoken";
 import { Resolver } from "did-resolver";
 import { importJWK, jwtVerify } from "jose";
-import {
-  Schema,
-  Validator
-} from "jsonschema";
+import { ajv } from "./validator.js";
 import {
   DIFPresentationDefinition,
   JwtFormat,
@@ -56,6 +53,7 @@ import {
   NonceAndStateVerification,
   VpExtractedData
 } from "./types";
+import { SchemaObject } from "ajv";
 
 
 /**
@@ -133,7 +131,7 @@ export class VpResolver {
         const rootFormats = definition.format;
         const format = inputDescriptor.format ?? rootFormats;
         const vc = await this.extractCredentialFromVp(vp, descriptor, rootFormats, format);
-        const claimData = this.resolveInputDescriptor(inputDescriptor, vc);
+        const claimData = await this.resolveInputDescriptor(inputDescriptor, vc);
         descriptorClaimsMap[inputDescriptor.id] = claimData;
         idsAlreadyUsed.add(inputDescriptor.id);
       }
@@ -226,9 +224,9 @@ export class VpResolver {
         [vc.credentialSchema];
       for (const W3CSchema of schemaArray) {
         const schema = await this.getSchema(W3CSchema);
-        const validator = new Validator();
-        const validationResult = validator.validate(vc, schema);
-        if (validationResult.errors.length) {
+        const validateFunction = await ajv.compileAsync(schema);
+        const validationResult = validateFunction(vc);
+        if (!validationResult) {
           throw new InvalidRequest(
             "VC does not validate against its own schema specification"
           );
@@ -259,7 +257,7 @@ export class VpResolver {
     // TODO: WE SHOULD CHECK THE TYPE
     try {
       const response = await fetch(schema.id);
-      return await response.json() as Schema;
+      return await response.json() as SchemaObject;
     } catch (e: any) {
       throw new InvalidRequest(`Can't recover credential schema: ${e}`);
     }
@@ -509,10 +507,10 @@ export class VpResolver {
     return jsonpath.query(data, path, 1);
   }
 
-  private resolveInputDescriptor(
+  private async resolveInputDescriptor(
     inputDescriptor: PresentationInputDescriptor,
     data: JwtVcPayload
-  ): Record<string, any> {
+  ): Promise<Record<string, any>> {
     const result: Record<string, any> = {};
     if (inputDescriptor.constraints.fields) {
       for (const field of inputDescriptor.constraints.fields) {
@@ -527,9 +525,9 @@ export class VpResolver {
           const tmp = jsonpath.query(data, path, 1);
           if (tmp.length) {
             if (field.filter) {
-              const validator = new Validator();
-              const validationResult = validator.validate(tmp[0], field.filter as Schema);
-              if (!validationResult.errors.length) {
+              const validateFunction = await ajv.compileAsync(field.filter);
+              const validationResult = validateFunction(tmp[0]);
+              if (validationResult) {
                 claimFound = tmp[0];
                 validPath = path;
                 break;
