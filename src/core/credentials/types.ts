@@ -10,11 +10,11 @@ import { CompactVc, VerificationResult } from "../../common/types/index.js";
 import { JwtHeader, JwtPayload } from "jsonwebtoken";
 
 /**
- * Function type that allows to verify the contents, but no the 
+ * Function type that allows to verify the contents, but no the
  * signature, of an acess token
  * @param header The JWT header of the token
  * @param payload The JWT payload of the token
- * @returns Verification that result that specify if it was successful 
+ * @returns Verification that result that specify if it was successful
  * and an optional error message
  */
 export type AccessTokenVerifyCallback = (
@@ -34,8 +34,7 @@ export type VcSignCallback = (
 ) => Promise<W3CVerifiableCredential | CompactVc>;
 
 
-export type CredentialDataResponse =
-  | InTimeCredentialData
+export type CredentialDataResponse = InTimeCredentialData
   | DeferredCredentialData
 
 export interface InTimeCredentialData {
