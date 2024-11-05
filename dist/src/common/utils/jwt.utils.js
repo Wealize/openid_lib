@@ -62,3 +62,4 @@ export function obtainDid(kid, iss) {
     }
     return kid.trim().split("#")[0];
 }
+//# sourceMappingURL=jwt.utils.js.map

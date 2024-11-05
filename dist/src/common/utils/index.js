@@ -7,3 +7,4 @@ export * from "./url.utils.js";
 export * from "./verifiable-credential.js";
 export * from "./verification.js";
 export * from "./did.utils.js";
+//# sourceMappingURL=index.js.map

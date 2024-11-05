@@ -92,3 +92,4 @@ export class VpFormatsNotSupported extends OpenIdError {
         super("vp_formats_not_supported", message, 400, redirectUri, holderState);
     }
 }
+//# sourceMappingURL=openid.error.js.map

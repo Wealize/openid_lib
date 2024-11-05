@@ -35,3 +35,4 @@ export function generateDefaultAuthorisationServerMetadata(issuer) {
         ]
     };
 }
+//# sourceMappingURL=default.utils.js.map

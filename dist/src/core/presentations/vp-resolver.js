@@ -424,3 +424,4 @@ export class VpResolver {
 function checkIfLdFormat(format) {
     return format.includes("ld");
 }
+//# sourceMappingURL=vp-resolver.js.map

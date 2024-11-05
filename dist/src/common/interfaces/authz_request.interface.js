@@ -10,3 +10,4 @@ export var AuthzRequestLocation;
     AuthzRequestLocation[AuthzRequestLocation["PLAIN_REQUEST"] = 0] = "PLAIN_REQUEST";
     AuthzRequestLocation[AuthzRequestLocation["JWT_OBJECT"] = 1] = "JWT_OBJECT";
 })(AuthzRequestLocation || (AuthzRequestLocation = {}));
+//# sourceMappingURL=authz_request.interface.js.map

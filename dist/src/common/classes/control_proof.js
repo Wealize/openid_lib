@@ -117,3 +117,4 @@ class JwtControlProof extends ControlProof {
         });
     }
 }
+//# sourceMappingURL=control_proof.js.map

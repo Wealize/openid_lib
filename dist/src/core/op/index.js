@@ -99,3 +99,4 @@ export class OpenIDProvider {
     verifyAuthzResponse() {
     }
 }
+//# sourceMappingURL=index.js.map

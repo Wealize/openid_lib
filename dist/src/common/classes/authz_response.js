@@ -25,3 +25,4 @@ export class AuthorizationResponse {
         return `${this.uri}?${new URLSearchParams(Object.entries(params)).toString()}`;
     }
 }
+//# sourceMappingURL=authz_response.js.map
