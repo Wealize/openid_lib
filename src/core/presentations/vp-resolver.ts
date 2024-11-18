@@ -413,10 +413,10 @@ export class VpResolver {
   private checkVcDataModel(
     vc: W3CVerifiableCredential
   ): W3CDataModel {
-    if (CONTEXT_VC_DATA_MODEL_1.every((x) => vc["@context"].includes(x))) {
+    if (vc["@context"].includes(CONTEXT_VC_DATA_MODEL_1)) {
       return W3CDataModel.V1;
     }
-    if (CONTEXT_VC_DATA_MODEL_2.every((x) => vc["@context"].includes(x))) {
+    if (vc["@context"].includes(CONTEXT_VC_DATA_MODEL_2)) {
       return W3CDataModel.V2;
     }
     throw new InvalidRequest("Invalid @¢ontext specified")

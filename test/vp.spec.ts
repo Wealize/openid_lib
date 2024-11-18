@@ -870,7 +870,7 @@ async function generateProof(nonce: string) {
 
 async function generateVpToken(vc: string[], nonce: string) {
   const vp: W3CVerifiablePresentation = {
-    "@context": CONTEXT_VC_DATA_MODEL_2,
+    "@context": [CONTEXT_VC_DATA_MODEL_2],
     type: ["VerifiablePresentation"],
     holder: holderDid,
     verifiableCredential: vc
