@@ -230,3 +230,4 @@ class OpenIdStepBuilderEndStage {
         return new OpenIDReliyingParty(this.holderMetadata, this.metadata, this.didResolver, this.jwtSignCallback, this.scopeVerificationFlag, this.manager, this.subjectComparison, this.generalConfiguration, this.issuerStateCallback, this.authzDetailsVerificationCallback, this.credentialExternalVerification, this.preAuthCallback);
     }
 }
+//# sourceMappingURL=builder.js.map

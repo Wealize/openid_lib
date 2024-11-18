@@ -257,3 +257,4 @@ export class VerifiableCredentialDisplayBuilder {
         };
     }
 }
+//# sourceMappingURL=issuer_metadata.builder.js.map

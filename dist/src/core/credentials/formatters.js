@@ -77,3 +77,4 @@ class JwtVcFormatter extends VcFormatter {
         return token;
     }
 }
+//# sourceMappingURL=formatters.js.map

@@ -96,3 +96,4 @@ export class CredentialOfferBuilder {
         };
     }
 }
+//# sourceMappingURL=credential_offer.build.js.map

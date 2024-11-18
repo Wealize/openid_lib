@@ -47,3 +47,4 @@ function getJwkFromDocument(didDocument, methodIdentifier) {
     }
     return verificationMethod.publicKeyJwk;
 }
+//# sourceMappingURL=did_document.js.map

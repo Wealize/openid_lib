@@ -18,7 +18,7 @@ import { getAuthentificationJWKKeys } from "../../common/utils/did_document.js";
 import { AccessDenied, InsufficienteParamaters, InternalNonceError, InvalidGrant, InvalidRequest, InvalidScope, OpenIdError, UnauthorizedClient, UnsupportedGrantType } from "../../common/classes/index.js";
 import { VpResolver } from "../presentations/vp-resolver.js";
 import { VpTokenRequest } from "../../common/classes/vp_token_request.js";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 import { Result } from "../../common/classes/result.js";
 import { NonceManager } from "../nonce/index.js";
 /**
@@ -619,9 +619,7 @@ export class OpenIDReliyingParty {
      * @returns Token response with the generated access token
      * @throws If data provided is incorrect
      */
-    generateAccessToken(tokenRequest, generateIdToken, 
-    // tokenSignCallback: RpTypes.TokenSignCallback,
-    audience, authServerPublicKeyJwk) {
+    generateAccessToken(tokenRequest, generateIdToken, audience, authServerPublicKeyJwk) {
         return __awaiter(this, void 0, void 0, function* () {
             let clientId;
             let prevNonce;
@@ -671,6 +669,13 @@ export class OpenIDReliyingParty {
                             yield verifyJwtWithExpAndAudience(tokenRequest.client_assertion, data.clientJwk, this.metadata.issuer);
                         }
                     })).exhaustive();
+                    yield match(prevNonce.operationType)
+                        .with({ type: "Issuance", vcTypes: { type: "Know", vcTypes: P.select() } }, (types) => __awaiter(this, void 0, void 0, function* () {
+                        additionalParams = { vc_types: types };
+                    }))
+                        .with({ type: "Verification" }, (data) => __awaiter(this, void 0, void 0, function* () {
+                        additionalParams = { verification_scope: data.scope };
+                    }));
                     clientId = jwtPayload.sub; // This should be a DID
                     break;
                 case "urn:ietf:params:oauth:grant-type:pre-authorized_code":
@@ -786,3 +791,4 @@ function selectJwkFromSet(jwks, kid) {
 }
 export * from "./types.js";
 export * from "./builder.js";
+//# sourceMappingURL=index.js.map

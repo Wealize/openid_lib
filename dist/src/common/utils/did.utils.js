@@ -4,3 +4,4 @@ export function didFromDidUrl(didUrl) {
 export function areDidUrlsSameDid(didUrl1, didUrl2) {
     return didFromDidUrl(didUrl1) == didFromDidUrl(didUrl2);
 }
+//# sourceMappingURL=did.utils.js.map

@@ -15,3 +15,4 @@ export * from "./presentation_definition.interface.js";
 export * from "./presentation_submission.interface.js";
 export * from "./verifiable_presentation.interface.js";
 export * from "./vp_token_response.interface.js";
+//# sourceMappingURL=index.js.map

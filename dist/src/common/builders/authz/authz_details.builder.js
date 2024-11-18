@@ -92,3 +92,4 @@ export class AuthzDetailsBuilder {
         };
     }
 }
+//# sourceMappingURL=authz_details.builder.js.map

@@ -18,3 +18,4 @@ export function alwaysAcceptVerification(..._data) {
         return { valid: true };
     });
 }
+//# sourceMappingURL=verification.js.map

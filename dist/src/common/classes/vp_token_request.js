@@ -24,3 +24,4 @@ export class VpTokenRequest {
         return `${this.clientAuthorizationEndpoint}?${new URLSearchParams(Object.entries(Object.assign(Object.assign({}, data), { request: this.request }))).toString()}`;
     }
 }
+//# sourceMappingURL=vp_token_request.js.map

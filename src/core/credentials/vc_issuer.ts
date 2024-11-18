@@ -304,7 +304,7 @@ export class W3CVcIssuer {
     const timestamps = this.generateCredentialTimeStamps(vcData.metadata);
     const vcId = this.generateVcId();
     return {
-      "@context": CONTEXT_VC_DATA_MODEL_1,
+      "@context": [CONTEXT_VC_DATA_MODEL_1],
       type,
       credentialSchema: schema,
       issuanceDate: timestamps.issuanceDate,
@@ -331,7 +331,7 @@ export class W3CVcIssuer {
     const vcId = this.generateVcId();
     const timestamps = this.generateCredentialTimeStamps(vcData.metadata);
     return {
-      "@context": CONTEXT_VC_DATA_MODEL_2,
+      "@context": [CONTEXT_VC_DATA_MODEL_2],
       type,
       credentialSchema: schema,
       validFrom: timestamps.validFrom,

@@ -21,3 +21,4 @@ export class IdTokenRequest {
         return `${this.clientAuthorizationEndpoint}?${new URLSearchParams(Object.entries(Object.assign(Object.assign({}, this.requestParams), { request: this.request }))).toString()}`;
     }
 }
+//# sourceMappingURL=id_token_request.js.map

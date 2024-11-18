@@ -40,3 +40,4 @@ export class Result {
         throw this.error;
     }
 }
+//# sourceMappingURL=result.js.map

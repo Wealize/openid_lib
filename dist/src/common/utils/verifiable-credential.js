@@ -12,3 +12,4 @@ export function extractFromCredential(vc, path) {
     }
     return undefined;
 }
+//# sourceMappingURL=verifiable-credential.js.map

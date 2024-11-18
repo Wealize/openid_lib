@@ -68,7 +68,7 @@ import {
 import {
   CredentialAdditionalVerification,
 } from "../presentations/types.js";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 import { Result } from "../../common/classes/result.js";
 import { StateManager } from "../state/index.js";
 import { NonceManager } from "../nonce/index.js";
@@ -884,7 +884,6 @@ export class OpenIDReliyingParty {
   async generateAccessToken(
     tokenRequest: TokenRequest,
     generateIdToken: boolean,
-    // tokenSignCallback: RpTypes.TokenSignCallback,
     audience: string,
     authServerPublicKeyJwk: JWK,
   ): Promise<TokenResponse> {
@@ -950,6 +949,13 @@ export class OpenIDReliyingParty {
               );
             }
           }).exhaustive();
+        await match(prevNonce.operationType)
+          .with({ type: "Issuance", vcTypes: { type: "Know", vcTypes: P.select() } }, async (types) => {
+            additionalParams = { vc_types: types }
+          })
+          .with({ type: "Verification" }, async (data) => {
+            additionalParams = { verification_scope: data.scope };
+          });
         clientId = jwtPayload.sub! // This should be a DID
         break;
       case "urn:ietf:params:oauth:grant-type:pre-authorized_code":
