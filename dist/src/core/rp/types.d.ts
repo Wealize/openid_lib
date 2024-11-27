@@ -1,11 +1,11 @@
-import { JWK } from "jose";
-import { JWA_ALGS } from "../../common/constants/index.js";
-import { AuthzResponseMode } from "../../common/formats/index.js";
-import { AuthzRequest, DIFPresentationDefinition } from "../../common/index.js";
-import { VpFormatsSupported } from "../../common/types/index.js";
-import { DIDDocument } from "did-resolver";
-import { VpExtractedData } from "../presentations/types.js";
-import { JwtPayload } from "jsonwebtoken";
+import { JWK } from 'jose';
+import { JWA_ALGS } from '../../common/constants/index.js';
+import { AuthzResponseMode } from '../../common/formats/index.js';
+import { AuthzRequest, DIFPresentationDefinition } from '../../common/index.js';
+import { VpFormatsSupported } from '../../common/types/index.js';
+import { DIDDocument } from 'did-resolver';
+import { VpExtractedData } from '../presentations/types.js';
+import { JwtPayload } from 'jsonwebtoken';
 export interface RpConfiguration {
     /**
      * Expiration time(ms) for ID Tokens. @default 10 minutes
@@ -64,20 +64,20 @@ export type CreateTokenRequestOptionalParams = {
  * Allows to define how to specify the presentation definition in a VP Token Request
  */
 export type PresentationDefinitionLocation = {
-    type: "Raw";
+    type: 'Raw';
     presentationDefinition: DIFPresentationDefinition;
 } | {
-    type: "Uri";
+    type: 'Uri';
     presentationDefinitionUri: string;
 };
 /**
  * Allows to define the purpose behid a specific Authz Request
-*/
+ */
 export type RequestPurpose = {
-    type: "Issuance";
+    type: 'Issuance';
     verifiedBaseAuthzRequest: VerifiedBaseAuthzRequest;
 } | {
-    type: "Verification";
+    type: 'Verification';
     verifiedBaseAuthzRequest: VerifiedBaseAuthzRequest;
 };
 export interface VerifiedBaseAuthzRequest {

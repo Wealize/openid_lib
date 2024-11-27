@@ -1,4 +1,3 @@
-;
 /**
  * Defines in which location the request for authorisation should be included:
  * - PLAIN_REQUEST: The request is not signed and travels in the same HTTP

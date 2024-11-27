@@ -1,18 +1,18 @@
-import { JWK } from "jose";
-import { Resolvable, Resolver } from "did-resolver";
-import { AuthServerMetadata } from "../../common/interfaces/auth_server_metadata.interface.js";
-import { AuthzRequestWithJWT } from "../../common/interfaces/authz_request.interface.js";
-import { HolderMetadata } from "../../common/interfaces/client_metadata.interface.js";
-import { IdTokenRequest } from "../../common/classes/id_token_request.js";
-import { IdTokenResponse } from "../../common/interfaces/id_token_response.js";
-import { TokenRequest } from "../../common/interfaces/token_request.interface.js";
-import { TokenResponse } from "../../common/interfaces/token_response.interface.js";
-import * as RpTypes from "./types.js";
-import { AuthorizationDetails, DIFPresentationDefinition, VpTokenResponse } from "../../common/index.js";
-import { VpTokenRequest } from "../../common/classes/vp_token_request.js";
-import { CredentialAdditionalVerification } from "../presentations/types.js";
-import { Result } from "../../common/classes/result.js";
-import { StateManager } from "../state/index.js";
+import { JWK } from 'jose';
+import { Resolvable, Resolver } from 'did-resolver';
+import { AuthServerMetadata } from '../../common/interfaces/auth_server_metadata.interface.js';
+import { AuthzRequestWithJWT } from '../../common/interfaces/authz_request.interface.js';
+import { HolderMetadata } from '../../common/interfaces/client_metadata.interface.js';
+import { IdTokenRequest } from '../../common/classes/id_token_request.js';
+import { IdTokenResponse } from '../../common/interfaces/id_token_response.js';
+import { TokenRequest } from '../../common/interfaces/token_request.interface.js';
+import { TokenResponse } from '../../common/interfaces/token_response.interface.js';
+import * as RpTypes from './types.js';
+import { AuthorizationDetails, DIFPresentationDefinition, VpTokenResponse } from '../../common/index.js';
+import { VpTokenRequest } from '../../common/classes/vp_token_request.js';
+import { CredentialAdditionalVerification } from '../presentations/types.js';
+import { Result } from '../../common/classes/result.js';
+import { StateManager } from '../state/index.js';
 /**
  * Represents an entity acting as a Reliying Party. As such, it has the
  * capability to process authorisation requests and to send others.
@@ -36,32 +36,32 @@ export declare class OpenIDReliyingParty {
     private preAuthCallback?;
     private nonceManager;
     /**
-   * @param defaultHolderMetadata Default metadata configuration for all Holder Wallets
-   * that establish contact. This configuration is overwritten dynamically with the
-   * data provided by these actors.
-   * @param metadata Authorisation server metadata
-   * @param didResolver Object responsible for obtaining the DID Documents
-   * of the DIDs that are detected.
-   * @param signCallback Callback used to sign any required data.
-   * @param scopeVerificationFlag Flag that control if the scope parameter
-   * should be checked against the "scopes_supported" params of the Auth server
-   * metadata
-   * @param stateManager: An implementation of a State Manager that will be used to
-   * store and control the lifetime of the nonces
-   * @param subjectComparison Function used to compare if two ID, most probably DIDs,
-   * are the same
-   * @param generalConfiguration Configuration about the different expiration times
-   * of the involved tokens
-   * @param issuerStateVerirication Optional callback that can be used to check the "issuer state"
-   * parameter, but only is provided
-   * @param authzDetailsVerification Optional callback that can be used to check
-   * the authorization details of a Authz Request, but only if provided
-   * @param vpCredentialVerificationCallback Optional callback that is used during
-   * VP verification to check the credential data agains the use case logic.
-   * @param preAuthCallback Optional callback that is used to check the validity
-   * of a Pre-Authorization Code
-   */
-    constructor(defaultHolderMetadata: HolderMetadata, metadata: AuthServerMetadata, didResolver: Resolver, signCallback: RpTypes.TokenSignCallback, scopeVerificationFlag: boolean, stateManager: StateManager, subjectComparison: (firstId: string, secondId: string) => boolean, generalConfiguration: RpTypes.RpConfiguration, issuerStateVerirication?: ((state: string) => Promise<Result<null, Error>>) | undefined, authzDetailsVerification?: ((authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) | undefined, vpCredentialVerificationCallback?: CredentialAdditionalVerification | undefined, preAuthCallback?: ((clientId: string | undefined, preCode: string, pin?: string) => Promise<Result<string, Error>>) | undefined);
+     * @param defaultHolderMetadata Default metadata configuration for all Holder Wallets
+     * that establish contact. This configuration is overwritten dynamically with the
+     * data provided by these actors.
+     * @param metadata Authorisation server metadata
+     * @param didResolver Object responsible for obtaining the DID Documents
+     * of the DIDs that are detected.
+     * @param signCallback Callback used to sign any required data.
+     * @param scopeVerificationFlag Flag that control if the scope parameter
+     * should be checked against the "scopes_supported" params of the Auth server
+     * metadata
+     * @param stateManager: An implementation of a State Manager that will be used to
+     * store and control the lifetime of the nonces
+     * @param subjectComparison Function used to compare if two ID, most probably DIDs,
+     * are the same
+     * @param generalConfiguration Configuration about the different expiration times
+     * of the involved tokens
+     * @param issuerStateVerirication Optional callback that can be used to check the "issuer state"
+     * parameter, but only is provided
+     * @param authzDetailsVerification Optional callback that can be used to check
+     * the authorization details of a Authz Request, but only if provided
+     * @param vpCredentialVerificationCallback Optional callback that is used during
+     * VP verification to check the credential data agains the use case logic.
+     * @param preAuthCallback Optional callback that is used to check the validity
+     * of a Pre-Authorization Code
+     */
+    constructor(defaultHolderMetadata: HolderMetadata, metadata: AuthServerMetadata, didResolver: Resolver, signCallback: RpTypes.TokenSignCallback, scopeVerificationFlag: boolean, stateManager: StateManager, subjectComparison: (firstId: string, secondId: string) => boolean, generalConfiguration: RpTypes.RpConfiguration, issuerStateVerirication?: ((state: string) => Promise<Result<null, Error>>) | undefined, authzDetailsVerification?: ((authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) | undefined, vpCredentialVerificationCallback?: CredentialAdditionalVerification | undefined, preAuthCallback?: undefined | ((clientId: string | undefined, preCode: string, pin?: string) => Promise<Result<string, Error>>));
     /**
      * Allows to add support for a new DID Method
      * @param methodName DID Method name
@@ -161,5 +161,5 @@ export declare class OpenIDReliyingParty {
     private validateClientMetadata;
     private resolveClientMetadata;
 }
-export * from "./types.js";
-export * from "./builder.js";
+export * from './types.js';
+export * from './builder.js';

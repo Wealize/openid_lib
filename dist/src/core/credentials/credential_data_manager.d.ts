@@ -1,6 +1,6 @@
-import { W3CVerifiableCredentialFormats } from "../../common";
-import { Result } from "../../common/classes/result";
-import { CredentialDataResponse, DeferredCredentialData, InTimeCredentialData } from "./types";
+import { Result } from '../../common/classes/index.js';
+import { CredentialDataResponse, DeferredCredentialData, InTimeCredentialData } from './types.js';
+import { W3CVerifiableCredentialFormats } from '../../common/formats/index.js';
 /**
  * Abstract class that provided an interface to a VC Issuer
  * thorugh which it can get the information related to a VC
@@ -18,10 +18,10 @@ export declare abstract class CredentialDataManager {
      * a VC if it is already available
      * @param acceptanceToken The token to exchange
      */
-    abstract deferredExchange(acceptanceToken: string): Promise<Result<InTimeCredentialData & {
+    abstract deferredExchange(acceptanceToken: string): Promise<Result<(InTimeCredentialData & {
         format: W3CVerifiableCredentialFormats;
         types: string[];
-    } | DeferredCredentialData, Error>>;
+    }) | DeferredCredentialData, Error>>;
     /**
      * Allows to obtain the true identifier of the credential subject. This method
      * can be overwritten if needed and can be useful when working with DID URL syntax

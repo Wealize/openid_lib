@@ -1,7 +1,7 @@
-import { KeyLike } from "jose";
-import { W3CDataModel } from "../../common/formats/index.js";
-import { W3CVerifiableCredential } from "../../common/interfaces/index.js";
-import { Result } from "../../common/classes/result.js";
+import { KeyLike } from 'jose';
+import { W3CDataModel } from '../../common/formats/index.js';
+import { W3CVerifiableCredential } from '../../common/interfaces/index.js';
+import { Result } from '../../common/classes/result.js';
 /**
  * Callback type that is used to perfom additional verifications of a VC.
  * It can be used to check the credentialStatus parameter and the terms of use.

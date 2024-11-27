@@ -1,25 +1,18 @@
-import { v4 as uuidv4 } from 'uuid';
-import querystring from "querystring";
-import {
-  AuthzRequestBuilder
-} from "../../common/builders/authz/authz_request.builder.js";
-import {
-  AuthorizationDetails
-} from "../../common/interfaces/authz_details.interface.js";
+import {v4 as uuidv4} from 'uuid';
+import querystring from 'querystring';
+import {AuthzRequestBuilder} from '../../common/builders/authz/authz_request.builder.js';
+import {AuthorizationDetails} from '../../common/interfaces/authz_details.interface.js';
 import {
   AuthzRequest,
-  AuthzRequestLocation
-} from "../../common/interfaces/authz_request.interface.js";
+  AuthzRequestLocation,
+} from '../../common/interfaces/authz_request.interface.js';
 import {
   HolderMetadata,
-  ServiceMetadata
-} from "../../common/interfaces/client_metadata.interface.js";
-import { AuthzResponseType } from "../../common/types/index.js";
-import { generateChallenge } from "../../common/utils/pkce.utils.js";
-import {
-  DEFAULT_PKCE_LENGTH,
-  generateRandomString
-} from '../../common/index.js';
+  ServiceMetadata,
+} from '../../common/interfaces/client_metadata.interface.js';
+import {AuthzResponseType} from '../../common/types/index.js';
+import {generateChallenge} from '../../common/utils/pkce.utils.js';
+import {DEFAULT_PKCE_LENGTH, generateRandomString} from '../../common/index.js';
 
 /**
  * Extended authorisation request
@@ -28,24 +21,24 @@ interface AuthzRequestMethodData {
   /**
    * The petition in JWT format.
    */
-  jwt?: string,
+  jwt?: string;
   /**
    * The URL to send the request to
    */
-  url: string,
+  url: string;
   /**
    * The state associated with the request
    */
-  state: string,
+  state: string;
   /**
-   * The "code_verifier" that resolves the challenge included 
+   * The "code_verifier" that resolves the challenge included
    * in the request
    */
-  code_verifier?: string
+  code_verifier?: string;
 }
 
 /**
- * Define an entity acting as OpenIDProvider. As such, it can generate 
+ * Define an entity acting as OpenIDProvider. As such, it can generate
  * authorisation requests
  */
 export class OpenIDProvider {
@@ -63,15 +56,13 @@ export class OpenIDProvider {
     private requestCallback: AuthzSignCallback,
     private metadata: ServiceMetadata | HolderMetadata,
     private clientId: string,
-  ) {
-
-  }
+  ) {}
 
   // TODO: DERIVE FROM CREDENTIAL OFFER FOR ISSUER STATE AND EVEN AUTHZ DETAILS
   /**
    * Allows to generate an autorisation request
    * @param url The URL to send the request to
-   * @param requestLocation Allows to indicate where the request parameters 
+   * @param requestLocation Allows to indicate where the request parameters
    * should be included.
    * @param response_type The response type expected
    * @param authzDetails The autorisation details to include in the request
@@ -88,9 +79,9 @@ export class OpenIDProvider {
     scope: string,
     audience: string,
     pkceChallenge?: {
-      code_challenge: string,
-      code_challenge_method: string
-    }
+      code_challenge: string;
+      code_challenge_method: string;
+    },
   ): Promise<AuthzRequestMethodData> {
     let code_challenge, code_challenge_method, code_verifier;
     if (pkceChallenge) {
@@ -99,14 +90,14 @@ export class OpenIDProvider {
     } else {
       code_verifier = generateRandomString(DEFAULT_PKCE_LENGTH);
       code_challenge = await generateChallenge(code_verifier);
-      code_challenge_method = "S256"; // TODO: Define new type
+      code_challenge_method = 'S256'; // TODO: Define new type
     }
-    const hasParams = url.includes("?");
+    const hasParams = url.includes('?');
     const state = uuidv4();
     const authzBaseRequest = new AuthzRequestBuilder(
       response_type,
       this.clientId,
-      this.redirectUri
+      this.redirectUri,
     )
       .withScope(scope)
       .withMetadata(this.metadata)
@@ -117,15 +108,18 @@ export class OpenIDProvider {
     let location;
     let result: AuthzRequestMethodData;
     switch (requestLocation) {
-      case AuthzRequestLocation.JWT_OBJECT:
+      case AuthzRequestLocation.JWT_OBJECT: {
         const request = await this.requestCallback(authzBaseRequest, audience);
-        location = `${url}${hasParams ? "&" : "/?"}${querystring.stringify(
-          { ...authzBaseRequest, request } as Record<any, any>)}`;
-        result = { url: location, state, jwt: request };
+        location = `${url}${hasParams ? '&' : '/?'}${querystring.stringify({
+          ...authzBaseRequest,
+          request,
+        } as Record<any, any>)}`;
+        result = {url: location, state, jwt: request};
         break;
+      }
       case AuthzRequestLocation.PLAIN_REQUEST:
-        location = `${url}${hasParams ? "&" : "/?"}${querystring.stringify(authzBaseRequest as Record<any, any>)}`;
-        result = { url: location, state };
+        location = `${url}${hasParams ? '&' : '/?'}${querystring.stringify(authzBaseRequest as Record<any, any>)}`;
+        result = {url: location, state};
         break;
     }
     if (code_verifier) {
@@ -134,26 +128,15 @@ export class OpenIDProvider {
     return result;
   }
 
-  createIdTokenReponse() {
+  createIdTokenReponse() {}
 
-  }
+  createVpTokenResponse() {}
 
-  createVpTokenResponse() {
+  verifyIdTokenRequest() {}
 
-  }
+  verifyVpTokenResponse() {}
 
-  verifyIdTokenRequest() {
-
-  }
-
-  verifyVpTokenResponse() {
-
-  }
-
-  verifyAuthzResponse() {
-
-  }
-
+  verifyAuthzResponse() {}
 }
 
 /**
@@ -162,4 +145,7 @@ export class OpenIDProvider {
  * @param target The audience of the request
  * @returns The signed request in string format
  */
-export type AuthzSignCallback = (data: AuthzRequest, target: string) => Promise<string>;
+export type AuthzSignCallback = (
+  data: AuthzRequest,
+  target: string,
+) => Promise<string>;

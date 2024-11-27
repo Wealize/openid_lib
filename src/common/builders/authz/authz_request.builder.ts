@@ -1,12 +1,12 @@
-import { InvalidDataProvided } from "../../classes/index.js";
-import { DEFAULT_SCOPE } from "../../constants/index.js";
-import { AuthorizationDetails } from "../../interfaces/authz_details.interface.js";
-import { AuthzRequest } from "../../interfaces/authz_request.interface.js";
+import {InvalidDataProvided} from '../../classes/index.js';
+import {DEFAULT_SCOPE} from '../../constants/index.js';
+import {AuthorizationDetails} from '../../interfaces/authz_details.interface.js';
+import {AuthzRequest} from '../../interfaces/authz_request.interface.js';
 import {
   HolderMetadata,
-  ServiceMetadata
-} from "../../interfaces/client_metadata.interface.js";
-import { AuthzResponseType } from "../../types/index.js";
+  ServiceMetadata,
+} from '../../interfaces/client_metadata.interface.js';
+import {AuthzResponseType} from '../../types/index.js';
 
 /**
  * Builder class for AuthzRequest
@@ -26,25 +26,25 @@ export class AuthzRequestBuilder {
    * @param response_type The "reponse_type" attribute of an authorization request
    * @param client_id  The client identifier
    * @param redirect_uri  The "redirect_uri" attribute of an authorization request
-   * @param imposeOpenIdScope Flag that manages whether "scope" should 
+   * @param imposeOpenIdScope Flag that manages whether "scope" should
    * be checked for the string "openid".
    */
   constructor(
     private response_type: AuthzResponseType,
     private client_id: string,
     private redirect_uri: string,
-    private imposeOpenIdScope = true
-  ) { }
+    private imposeOpenIdScope = true,
+  ) {}
 
   /**
-   * Generates a build with the required data for a AuthzRequest sent 
+   * Generates a build with the required data for a AuthzRequest sent
    * by a Holder Wallet
    * @param response_type The "reponse_type" attribute of an authorization request
    * @param client_id The client identifier
    * @param redirect_uri The "redirect_uri" attribute of an authorization request
    * @param metadata The metadata of the Holder
    * @param code_challenge The "code_challenge" attribute of authorization request
-   * @param code_challenge_method The "code_challenge_method" attribute of 
+   * @param code_challenge_method The "code_challenge_method" attribute of
    * authorization request
    * @param issuer_state The "issuer_state" attribute of authorization request
    * @returns Instance of AuthzRequestBuilder
@@ -61,7 +61,7 @@ export class AuthzRequestBuilder {
     const builder = new AuthzRequestBuilder(
       response_type,
       client_id,
-      redirect_uri
+      redirect_uri,
     )
       .withMetadata(metadata)
       .withCodeChallenge(code_challenge, code_challenge_method);
@@ -72,7 +72,7 @@ export class AuthzRequestBuilder {
   }
 
   /**
-   * Generates a build with the required data for a AuthzRequest sent 
+   * Generates a build with the required data for a AuthzRequest sent
    * by a Service Wallet
    * @param response_type The "reponse_type" attribute of an authorization request
    * @param client_id The client identifier
@@ -91,9 +91,8 @@ export class AuthzRequestBuilder {
     const builder = new AuthzRequestBuilder(
       response_type,
       client_id,
-      redirect_uri
-    )
-      .withMetadata(metadata);
+      redirect_uri,
+    ).withMetadata(metadata);
     if (issuer_state) {
       builder.withIssuerState(issuer_state);
     }
@@ -105,7 +104,9 @@ export class AuthzRequestBuilder {
    * @param metadata The metadata to include
    * @returns This object
    */
-  withMetadata(metadata: HolderMetadata | ServiceMetadata): AuthzRequestBuilder {
+  withMetadata(
+    metadata: HolderMetadata | ServiceMetadata,
+  ): AuthzRequestBuilder {
     this.client_metadata = metadata;
     return this;
   }
@@ -116,7 +117,10 @@ export class AuthzRequestBuilder {
    * @param method The method that have to be used to verify the challenge
    * @returns This object
    */
-  withCodeChallenge(code_challenge: string, method: string): AuthzRequestBuilder {
+  withCodeChallenge(
+    code_challenge: string,
+    method: string,
+  ): AuthzRequestBuilder {
     this.code_challenge = code_challenge;
     this.code_challenge_method = method;
     return this;
@@ -167,10 +171,12 @@ export class AuthzRequestBuilder {
 
   /**
    * Add authorization details to an autorization request
-   * @param authorizationDetails The details to include 
+   * @param authorizationDetails The details to include
    * @returns This object
    */
-  addAuthzDetails(authorizationDetails: AuthorizationDetails): AuthzRequestBuilder {
+  addAuthzDetails(
+    authorizationDetails: AuthorizationDetails,
+  ): AuthzRequestBuilder {
     if (!this.authorization_details) {
       this.authorization_details = [];
     }
@@ -194,7 +200,7 @@ export class AuthzRequestBuilder {
       nonce: this.nonce,
       code_challenge: this.code_challenge,
       code_challenge_method: this.code_challenge_method,
-      client_metadata: this.client_metadata
-    }
+      client_metadata: this.client_metadata,
+    };
   }
 }

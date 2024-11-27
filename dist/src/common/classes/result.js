@@ -1,4 +1,6 @@
 export class Result {
+    ok;
+    error;
     constructor(ok, error) {
         this.ok = ok;
         this.error = error;
@@ -19,13 +21,13 @@ export class Result {
         if (this.isOk()) {
             return this.ok;
         }
-        throw new Error("Unwrap of error value");
+        throw new Error('Unwrap of error value');
     }
     unwrapError() {
         if (this.isError()) {
             return this.error;
         }
-        throw new Error("Unwrap of non error value");
+        throw new Error('Unwrap of non error value');
     }
     map(handler) {
         if (this.isError()) {

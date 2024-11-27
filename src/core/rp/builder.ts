@@ -1,5 +1,5 @@
-import { Resolver } from "did-resolver";
-import { Result } from "../../common/classes/result.js";
+import {Resolver} from 'did-resolver';
+import {Result} from '../../common/classes/result.js';
 import {
   ACCESS_TOKEN_EXPIRATION_TIME,
   AuthServerMetadata,
@@ -7,47 +7,53 @@ import {
   C_NONCE_EXPIRATION_TIME,
   HolderMetadata,
   ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
-  VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME
-} from "../../common/index.js";
-import { CredentialAdditionalVerification } from "../presentations/types.js";
-import { RpConfiguration, TokenSignCallback } from "./types.js";
-import { StateManager } from "../state/index.js";
-import { OpenIDReliyingParty } from "./index.js";
+  VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
+} from '../../common/index.js';
+import {CredentialAdditionalVerification} from '../presentations/types.js';
+import {RpConfiguration, TokenSignCallback} from './types.js';
+import {StateManager} from '../state/index.js';
+import {OpenIDReliyingParty} from './index.js';
 
 /**
  * Step builder that can be used to create an instance of a Reliying Party
  */
 export class OpenIdRPStepBuilder {
   private issuerStateCallback:
-    undefined
+    | undefined
     | ((state: string) => Promise<Result<null, Error>>) = undefined;
   private authzDetailsVerificationCallback:
-    undefined
-    | ((authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) = undefined;
-  private credentialExternalVerification: undefined | CredentialAdditionalVerification = undefined;
+    | undefined
+    | ((authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) =
+    undefined;
+  private credentialExternalVerification:
+    | undefined
+    | CredentialAdditionalVerification = undefined;
   private scopeVerificationFlag = false;
-  private subjectComparison: (firstId: string, secondId: string) => boolean = (firstId, secondId) => {
+  private subjectComparison: (firstId: string, secondId: string) => boolean = (
+    firstId,
+    secondId,
+  ) => {
     return firstId === secondId;
-  }
-  private preAuthCallback: undefined
-    | ((clientId: string | undefined,
-      preCode: string,
-      pin?: string
-    ) => Promise<Result<string, Error>>) = undefined;
+  };
+  private preAuthCallback:
+    | undefined
+    | ((
+        clientId: string | undefined,
+        preCode: string,
+        pin?: string,
+      ) => Promise<Result<string, Error>>) = undefined;
   private generalConfiguration: RpConfiguration = {
     idTokenExpirationTime: ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
     vpTokenExpirationTIme: VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
     cNonceExpirationTime: C_NONCE_EXPIRATION_TIME,
-    accessTokenExpirationTime: ACCESS_TOKEN_EXPIRATION_TIME
-  }
+    accessTokenExpirationTime: ACCESS_TOKEN_EXPIRATION_TIME,
+  };
 
-  constructor(
-    private metadata: AuthServerMetadata,
-  ) { };
+  constructor(private metadata: AuthServerMetadata) {}
 
   /**
    * Allows to overwrite the default expiration time for ID Token Request
-   * @param time The new expieration time in ms 
+   * @param time The new expieration time in ms
    * @returns The same instance of the step builder
    */
   setIdTokenExpirationTime(time: number) {
@@ -57,7 +63,7 @@ export class OpenIdRPStepBuilder {
 
   /**
    * Allows to overwrite the default expiration time for VP Token Request
-   * @param time The new expieration time in ms 
+   * @param time The new expieration time in ms
    * @returns The same instance of the step builder
    */
   setVpTokenExpirationTime(time: number) {
@@ -67,7 +73,7 @@ export class OpenIdRPStepBuilder {
 
   /**
    * Allows to overwrite the default expiration time for Challenge nonces
-   * @param time The new expieration time in seconds 
+   * @param time The new expieration time in seconds
    * @returns The same instance of the step builder
    */
   setCNonceExpirationTime(time: number) {
@@ -93,9 +99,10 @@ export class OpenIdRPStepBuilder {
    * @returns The same instance of the step builder
    */
   withPreAuthCallback(
-    callback: (clientId: string | undefined,
+    callback: (
+      clientId: string | undefined,
       preCode: string,
-      pin?: string
+      pin?: string,
     ) => Promise<Result<string, Error>>,
   ) {
     this.preAuthCallback = callback;
@@ -109,7 +116,8 @@ export class OpenIdRPStepBuilder {
    * @returns The same instance of the step builder
    */
   withIssuerStateVerification(
-    callback: (state: string) => Promise<Result<null, Error>>) {
+    callback: (state: string) => Promise<Result<null, Error>>,
+  ) {
     this.issuerStateCallback = callback;
     return this;
   }
@@ -122,7 +130,10 @@ export class OpenIdRPStepBuilder {
    * @returns The same instance of the step builder
    */
   withAuthzDetailsVerification(
-    callback: (authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) {
+    callback: (
+      authDetails: AuthorizationDetails,
+    ) => Promise<Result<null, Error>>,
+  ) {
     this.authzDetailsVerificationCallback = callback;
     return this;
   }
@@ -142,7 +153,9 @@ export class OpenIdRPStepBuilder {
    * @param callback The callback that handle the verification
    * @returns The same instance of the step builder
    */
-  withVpCredentialExternalVerification(callback: CredentialAdditionalVerification) {
+  withVpCredentialExternalVerification(
+    callback: CredentialAdditionalVerification,
+  ) {
     this.credentialExternalVerification = callback;
     return this;
   }
@@ -159,7 +172,9 @@ export class OpenIdRPStepBuilder {
    * @param resolutor The comparison callback
    * @returns The same instance of the step builder
    */
-  withCustomSubjectComparison(resolutor: (firstId: string, secondId: string) => boolean) {
+  withCustomSubjectComparison(
+    resolutor: (firstId: string, secondId: string) => boolean,
+  ) {
     this.subjectComparison = resolutor;
     return this;
   }
@@ -171,7 +186,9 @@ export class OpenIdRPStepBuilder {
    * @param metadata The metadata to use
    * @returns The next stage of the step builder, focused on the DID Resolvers
    */
-  setDefaultHolderMetadata(metadata: HolderMetadata): OpenIdStepBuilderHolderMetadataStage {
+  setDefaultHolderMetadata(
+    metadata: HolderMetadata,
+  ): OpenIdStepBuilderHolderMetadataStage {
     return new OpenIdStepBuilderHolderMetadataStage(
       this.generalConfiguration,
       this.metadata,
@@ -181,8 +198,8 @@ export class OpenIdRPStepBuilder {
       this.scopeVerificationFlag,
       metadata,
       this.subjectComparison,
-      this.preAuthCallback
-    )
+      this.preAuthCallback,
+    );
   }
 }
 
@@ -190,21 +207,28 @@ class OpenIdStepBuilderHolderMetadataStage {
   constructor(
     private generalConfiguration: RpConfiguration,
     private metadata: AuthServerMetadata,
-    private issuerStateCallback: undefined
+    private issuerStateCallback:
+      | undefined
       | ((state: string) => Promise<Result<null, Error>>) = undefined,
     private authzDetailsVerificationCallback:
-      undefined
-      | ((authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) = undefined,
-    private credentialExternalVerification: undefined | CredentialAdditionalVerification = undefined,
+      | undefined
+      | ((
+          authDetails: AuthorizationDetails,
+        ) => Promise<Result<null, Error>>) = undefined,
+    private credentialExternalVerification:
+      | undefined
+      | CredentialAdditionalVerification = undefined,
     private scopeVerificationFlag: boolean,
     private holderMetadata: HolderMetadata,
     private subjectComparison: (firstId: string, secondId: string) => boolean,
-    private preAuthCallback: undefined
-      | ((clientId: string | undefined,
-        preCode: string,
-        pin?: string
-      ) => Promise<Result<string, Error>>) = undefined
-  ) { };
+    private preAuthCallback:
+      | undefined
+      | ((
+          clientId: string | undefined,
+          preCode: string,
+          pin?: string,
+        ) => Promise<Result<string, Error>>) = undefined,
+  ) {}
 
   /**
    * Allows to set the DID Resolver to use by the RP
@@ -222,7 +246,7 @@ class OpenIdStepBuilderHolderMetadataStage {
       this.holderMetadata,
       didResolver,
       this.subjectComparison,
-      this.preAuthCallback
+      this.preAuthCallback,
     );
   }
 }
@@ -231,30 +255,39 @@ class OpenIdStepBuilderResolverStage {
   constructor(
     private generalConfiguration: RpConfiguration,
     private metadata: AuthServerMetadata,
-    private issuerStateCallback: undefined
+    private issuerStateCallback:
+      | undefined
       | ((state: string) => Promise<Result<null, Error>>) = undefined,
     private authzDetailsVerificationCallback:
-      undefined
-      | ((authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) = undefined,
-    private credentialExternalVerification: undefined | CredentialAdditionalVerification = undefined,
+      | undefined
+      | ((
+          authDetails: AuthorizationDetails,
+        ) => Promise<Result<null, Error>>) = undefined,
+    private credentialExternalVerification:
+      | undefined
+      | CredentialAdditionalVerification = undefined,
     private scopeVerificationFlag: boolean,
     private holderMetadata: HolderMetadata,
     private didResolver: Resolver,
     private subjectComparison: (firstId: string, secondId: string) => boolean,
-    private preAuthCallback: undefined
-      | ((clientId: string | undefined,
-        preCode: string,
-        pin?: string
-      ) => Promise<Result<string, Error>>) = undefined
-  ) { };
+    private preAuthCallback:
+      | undefined
+      | ((
+          clientId: string | undefined,
+          preCode: string,
+          pin?: string,
+        ) => Promise<Result<string, Error>>) = undefined,
+  ) {}
 
   /**
    * Allows to set the sign callback for all tokens and request that
    * the RP will generate
-   * @param jwtSignCallback The callback to use 
+   * @param jwtSignCallback The callback to use
    * @returns The next stage of the step builder
    */
-  withTokenSignCallback(jwtSignCallback: TokenSignCallback): OpenIdStepBuilderSignStage {
+  withTokenSignCallback(
+    jwtSignCallback: TokenSignCallback,
+  ): OpenIdStepBuilderSignStage {
     return new OpenIdStepBuilderSignStage(
       this.generalConfiguration,
       this.metadata,
@@ -266,10 +299,9 @@ class OpenIdStepBuilderResolverStage {
       this.holderMetadata,
       this.didResolver,
       this.subjectComparison,
-      this.preAuthCallback
+      this.preAuthCallback,
     );
   }
-
 }
 
 class OpenIdStepBuilderSignStage {
@@ -277,22 +309,29 @@ class OpenIdStepBuilderSignStage {
     private generalConfiguration: RpConfiguration,
     private metadata: AuthServerMetadata,
     private jwtSignCallback: TokenSignCallback,
-    private issuerStateCallback: undefined
+    private issuerStateCallback:
+      | undefined
       | ((state: string) => Promise<Result<null, Error>>) = undefined,
     private authzDetailsVerificationCallback:
-      undefined
-      | ((authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) = undefined,
-    private credentialExternalVerification: undefined | CredentialAdditionalVerification = undefined,
+      | undefined
+      | ((
+          authDetails: AuthorizationDetails,
+        ) => Promise<Result<null, Error>>) = undefined,
+    private credentialExternalVerification:
+      | undefined
+      | CredentialAdditionalVerification = undefined,
     private scopeVerificationFlag: boolean,
     private holderMetadata: HolderMetadata,
     private didResolver: Resolver,
     private subjectComparison: (firstId: string, secondId: string) => boolean,
-    private preAuthCallback: undefined
-      | ((clientId: string | undefined,
-        preCode: string,
-        pin?: string
-      ) => Promise<Result<string, Error>>) = undefined
-  ) { };
+    private preAuthCallback:
+      | undefined
+      | ((
+          clientId: string | undefined,
+          preCode: string,
+          pin?: string,
+        ) => Promise<Result<string, Error>>) = undefined,
+  ) {}
 
   /**
    * Allows to set the state manager that will be used by the RP
@@ -313,8 +352,8 @@ class OpenIdStepBuilderSignStage {
       this.didResolver,
       manager,
       this.subjectComparison,
-      this.preAuthCallback
-    )
+      this.preAuthCallback,
+    );
   }
 }
 
@@ -323,23 +362,30 @@ class OpenIdStepBuilderEndStage {
     private generalConfiguration: RpConfiguration,
     private metadata: AuthServerMetadata,
     private jwtSignCallback: TokenSignCallback,
-    private issuerStateCallback: undefined
+    private issuerStateCallback:
+      | undefined
       | ((state: string) => Promise<Result<null, Error>>) = undefined,
     private authzDetailsVerificationCallback:
-      undefined
-      | ((authDetails: AuthorizationDetails) => Promise<Result<null, Error>>) = undefined,
-    private credentialExternalVerification: undefined | CredentialAdditionalVerification = undefined,
+      | undefined
+      | ((
+          authDetails: AuthorizationDetails,
+        ) => Promise<Result<null, Error>>) = undefined,
+    private credentialExternalVerification:
+      | undefined
+      | CredentialAdditionalVerification = undefined,
     private scopeVerificationFlag: boolean,
     private holderMetadata: HolderMetadata,
     private didResolver: Resolver,
     private manager: StateManager,
     private subjectComparison: (firstId: string, secondId: string) => boolean,
-    private preAuthCallback: undefined
-      | ((clientId: string | undefined,
-        preCode: string,
-        pin?: string
-      ) => Promise<Result<string, Error>>) = undefined
-  ) { };
+    private preAuthCallback:
+      | undefined
+      | ((
+          clientId: string | undefined,
+          preCode: string,
+          pin?: string,
+        ) => Promise<Result<string, Error>>) = undefined,
+  ) {}
 
   /**
    * Builds an instance of the RP
@@ -358,7 +404,7 @@ class OpenIdStepBuilderEndStage {
       this.issuerStateCallback,
       this.authzDetailsVerificationCallback,
       this.credentialExternalVerification,
-      this.preAuthCallback
+      this.preAuthCallback,
     );
   }
 }

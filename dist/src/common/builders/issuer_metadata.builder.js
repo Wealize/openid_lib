@@ -5,6 +5,13 @@ import { InternalNonceError } from '../classes/index.js';
  * Builder class for Credential Issuer Metadata
  */
 export class IssuerMetadataBuilder {
+    credential_issuer;
+    credential_endpoint;
+    imposeHttps;
+    authorization_server;
+    deferred_credential_endpoint;
+    batch_credential_endpoint;
+    credentials_supported = new Map();
     /**
      * Constructor of IssuerMetadataBuilder
      * @param credential_issuer URI of the credential issuer
@@ -18,15 +25,14 @@ export class IssuerMetadataBuilder {
         this.credential_issuer = credential_issuer;
         this.credential_endpoint = credential_endpoint;
         this.imposeHttps = imposeHttps;
-        this.credentials_supported = new Map();
         if (imposeHttps) {
             if (!isHttps(credential_issuer)) {
                 // TODO: Define error enum
-                throw new InternalNonceError("Is not https");
+                throw new InternalNonceError('Is not https');
             }
             if (!isHttps(credential_endpoint)) {
                 // TODO: Define error enum
-                throw new InternalNonceError("Is not https");
+                throw new InternalNonceError('Is not https');
             }
         }
     }
@@ -44,7 +50,7 @@ export class IssuerMetadataBuilder {
      * @returns This object
      */
     withAuthorizationServer(url) {
-        this.assertUrlIsHttps(url, "authorization_server");
+        this.assertUrlIsHttps(url, 'authorization_server');
         this.authorization_server = url;
         return this;
     }
@@ -54,7 +60,7 @@ export class IssuerMetadataBuilder {
      * @returns This object
      */
     withDeferredCredentialEndpoint(url) {
-        this.assertUrlIsHttps(url, "deferred_credential_endpoint");
+        this.assertUrlIsHttps(url, 'deferred_credential_endpoint');
         this.deferred_credential_endpoint = url;
         return this;
     }
@@ -64,7 +70,7 @@ export class IssuerMetadataBuilder {
      * @returns This object
      */
     withBatchCredentialEndpoint(url) {
-        this.assertUrlIsHttps(url, "batch_credential_endpoint");
+        this.assertUrlIsHttps(url, 'batch_credential_endpoint');
         this.batch_credential_endpoint = url;
         return this;
     }
@@ -82,7 +88,7 @@ export class IssuerMetadataBuilder {
         else {
             if (this.credentials_supported.get(supportedCredential.id)) {
                 // TODO: Define error enum
-                throw new InternalNonceError("Credential supported already defined");
+                throw new InternalNonceError('Credential supported already defined');
             }
             id = supportedCredential.id;
         }
@@ -100,19 +106,18 @@ export class IssuerMetadataBuilder {
             credential_endpoint: this.credential_endpoint,
             deferred_credential_endpoint: this.deferred_credential_endpoint,
             batch_credential_endpoint: this.batch_credential_endpoint,
-            credentials_supported: Array.from(this.credentials_supported.values())
+            credentials_supported: Array.from(this.credentials_supported.values()),
         };
-        ;
     }
 }
 /**
  * Builder class for Credential Supported objects in Credential Issuer Metadata
  */
 export class CredentialSupportedBuilder {
-    constructor() {
-        this.format = "jwt_vc_json";
-        this.types = [];
-    }
+    format = 'jwt_vc_json';
+    id;
+    types = [];
+    display;
     /**
      * Set the format of the credential. By default "jwt_vc_json".
      * @param format The W3C VC format
@@ -161,7 +166,7 @@ export class CredentialSupportedBuilder {
             format: this.format,
             id: this.id,
             types: this.types,
-            display: this.display
+            display: this.display,
         };
     }
 }
@@ -169,6 +174,7 @@ export class CredentialSupportedBuilder {
  * Builder for VC display information in CredentialSupported objects
  */
 export class VerifiableCredentialDisplayBuilder {
+    name;
     /**
      * Constructor of VerifiableCredentialDisplayBuilder
      * @param name String value of a display name for the Credential Issuer.
@@ -176,6 +182,13 @@ export class VerifiableCredentialDisplayBuilder {
     constructor(name) {
         this.name = name;
     }
+    locale;
+    logo;
+    url;
+    alt_text;
+    description;
+    background_color;
+    text_color;
     /**
      * Set the locale information of the display information
      * @param locale String value that identifies the language of this object
@@ -253,7 +266,7 @@ export class VerifiableCredentialDisplayBuilder {
             alt_text: this.alt_text,
             description: this.description,
             background_color: this.background_color,
-            text_color: this.text_color
+            text_color: this.text_color,
         };
     }
 }

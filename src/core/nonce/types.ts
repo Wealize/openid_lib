@@ -1,52 +1,52 @@
-import { JWK } from "jose"
-import { AuthzResponseType } from "../../common"
+import {JWK} from 'jose';
+import {AuthzResponseType} from '@/types';
 
 /**
  * It sets the requested VC Types, if they are known
  */
 export type RequestVcTypes =
-  | { type: "Uknown" }
-  | { type: "Know", vcTypes: string[] }
+  | {type: 'Uknown'}
+  | {type: 'Know'; vcTypes: string[]};
 
 /**
  * It sets the Operation type, which be a VC issuance or a Verification
  */
 export type OperationTypeEnum =
-  | { type: "Issuance", vcTypes: RequestVcTypes }
-  | { type: "Verification", scope: string }
+  | {type: 'Issuance'; vcTypes: RequestVcTypes}
+  | {type: 'Verification'; scope: string};
 
 /**
  * It sets the client information associated with the nonce
  */
 export type ClientTypeEnum =
   | {
-    type: "HolderWallet",
-    clientId: string,
-    codeChallenge?: string,
-    codeChallengeMethod?: string, // TODO: The method must be an algorithm
-  }
-  | { type: "ServiceWallet", clientJwk: JWK, clientId: string }
+      type: 'HolderWallet';
+      clientId: string;
+      codeChallenge?: string;
+      codeChallengeMethod?: string; // TODO: The method must be an algorithm
+    }
+  | {type: 'ServiceWallet'; clientJwk: JWK; clientId: string};
 
 /**
  * All possible states that can be associated with a nonce
  */
 export type NonceSpecificData =
-  PostBaseAuthzNonce
+  | PostBaseAuthzNonce
   | DirectRequestNonce
   | PostAuthzNonce
-  | ChallengeNonce
+  | ChallengeNonce;
 
 /**
  * The state for a nonce generated for a VP/ID Token Request after a base
  * authz request have been verified
  */
 export interface PostBaseAuthzNonce {
-  type: "PostBaseAuthz",
-  clientData: ClientTypeEnum,
-  redirectUri: string,
-  responseType: Extract<AuthzResponseType, "id_token" | "vp_token">,
-  holderState?: string,
-  state?: string
+  type: 'PostBaseAuthz';
+  clientData: ClientTypeEnum;
+  redirectUri: string;
+  responseType: Extract<AuthzResponseType, 'id_token' | 'vp_token'>;
+  holderState?: string;
+  state?: string;
 }
 
 /**
@@ -54,8 +54,8 @@ export interface PostBaseAuthzNonce {
  * a previously verified authz request
  */
 export interface DirectRequestNonce {
-  type: "DirectRequest",
-  responseType: Extract<AuthzResponseType, "id_token" | "vp_token">
+  type: 'DirectRequest';
+  responseType: Extract<AuthzResponseType, 'id_token' | 'vp_token'>;
 }
 
 /**
@@ -63,10 +63,10 @@ export interface DirectRequestNonce {
  * have been verified
  */
 export interface PostAuthzNonce {
-  type: "PostAuthz",
-  clientData: ClientTypeEnum,
-  redirectUri: string,
-  responseType: Extract<AuthzResponseType, "id_token" | "vp_token">
+  type: 'PostAuthz';
+  clientData: ClientTypeEnum;
+  redirectUri: string;
+  responseType: Extract<AuthzResponseType, 'id_token' | 'vp_token'>;
 }
 
 /**
@@ -74,8 +74,8 @@ export interface PostAuthzNonce {
  * control proof of a credential request
  */
 export interface ChallengeNonce {
-  type: "ChallengeNonce",
-  expirationTime: number
+  type: 'ChallengeNonce';
+  expirationTime: number;
 }
 
 /**
@@ -87,7 +87,7 @@ export type NonceState = GeneralNonceData & NonceSpecificData;
  * General data for all nonce's states
  */
 export interface GeneralNonceData {
-  timestamp: number,
-  sub: string,
-  operationType: OperationTypeEnum,
+  timestamp: number;
+  sub: string;
+  operationType: OperationTypeEnum;
 }

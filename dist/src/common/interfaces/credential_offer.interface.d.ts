@@ -1,10 +1,10 @@
-import { W3CVerifiableCredentialFormats } from "../formats/index.js";
+import { W3CVerifiableCredentialFormats } from '../formats/index.js';
 /**
  * Defines the Grant pre-authorize_code for a Credential Offer in
  * accordance to OID4VCI
  */
 export interface GrantPreAuthorizeCode {
-    "pre-authorized_code": string;
+    'pre-authorized_code': string;
     user_pin_required: boolean;
 }
 /**
@@ -20,7 +20,7 @@ export interface GrantAuthorizationCode {
  */
 export interface CredentialOfferGrants {
     authorization_code?: GrantAuthorizationCode;
-    "urn:ietf:params:oauth:grant-type:pre-authorized_code"?: GrantPreAuthorizeCode;
+    'urn:ietf:params:oauth:grant-type:pre-authorized_code'?: GrantPreAuthorizeCode;
 }
 /**
  * Defines the Trust framework field for a Credential Offer in

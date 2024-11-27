@@ -1,11 +1,11 @@
-import { Resolver } from "did-resolver";
-import { JWK } from "jose";
-import { Jwt } from "jsonwebtoken";
-import { W3CDataModel, W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
-import { CredentialRequest } from "../../common/interfaces/credential_request.interface.js";
-import { IssuerMetadata } from "../../common/interfaces/issuer_metadata.interface.js";
-import { CredentialResponse } from "../../common/interfaces/credential_response.interface.js";
-import * as VcIssuerTypes from "./types.js";
+import { Resolver } from 'did-resolver';
+import { JWK } from 'jose';
+import { Jwt } from 'jsonwebtoken';
+import { W3CDataModel, W3CVerifiableCredentialFormats } from '../../common/formats/index.js';
+import { CredentialRequest } from '../../common/interfaces/credential_request.interface.js';
+import { IssuerMetadata } from '../../common/interfaces/issuer_metadata.interface.js';
+import { CredentialResponse } from '../../common/interfaces/credential_response.interface.js';
+import * as VcIssuerTypes from './types.js';
 import { CredentialDataManager } from './credential_data_manager.js';
 import { StateManager } from '../state/index.js';
 /**

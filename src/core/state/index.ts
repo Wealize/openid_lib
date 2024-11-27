@@ -38,7 +38,7 @@ export class MemoryStateManager extends StateManager {
   private memory: Record<string, any> = {};
   constructor() {
     super();
-  };
+  }
 
   async saveState(id: string, data: any): Promise<void> {
     this.memory[id] = data;
@@ -49,7 +49,7 @@ export class MemoryStateManager extends StateManager {
   }
 
   getState(id: string): Promise<any | undefined> {
-    return this.memory[id]
+    return this.memory[id];
   }
 
   async deleteState(id: string): Promise<void> {

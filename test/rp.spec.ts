@@ -1,4 +1,4 @@
-import { assert, expect } from "chai";
+// import { assert, expect } from "chai";
 import {
   AuthzDetailsBuilder,
   AuthzRequestBuilder,
@@ -15,9 +15,10 @@ import { getResolver } from "@cef-ebsi/key-did-resolver";
 import { Resolver } from "did-resolver";
 import { SignJWT, importJWK } from "jose";
 import { JwtPayload } from "jsonwebtoken";
-import { OpenIdRPStepBuilder } from "../src/core/rp/builder.js";
-import { MemoryStateManager } from "../src/core/state/index.js";
-import { Result } from "../src/common/classes/result.js";
+import { OpenIdRPStepBuilder } from "@/core/rp/builder.js";
+import { MemoryStateManager } from "@/core/state/index.js";
+import { Result } from "@/classes";
+import { expect, test, describe } from '@jest/globals';
 
 const holderJWK = {
   "kty": "EC",
@@ -60,7 +61,7 @@ const signCallback = async (payload: JwtPayload, _supportedAlgs?: JWA_ALGS[]) =>
     .sign(keyLike);
 };
 
-describe("Reliying Party tests", async () => {
+describe("Reliying Party tests", () => {
   const rp = new OpenIdRPStepBuilder(
     {
       ...generateDefaultAuthorisationServerMetadata("https://issuer"),
@@ -103,8 +104,8 @@ describe("Reliying Party tests", async () => {
     })
     .withStateManager(new MemoryStateManager())
     .build();
-  context("authorization_code response type with ID Token", async () => {
-    it("It should successfully emit an AccessToken", async () => {
+  describe("authorization_code response type with ID Token", () => {
+    test("It should successfully emit an AccessToken", async () => {
       expect(async () => {
         const codeVerifier = "test";
         // Generate AuthzRequest
@@ -156,9 +157,9 @@ describe("Reliying Party tests", async () => {
           authServerUrl,
           authServerJWK
         );
-      }).to.not.throw();
+      }).not.toThrow();
     });
-    it("Should detect Authz with incorrect details", async () => {
+    test("Should detect Authz with incorrect details", async () => {
       const newRp = new OpenIdRPStepBuilder(
         generateDefaultAuthorisationServerMetadata("https://issuer")
       )
@@ -202,14 +203,11 @@ describe("Reliying Party tests", async () => {
           ).build()
       ).build();
       // Verify AuthzRequest
-      try {
-        await newRp.verifyBaseAuthzRequest(
-          authzRequest,
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+      await expect(newRp.verifyBaseAuthzRequest(
+        authzRequest,
+      )).rejects.toThrow();
     });
-    it("Should detect Authz with incorrect scope", async () => {
+    test("Should detect Authz with incorrect scope", async () => {
       const newRp = new OpenIdRPStepBuilder(
         generateDefaultAuthorisationServerMetadata("https://issuer")
       )
@@ -251,16 +249,15 @@ describe("Reliying Party tests", async () => {
           .withTypes(
             ["TestVc"]
           ).build()
-      ).build();
+      )
+      .withScope("openid invalid_scope")
+      .build();
       // Verify AuthzRequest
-      try {
-        await newRp.verifyBaseAuthzRequest(
-          authzRequest,
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+      await expect(newRp.verifyBaseAuthzRequest(
+        authzRequest,
+      )).rejects.toThrow()
     });
-    it("Should reject Authz request with no issuer_state", async () => {
+    test("Should reject Authz request with no issuer_state", async () => {
       const newRp = new OpenIdRPStepBuilder(
         generateDefaultAuthorisationServerMetadata("https://issuer")
       )
@@ -304,14 +301,11 @@ describe("Reliying Party tests", async () => {
           ).build()
       ).build();
       // Verify AuthzRequest
-      try {
-        await newRp.verifyBaseAuthzRequest(
-          authzRequest,
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+      await expect(newRp.verifyBaseAuthzRequest(
+        authzRequest,
+      )).rejects.toThrow();
     });
-    it("Should reject ID Token with incorrect signature", async () => {
+    test("Should reject ID Token with incorrect signature", async () => {
       const header = {
         alg: "ES256",
         kid: `${holderDid}#${holderKid}`
@@ -326,16 +320,13 @@ describe("Reliying Party tests", async () => {
         .sign(keyLike);
       const { signature } = decodeToken(idToken);
       const jwt = "eyaaaaaaaa.aaaaaaaaa." + signature;
-      try {
-        await rp.verifyIdTokenResponse(
-          {
-            id_token: jwt
-          },
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+      await expect(rp.verifyIdTokenResponse(
+        {
+          id_token: jwt
+        },
+      )).rejects.toThrow();
     });
-    it("Should reject ID Token with incorrect kid", async () => {
+    test("Should reject ID Token with incorrect kid", async () => {
       const header = {
         alg: "ES256",
         kid: "kid"
@@ -348,16 +339,13 @@ describe("Reliying Party tests", async () => {
         .setSubject(holderDid)
         .setExpirationTime("15m")
         .sign(keyLike);
-      try {
-        await rp.verifyIdTokenResponse(
-          {
-            id_token: idToken
-          },
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+      await expect(rp.verifyIdTokenResponse(
+        {
+          id_token: idToken
+        },
+      )).rejects.toThrow();
     });
-    it("Should reject ID Token with unsupported DID Method", async () => {
+    test("Should reject ID Token with unsupported DID Method", async () => {
       const header = {
         alg: "ES256",
         kid: `${holderDid}#${holderKid}`
@@ -370,35 +358,27 @@ describe("Reliying Party tests", async () => {
         .setSubject(holderDid)
         .setExpirationTime("15m")
         .sign(keyLike);
-      try {
-        await rp.verifyIdTokenResponse(
-          {
-            id_token: idToken
-          },
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+      await expect(rp.verifyIdTokenResponse(
+        {
+          id_token: idToken
+        },
+      )).rejects.toThrow();
     });
-    it("Should reject Token Request with unssuported Grant", async () => {
+    test("Should reject Token Request with unssuported Grant", async () => {
       // Create Token Request
       const tokenRequest: TokenRequest = {
         grant_type: "vp_token",
         client_id: holderDid
       };
-      try {
-        // Create Token Response
-        await rp.generateAccessToken(
-          tokenRequest,
-          false,
-          // signCallback,
-          authServerUrl,
-          authServerJWK
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+      await expect(rp.generateAccessToken(
+        tokenRequest,
+        false,
+        // signCallback,
+        authServerUrl,
+        authServerJWK
+      )).rejects.toThrow();
     });
-    it("Should reject Token Request with invalid authz code", async () => {
-      try {
+    test("Should reject Token Request with invalid authz code", async () => {
         const codeVerifier = "test";
         // Generate AuthzRequest
         const authzRequest = AuthzRequestBuilder.holderAuthzRequestBuilder(
@@ -441,25 +421,15 @@ describe("Reliying Party tests", async () => {
           code: "invalid token"
         };
         // Create Token Response
-        const _tokenResponse = await rp.generateAccessToken(
+        await expect(rp.generateAccessToken(
           tokenRequest,
           false,
           // signCallback,
           authServerUrl,
           authServerJWK
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+        )).rejects.toThrow();
     });
-    it("Should reject Token Request with invalid cove_verifier", async () => {
-      // Create Token Request
-      const tokenRequest: TokenRequest = {
-        grant_type: "vp_token",
-        client_id: holderDid,
-        code_verifier: "test",
-        code: "123"
-      };
-      try {
+    test("Should reject Token Request with invalid code_verifier", async () => {
         const codeVerifier = "INVALID";
         // Generate AuthzRequest
         const authzRequest = AuthzRequestBuilder.holderAuthzRequestBuilder(
@@ -467,7 +437,7 @@ describe("Reliying Party tests", async () => {
           holderDid,
           "openid:",
           {},
-          await generateChallenge(codeVerifier),
+          await generateChallenge("test"),
           "ES256"
         ).addAuthzDetails(
           AuthzDetailsBuilder.openIdCredentialBuilder("jwt_vc_json")
@@ -503,18 +473,15 @@ describe("Reliying Party tests", async () => {
           code: verifiedIdTokenResponse.authzCode
         };
         // Create Token Response
-        const _tokenResponse = await rp.generateAccessToken(
+        await expect(rp.generateAccessToken(
           tokenRequest,
           false,
-          // signCallback,
           authServerUrl,
           authServerJWK
-        );
-        assert.fail("Should have thrown");
-      } catch (_error: any) { }
+        )).rejects.toThrow();
     });
   });
-  it("Access Token generation with pre-auth code", async () => {
+  test("Access Token generation with pre-auth code", async () => {
     const credentialOffer = new CredentialOfferBuilder(authServerUrl)
       .withPreAuthGrant(true, "123")
       .addCredential({
@@ -529,17 +496,13 @@ describe("Reliying Party tests", async () => {
       "pre-authorized_code": credentialOffer.grants?.["urn:ietf:params:oauth:grant-type:pre-authorized_code"]?.["pre-authorized_code"],
       user_pin: "444"
     };
-    try {
-      await rp.generateAccessToken(
-        tokenRequest,
-        false,
-        // signCallback,
-        authServerUrl,
-        authServerJWK
-      );
-    } catch (_error: any) {
-      assert.fail("AccessToken with preAuth thrown an unexpected exception");
-    }
+    await expect(rp.generateAccessToken(
+      tokenRequest,
+      false,
+      // signCallback,
+      authServerUrl,
+      authServerJWK
+    )).resolves.not.toThrow();
   });
 });
 

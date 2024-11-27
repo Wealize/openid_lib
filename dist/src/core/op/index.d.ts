@@ -1,7 +1,7 @@
-import { AuthorizationDetails } from "../../common/interfaces/authz_details.interface.js";
-import { AuthzRequest, AuthzRequestLocation } from "../../common/interfaces/authz_request.interface.js";
-import { HolderMetadata, ServiceMetadata } from "../../common/interfaces/client_metadata.interface.js";
-import { AuthzResponseType } from "../../common/types/index.js";
+import { AuthorizationDetails } from '../../common/interfaces/authz_details.interface.js';
+import { AuthzRequest, AuthzRequestLocation } from '../../common/interfaces/authz_request.interface.js';
+import { HolderMetadata, ServiceMetadata } from '../../common/interfaces/client_metadata.interface.js';
+import { AuthzResponseType } from '../../common/types/index.js';
 /**
  * Extended authorisation request
  */

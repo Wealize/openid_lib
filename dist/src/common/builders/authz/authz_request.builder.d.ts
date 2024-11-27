@@ -1,7 +1,7 @@
-import { AuthorizationDetails } from "../../interfaces/authz_details.interface.js";
-import { AuthzRequest } from "../../interfaces/authz_request.interface.js";
-import { HolderMetadata, ServiceMetadata } from "../../interfaces/client_metadata.interface.js";
-import { AuthzResponseType } from "../../types/index.js";
+import { AuthorizationDetails } from '../../interfaces/authz_details.interface.js';
+import { AuthzRequest } from '../../interfaces/authz_request.interface.js';
+import { HolderMetadata, ServiceMetadata } from '../../interfaces/client_metadata.interface.js';
+import { AuthzResponseType } from '../../types/index.js';
 /**
  * Builder class for AuthzRequest
  */

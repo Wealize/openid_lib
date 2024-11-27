@@ -1,27 +1,27 @@
-import { ACCESS_TOKEN_EXPIRATION_TIME, C_NONCE_EXPIRATION_TIME, ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME, VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME } from "../../common/index.js";
-import { OpenIDReliyingParty } from "./index.js";
+import { ACCESS_TOKEN_EXPIRATION_TIME, C_NONCE_EXPIRATION_TIME, ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME, VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME, } from '../../common/index.js';
+import { OpenIDReliyingParty } from './index.js';
 /**
  * Step builder that can be used to create an instance of a Reliying Party
  */
 export class OpenIdRPStepBuilder {
+    metadata;
+    issuerStateCallback = undefined;
+    authzDetailsVerificationCallback = undefined;
+    credentialExternalVerification = undefined;
+    scopeVerificationFlag = false;
+    subjectComparison = (firstId, secondId) => {
+        return firstId === secondId;
+    };
+    preAuthCallback = undefined;
+    generalConfiguration = {
+        idTokenExpirationTime: ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
+        vpTokenExpirationTIme: VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
+        cNonceExpirationTime: C_NONCE_EXPIRATION_TIME,
+        accessTokenExpirationTime: ACCESS_TOKEN_EXPIRATION_TIME,
+    };
     constructor(metadata) {
         this.metadata = metadata;
-        this.issuerStateCallback = undefined;
-        this.authzDetailsVerificationCallback = undefined;
-        this.credentialExternalVerification = undefined;
-        this.scopeVerificationFlag = false;
-        this.subjectComparison = (firstId, secondId) => {
-            return firstId === secondId;
-        };
-        this.preAuthCallback = undefined;
-        this.generalConfiguration = {
-            idTokenExpirationTime: ID_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
-            vpTokenExpirationTIme: VP_TOKEN_REQUEST_DEFAULT_EXPIRATION_TIME,
-            cNonceExpirationTime: C_NONCE_EXPIRATION_TIME,
-            accessTokenExpirationTime: ACCESS_TOKEN_EXPIRATION_TIME
-        };
     }
-    ;
     /**
      * Allows to overwrite the default expiration time for ID Token Request
      * @param time The new expieration time in ms
@@ -136,6 +136,15 @@ export class OpenIdRPStepBuilder {
     }
 }
 class OpenIdStepBuilderHolderMetadataStage {
+    generalConfiguration;
+    metadata;
+    issuerStateCallback;
+    authzDetailsVerificationCallback;
+    credentialExternalVerification;
+    scopeVerificationFlag;
+    holderMetadata;
+    subjectComparison;
+    preAuthCallback;
     constructor(generalConfiguration, metadata, issuerStateCallback = undefined, authzDetailsVerificationCallback = undefined, credentialExternalVerification = undefined, scopeVerificationFlag, holderMetadata, subjectComparison, preAuthCallback = undefined) {
         this.generalConfiguration = generalConfiguration;
         this.metadata = metadata;
@@ -147,7 +156,6 @@ class OpenIdStepBuilderHolderMetadataStage {
         this.subjectComparison = subjectComparison;
         this.preAuthCallback = preAuthCallback;
     }
-    ;
     /**
      * Allows to set the DID Resolver to use by the RP
      * @param didResolver The DID Resolver to use
@@ -158,6 +166,16 @@ class OpenIdStepBuilderHolderMetadataStage {
     }
 }
 class OpenIdStepBuilderResolverStage {
+    generalConfiguration;
+    metadata;
+    issuerStateCallback;
+    authzDetailsVerificationCallback;
+    credentialExternalVerification;
+    scopeVerificationFlag;
+    holderMetadata;
+    didResolver;
+    subjectComparison;
+    preAuthCallback;
     constructor(generalConfiguration, metadata, issuerStateCallback = undefined, authzDetailsVerificationCallback = undefined, credentialExternalVerification = undefined, scopeVerificationFlag, holderMetadata, didResolver, subjectComparison, preAuthCallback = undefined) {
         this.generalConfiguration = generalConfiguration;
         this.metadata = metadata;
@@ -170,7 +188,6 @@ class OpenIdStepBuilderResolverStage {
         this.subjectComparison = subjectComparison;
         this.preAuthCallback = preAuthCallback;
     }
-    ;
     /**
      * Allows to set the sign callback for all tokens and request that
      * the RP will generate
@@ -182,6 +199,17 @@ class OpenIdStepBuilderResolverStage {
     }
 }
 class OpenIdStepBuilderSignStage {
+    generalConfiguration;
+    metadata;
+    jwtSignCallback;
+    issuerStateCallback;
+    authzDetailsVerificationCallback;
+    credentialExternalVerification;
+    scopeVerificationFlag;
+    holderMetadata;
+    didResolver;
+    subjectComparison;
+    preAuthCallback;
     constructor(generalConfiguration, metadata, jwtSignCallback, issuerStateCallback = undefined, authzDetailsVerificationCallback = undefined, credentialExternalVerification = undefined, scopeVerificationFlag, holderMetadata, didResolver, subjectComparison, preAuthCallback = undefined) {
         this.generalConfiguration = generalConfiguration;
         this.metadata = metadata;
@@ -195,7 +223,6 @@ class OpenIdStepBuilderSignStage {
         this.subjectComparison = subjectComparison;
         this.preAuthCallback = preAuthCallback;
     }
-    ;
     /**
      * Allows to set the state manager that will be used by the RP
      * to handle the nonces among the states related to them
@@ -207,6 +234,18 @@ class OpenIdStepBuilderSignStage {
     }
 }
 class OpenIdStepBuilderEndStage {
+    generalConfiguration;
+    metadata;
+    jwtSignCallback;
+    issuerStateCallback;
+    authzDetailsVerificationCallback;
+    credentialExternalVerification;
+    scopeVerificationFlag;
+    holderMetadata;
+    didResolver;
+    manager;
+    subjectComparison;
+    preAuthCallback;
     constructor(generalConfiguration, metadata, jwtSignCallback, issuerStateCallback = undefined, authzDetailsVerificationCallback = undefined, credentialExternalVerification = undefined, scopeVerificationFlag, holderMetadata, didResolver, manager, subjectComparison, preAuthCallback = undefined) {
         this.generalConfiguration = generalConfiguration;
         this.metadata = metadata;
@@ -221,7 +260,6 @@ class OpenIdStepBuilderEndStage {
         this.subjectComparison = subjectComparison;
         this.preAuthCallback = preAuthCallback;
     }
-    ;
     /**
      * Builds an instance of the RP
      * @returns An instance of OpenIDReliyingParty
