@@ -1,6 +1,5 @@
 src/test
 node_modules
-dist
 .docker-volumes
 .github
 .gitignore

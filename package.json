@@ -4,7 +4,13 @@
   "description": "",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    }
+  },
   "engines": {
     "node": ">=22"
   },
