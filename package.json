@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "",
   "main": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "exports": "./dist/src/index.js",
   "engines": {
     "node": ">=22"
