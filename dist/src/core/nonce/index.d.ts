@@ -1,7 +1,7 @@
-import { Result } from "../../common/classes/result.js";
-import { NonceError } from "../../common/index.js";
-import { StateManager } from "../state/index.js";
-import { ChallengeNonce, GeneralNonceData, NonceState, PostAuthzNonce, PostBaseAuthzNonce, DirectRequestNonce } from "./types.js";
+import { Result } from '../../common/classes/result.js';
+import { NonceError } from '../../common/index.js';
+import { StateManager } from '../state/index.js';
+import { ChallengeNonce, GeneralNonceData, NonceState, PostAuthzNonce, PostBaseAuthzNonce, DirectRequestNonce } from './types.js';
 /**
  * Class that allows the management of the nonces generated together
  * with their states using an interface that simulates a key-value database.
@@ -47,4 +47,4 @@ export declare class NonceManager {
      */
     getChallengeNonce(id: string): Promise<Result<GeneralNonceData & ChallengeNonce, NonceError>>;
 }
-export * from "./types.js";
+export * from './types.js';

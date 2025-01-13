@@ -1,31 +1,29 @@
-import { JWK } from "jose";
-import { JWA_ALGS } from "../../common/constants/index.js";
-import { AuthzResponseMode } from "../../common/formats/index.js";
-import { AuthzRequest, DIFPresentationDefinition } from "../../common/index.js";
-import {
-  VpFormatsSupported
-} from "../../common/types/index.js";
-import { DIDDocument } from "did-resolver";
-import { VpExtractedData } from "../presentations/types.js";
-import { JwtPayload } from "jsonwebtoken";
+import {JWK} from 'jose';
+import {JWA_ALGS} from '../../common/constants/index.js';
+import {AuthzResponseMode} from '../../common/formats/index.js';
+import {AuthzRequest, DIFPresentationDefinition} from '../../common/index.js';
+import {VpFormatsSupported} from '../../common/types/index.js';
+import {DIDDocument} from 'did-resolver';
+import {VpExtractedData} from '../presentations/types.js';
+import {JwtPayload} from 'jsonwebtoken';
 
 export interface RpConfiguration {
   /**
    * Expiration time(ms) for ID Tokens. @default 10 minutes
    */
-  idTokenExpirationTime: number,
+  idTokenExpirationTime: number;
   /**
    * Expiration time(ms) for VP Tokens. @default 10 minutes
    */
-  vpTokenExpirationTIme: number,
+  vpTokenExpirationTIme: number;
   /**
    * Expiration time(s) for Challenge Nonce. @default 1 hour
    */
-  cNonceExpirationTime: number,
+  cNonceExpirationTime: number;
   /**
    * Expiration time(s) for access tokens. @default 1 hour
    */
-  accessTokenExpirationTime: number
+  accessTokenExpirationTime: number;
 }
 
 /**
@@ -37,7 +35,7 @@ export interface RpConfiguration {
  */
 export type TokenSignCallback = (
   payload: JwtPayload,
-  supportedSignAlg?: JWA_ALGS[]
+  supportedSignAlg?: JWA_ALGS[],
 ) => Promise<string>;
 
 /**
@@ -47,11 +45,11 @@ export type TokenSignCallback = (
 export type CreateTokenRequestOptionalParams = {
   /**
    * Response mode to specify in the ID Token
-   * @defaultValue "direct_post" 
+   * @defaultValue "direct_post"
    */
   responseMode?: AuthzResponseMode;
   /**
-   * Additional payload to include in the JWT 
+   * Additional payload to include in the JWT
    */
   additionalPayload?: Record<string, any>;
   /**
@@ -66,22 +64,22 @@ export type CreateTokenRequestOptionalParams = {
   /**
    * The scope to include in the JWT
    */
-  scope?: string
+  scope?: string;
 };
 
 /**
  * Allows to define how to specify the presentation definition in a VP Token Request
  */
 export type PresentationDefinitionLocation =
-  | { type: "Raw", presentationDefinition: DIFPresentationDefinition }
-  | { type: "Uri", presentationDefinitionUri: string }
+  | {type: 'Raw'; presentationDefinition: DIFPresentationDefinition}
+  | {type: 'Uri'; presentationDefinitionUri: string};
 
 /**
  * Allows to define the purpose behid a specific Authz Request
-*/
+ */
 export type RequestPurpose =
-  | { type: "Issuance", verifiedBaseAuthzRequest: VerifiedBaseAuthzRequest }
-  | { type: "Verification", verifiedBaseAuthzRequest: VerifiedBaseAuthzRequest }
+  | {type: 'Issuance'; verifiedBaseAuthzRequest: VerifiedBaseAuthzRequest}
+  | {type: 'Verification'; verifiedBaseAuthzRequest: VerifiedBaseAuthzRequest};
 
 export interface VerifiedBaseAuthzRequest {
   /**
@@ -91,11 +89,11 @@ export interface VerifiedBaseAuthzRequest {
   /**
    * Verified authz request
    */
-  authzRequest: AuthzRequest,
+  authzRequest: AuthzRequest;
   /**
    * JWK used by the service Wallet
    */
-  serviceWalletJWK?: JWK
+  serviceWalletJWK?: JWK;
 }
 
 export interface VerifiedIdTokenResponse {
@@ -106,23 +104,23 @@ export interface VerifiedIdTokenResponse {
   /**
    * The subject identifier. In most cases coincide with the ID of the DID Document
    */
-  subject: string,
+  subject: string;
   /**
    * The verified token
    */
-  token: string,
+  token: string;
   /**
    * The authorization code generated
    */
-  authzCode?: string,
+  authzCode?: string;
   /**
    * The expected state by the holder
    */
-  state?: string,
+  state?: string;
   /**
    * The URI in which the holder expects to received the Authz code
    */
-  redirectUri?: string,
+  redirectUri?: string;
 }
 
 export interface VerifiedVpTokenResponse {
@@ -133,23 +131,23 @@ export interface VerifiedVpTokenResponse {
   /**
    * The data extracted from the VCs of the VP
    */
-  vpInternalData: VpExtractedData,
+  vpInternalData: VpExtractedData;
   /**
    * The authorization code generated
    */
-  authzCode?: string,
+  authzCode?: string;
   /**
    * The expected state by the holder
    */
-  state?: string,
+  state?: string;
   /**
    * The URI in which the holder expects to received the Authz code
    */
-  redirectUri?: string,
+  redirectUri?: string;
 }
 
 /**
- * Client metadata that has been processed to indicate which formats, signature 
+ * Client metadata that has been processed to indicate which formats, signature
  * algorithms and response types are supported.
  */
 export interface ValidatedClientMetadata {
@@ -169,4 +167,4 @@ export interface ValidatedClientMetadata {
    * Authorization endpoint of the client
    */
   authorizationEndpoint: string;
-};
+}

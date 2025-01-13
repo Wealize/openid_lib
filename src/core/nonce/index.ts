@@ -1,14 +1,10 @@
-import {
-  Result
-} from "../../common/classes/result.js";
+import {Result} from '../../common/classes/result.js';
 import {
   InvalidNonceStage,
   NonceError,
-  NonceNotFound
-} from "../../common/index.js";
-import {
-  StateManager
-} from "../state/index.js";
+  NonceNotFound,
+} from '../../common/index.js';
+import {StateManager} from '../state/index.js';
 import {
   ChallengeNonce,
   GeneralNonceData,
@@ -16,15 +12,15 @@ import {
   NonceSpecificData,
   PostAuthzNonce,
   PostBaseAuthzNonce,
-  DirectRequestNonce
-} from "./types.js";
+  DirectRequestNonce,
+} from './types.js';
 
 /**
  * Class that allows the management of the nonces generated together
  * with their states using an interface that simulates a key-value database.
  */
 export class NonceManager {
-  constructor(private stateManager: StateManager) { }
+  constructor(private stateManager: StateManager) {}
 
   // TODO: Evaluate the use of result
   /**
@@ -50,7 +46,7 @@ export class NonceManager {
 
   private async getNonce(
     id: string,
-    expectedStage: Extract<NonceSpecificData, { type: string }>["type"]
+    expectedStage: Extract<NonceSpecificData, {type: string}>['type'],
   ): Promise<Result<NonceState, NonceError>> {
     const nonce = await this.stateManager.getState(id);
     if (!nonce) {
@@ -68,12 +64,12 @@ export class NonceManager {
    * @returns The state of the nonce
    */
   async getPostBaseAuthzNonce(
-    id: string
+    id: string,
   ): Promise<Result<GeneralNonceData & PostBaseAuthzNonce, NonceError>> {
-    return await this.getNonce(
-      id,
-      "PostBaseAuthz"
-    ) as Result<GeneralNonceData & PostBaseAuthzNonce, NonceError>;
+    return (await this.getNonce(id, 'PostBaseAuthz')) as Result<
+      GeneralNonceData & PostBaseAuthzNonce,
+      NonceError
+    >;
   }
 
   /**
@@ -82,12 +78,12 @@ export class NonceManager {
    * @returns The state of the nonce
    */
   async getDirectRequestNonce(
-    id: string
+    id: string,
   ): Promise<Result<GeneralNonceData & DirectRequestNonce, NonceError>> {
-    return await this.getNonce(
-      id,
-      "DirectRequest"
-    ) as Result<GeneralNonceData & DirectRequestNonce, NonceError>;
+    return (await this.getNonce(id, 'DirectRequest')) as Result<
+      GeneralNonceData & DirectRequestNonce,
+      NonceError
+    >;
   }
 
   /**
@@ -96,12 +92,12 @@ export class NonceManager {
    * @returns The state of the nonce
    */
   async getPostAuthz(
-    id: string
+    id: string,
   ): Promise<Result<GeneralNonceData & PostAuthzNonce, NonceError>> {
-    return await this.getNonce(
-      id,
-      "PostAuthz"
-    ) as Result<GeneralNonceData & PostAuthzNonce, NonceError>;
+    return (await this.getNonce(id, 'PostAuthz')) as Result<
+      GeneralNonceData & PostAuthzNonce,
+      NonceError
+    >;
   }
 
   /**
@@ -110,13 +106,13 @@ export class NonceManager {
    * @returns The state of the nonce
    */
   async getChallengeNonce(
-    id: string
+    id: string,
   ): Promise<Result<GeneralNonceData & ChallengeNonce, NonceError>> {
-    return await this.getNonce(
-      id,
-      "ChallengeNonce"
-    ) as Result<GeneralNonceData & ChallengeNonce, NonceError>;
+    return (await this.getNonce(id, 'ChallengeNonce')) as Result<
+      GeneralNonceData & ChallengeNonce,
+      NonceError
+    >;
   }
 }
 
-export * from "./types.js";
+export * from './types.js';

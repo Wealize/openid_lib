@@ -1,13 +1,13 @@
-import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
+import {W3CVerifiableCredentialFormats} from '../../common/formats/index.js';
 import {
   W3CCredentialStatus,
   W3CSingleCredentialSubject,
   W3CTermsOfUse,
   W3CVcSchemaDefinition,
-  W3CVerifiableCredential
-} from "../../common/interfaces/w3c_verifiable_credential.interface.js";
-import { CompactVc, VerificationResult } from "../../common/types/index.js";
-import { JwtHeader, JwtPayload } from "jsonwebtoken";
+  W3CVerifiableCredential,
+} from '../../common/interfaces/w3c_verifiable_credential.interface.js';
+import {CompactVc, VerificationResult} from '../../common/types/index.js';
+import {JwtHeader, JwtPayload} from 'jsonwebtoken';
 
 /**
  * Function type that allows to verify the contents, but no the
@@ -19,7 +19,7 @@ import { JwtHeader, JwtPayload } from "jsonwebtoken";
  */
 export type AccessTokenVerifyCallback = (
   header: JwtHeader,
-  payload: JwtPayload
+  payload: JwtPayload,
 ) => Promise<VerificationResult>;
 
 /**
@@ -30,52 +30,52 @@ export type AccessTokenVerifyCallback = (
  */
 export type VcSignCallback = (
   format: W3CVerifiableCredentialFormats,
-  vc: W3CVerifiableCredential | JwtPayload
+  vc: W3CVerifiableCredential | JwtPayload,
 ) => Promise<W3CVerifiableCredential | CompactVc>;
 
-
-export type CredentialDataResponse = InTimeCredentialData
-  | DeferredCredentialData
+export type CredentialDataResponse =
+  | InTimeCredentialData
+  | DeferredCredentialData;
 
 export interface InTimeCredentialData {
-  type: "InTime",
+  type: 'InTime';
   /**
    * The subject data of a credential
    */
-  data: W3CSingleCredentialSubject,
+  data: W3CSingleCredentialSubject;
   /**
    * The schema of the VC
    */
-  schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[],
+  schema: W3CVcSchemaDefinition | W3CVcSchemaDefinition[];
   /**
    * The credential status information of the VC
    */
-  status?: W3CCredentialStatus | W3CCredentialStatus[],
+  status?: W3CCredentialStatus | W3CCredentialStatus[];
   /**
    * The terms of use information of the VC
    */
-  termfOfUse?: W3CTermsOfUse | W3CTermsOfUse[],
+  termfOfUse?: W3CTermsOfUse | W3CTermsOfUse[];
   /**
    * The metadata of the VC
    */
-  metadata: CredentialMetadata
+  metadata: CredentialMetadata;
 }
 
 export interface DeferredCredentialData {
-  type: "Deferred",
+  type: 'Deferred';
   /**
    * A deferred code that can be exchange for a VC
    */
-  deferredCode?: string,
+  deferredCode?: string;
 }
 
 export interface CredentialMetadata {
   /** The expiration time in UTC and in ISO format. Can't be combined with expiresIn */
-  validUntil?: string,
+  validUntil?: string;
   /** For how long will be valid the VC. Can't be combined with validUntil */
-  expiresInSeconds?: number,
+  expiresInSeconds?: number;
   /** When the VC will be valid */
-  nbf?: string,
+  nbf?: string;
   /** Issuance in ISO format. If not defined, the current datetime is taken */
-  iss?: string
+  iss?: string;
 }

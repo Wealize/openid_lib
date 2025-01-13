@@ -1,0 +1,6 @@
+src/test
+node_modules
+.docker-volumes
+.github
+.gitignore
+.dockerignore

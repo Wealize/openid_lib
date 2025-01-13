@@ -1,10 +1,10 @@
-import { Resolver } from "did-resolver";
-import { Result } from "../../common/classes/result.js";
-import { AuthServerMetadata, AuthorizationDetails, HolderMetadata } from "../../common/index.js";
-import { CredentialAdditionalVerification } from "../presentations/types.js";
-import { RpConfiguration, TokenSignCallback } from "./types.js";
-import { StateManager } from "../state/index.js";
-import { OpenIDReliyingParty } from "./index.js";
+import { Resolver } from 'did-resolver';
+import { Result } from '../../common/classes/result.js';
+import { AuthServerMetadata, AuthorizationDetails, HolderMetadata } from '../../common/index.js';
+import { CredentialAdditionalVerification } from '../presentations/types.js';
+import { RpConfiguration, TokenSignCallback } from './types.js';
+import { StateManager } from '../state/index.js';
+import { OpenIDReliyingParty } from './index.js';
 /**
  * Step builder that can be used to create an instance of a Reliying Party
  */

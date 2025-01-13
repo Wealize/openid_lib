@@ -1,8 +1,8 @@
-import { DidDocumentError } from "../classes/index.js";
-import { DIDDocument } from "did-resolver";
-import { JWK } from "jose";
+import {DidDocumentError} from '../classes/index.js';
+import {DIDDocument} from 'did-resolver';
+import {JWK} from 'jose';
 
-// TODO: In a DID Document the VerificationMethod can be expressed 
+// TODO: In a DID Document the VerificationMethod can be expressed
 // in differents formats other than JWK.
 // https://www.w3.org/TR/did-core/#verification-material
 
@@ -11,8 +11,8 @@ import { JWK } from "jose";
  * @param didDocument The DID document from which to extract the key
  * @param methodIdentifier The verification method to search in the DID document
  * @returns The publick key associated in JWK format
- * @throws If the method identifier provided is not specified in a 
- * authentification relationship or if there is not verification method 
+ * @throws If the method identifier provided is not specified in a
+ * authentification relationship or if there is not verification method
  * with that ID. It can also throws if the method does not provide any JWK
  */
 export function getAuthentificationJWKKeys(
@@ -20,7 +20,9 @@ export function getAuthentificationJWKKeys(
   methodIdentifier: string,
 ): JWK {
   if (!didDocument.authentication?.includes(methodIdentifier)) {
-    throw new DidDocumentError("The kid specified is not the identifier of an authentification relationship");
+    throw new DidDocumentError(
+      'The kid specified is not the identifier of an authentification relationship',
+    );
   }
   return getJwkFromDocument(didDocument, methodIdentifier);
 }
@@ -30,8 +32,8 @@ export function getAuthentificationJWKKeys(
  * @param didDocument The DID document from which to extract the key
  * @param methodIdentifier The verification method to search in the DID document
  * @returns The publick key associated in JWK format
- * @throws If the method identifier provided is not specified in a 
- * authentification relationship or if there is not verification method 
+ * @throws If the method identifier provided is not specified in a
+ * authentification relationship or if there is not verification method
  * with that ID. It can also throws if the method does not provide any JWK
  */
 export function getAssertionMethodJWKKeys(
@@ -40,7 +42,7 @@ export function getAssertionMethodJWKKeys(
 ): JWK {
   if (!didDocument.assertionMethod?.includes(methodIdentifier)) {
     throw new DidDocumentError(
-      "The kid specified is not the identifier of an assertionMethod relationship"
+      'The kid specified is not the identifier of an assertionMethod relationship',
     );
   }
   return getJwkFromDocument(didDocument, methodIdentifier);
@@ -52,20 +54,20 @@ function getJwkFromDocument(
 ): JWK {
   if (!didDocument.verificationMethod) {
     throw new DidDocumentError(
-      `No verification methods defined in DidDocumet for did ${didDocument.id}`
+      `No verification methods defined in DidDocumet for did ${didDocument.id}`,
     );
   }
   const verificationMethod = didDocument.verificationMethod.find(
-    (method) => method.id === methodIdentifier
+    method => method.id === methodIdentifier,
   );
   if (!verificationMethod) {
     throw new DidDocumentError(
-      `There is no verification method with id ${methodIdentifier}`
+      `There is no verification method with id ${methodIdentifier}`,
     );
   }
   if (!verificationMethod.publicKeyJwk) {
     throw new DidDocumentError(
-      "The verificationMethod must contain public key with JWK format"
+      'The verificationMethod must contain public key with JWK format',
     );
   }
   return verificationMethod.publicKeyJwk;

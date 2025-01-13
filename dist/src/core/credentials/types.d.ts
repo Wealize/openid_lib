@@ -1,7 +1,7 @@
-import { W3CVerifiableCredentialFormats } from "../../common/formats/index.js";
-import { W3CCredentialStatus, W3CSingleCredentialSubject, W3CTermsOfUse, W3CVcSchemaDefinition, W3CVerifiableCredential } from "../../common/interfaces/w3c_verifiable_credential.interface.js";
-import { CompactVc, VerificationResult } from "../../common/types/index.js";
-import { JwtHeader, JwtPayload } from "jsonwebtoken";
+import { W3CVerifiableCredentialFormats } from '../../common/formats/index.js';
+import { W3CCredentialStatus, W3CSingleCredentialSubject, W3CTermsOfUse, W3CVcSchemaDefinition, W3CVerifiableCredential } from '../../common/interfaces/w3c_verifiable_credential.interface.js';
+import { CompactVc, VerificationResult } from '../../common/types/index.js';
+import { JwtHeader, JwtPayload } from 'jsonwebtoken';
 /**
  * Function type that allows to verify the contents, but no the
  * signature, of an acess token
@@ -20,7 +20,7 @@ export type AccessTokenVerifyCallback = (header: JwtHeader, payload: JwtPayload)
 export type VcSignCallback = (format: W3CVerifiableCredentialFormats, vc: W3CVerifiableCredential | JwtPayload) => Promise<W3CVerifiableCredential | CompactVc>;
 export type CredentialDataResponse = InTimeCredentialData | DeferredCredentialData;
 export interface InTimeCredentialData {
-    type: "InTime";
+    type: 'InTime';
     /**
      * The subject data of a credential
      */
@@ -43,7 +43,7 @@ export interface InTimeCredentialData {
     metadata: CredentialMetadata;
 }
 export interface DeferredCredentialData {
-    type: "Deferred";
+    type: 'Deferred';
     /**
      * A deferred code that can be exchange for a VC
      */

@@ -1,11 +1,10 @@
-import { assert, expect } from "chai";
 import {
   CredentialDataManager,
   CredentialDataResponse,
   DeferredCredentialData,
   InTimeCredentialData,
   W3CVcIssuer
-} from "../src/core/credentials/index.js";
+} from "@/core/credentials/index.js";
 import {
   AuthzDetailsBuilder,
   AuthzRequestBuilder,
@@ -24,11 +23,12 @@ import {
 import { Resolver } from "did-resolver";
 import { getResolver } from "@cef-ebsi/key-did-resolver";
 import { SignJWT, importJWK } from "jose";
-import { MemoryStateManager } from "../src/core/state/index.js";
-import { Result } from "../src/common/classes/result.js";
-import { OpenIdRPStepBuilder } from "../src/core/rp/builder.js";
+import { MemoryStateManager } from "@/core/state/index.js";
+import { Result } from "@/classes";
+import { OpenIdRPStepBuilder } from "@/core/rp/builder.js";
 import { JwtPayload } from "jsonwebtoken";
 import { generateChallenge } from "pkce-challenge";
+import { expect, test, describe } from '@jest/globals';
 
 const memoryManager = new MemoryStateManager();
 
@@ -156,8 +156,8 @@ describe("VC Issuance tests", () => {
     }
   );
 
-  context("In-Time flow", () => {
-    it("Should successfully issue a VC", async () => {
+  describe("In-Time flow", () => {
+    test("Should successfully issue a VC", async () => {
       const tokenResponse = await generateTokenResponse("VcTest");
       const credentialRequest: CredentialRequest = {
         types: ["VcTest"],
@@ -167,24 +167,20 @@ describe("VC Issuance tests", () => {
           jwt: await generateProof(tokenResponse.c_nonce)
         }
       };
-      try {
-        const accessToken = await vcIssuer.verifyAccessToken(
-          tokenResponse.access_token,
-          issuerJWK
-        );
-        const credentialResponse = await vcIssuer.generateCredentialResponse(
-          accessToken,
-          credentialRequest,
-          W3CDataModel.V2,
-        );
-        expect(credentialResponse.credential).not.to.be.undefined;
-      } catch (_error: any) {
-        assert.fail("Should not have thrown");
-      }
+      const accessToken = await vcIssuer.verifyAccessToken(
+        tokenResponse.access_token,
+        issuerJWK
+      );
+      const credentialResponse = await vcIssuer.generateCredentialResponse(
+        accessToken,
+        credentialRequest,
+        W3CDataModel.V2,
+      );
+      expect(credentialResponse.credential).not.toBeUndefined;
     });
   });
-  context("Deferred flow", () => {
-    it("Should successfully issue a VC", async () => {
+  describe("Deferred flow", () => {
+    test("Should successfully issue a VC", async () => {
       const tokenResponse = await generateTokenResponse("DeferredVc");
       const credentialRequest: CredentialRequest = {
         types: ["DeferredVc"],
@@ -195,29 +191,21 @@ describe("VC Issuance tests", () => {
         }
       };
       let credentialResponse: CredentialResponse;
-      try {
-        const accessToken = await vcIssuer.verifyAccessToken(
-          tokenResponse.access_token,
-          issuerJWK
-        );
-        credentialResponse = await vcIssuer.generateCredentialResponse(
-          accessToken,
-          credentialRequest,
-          W3CDataModel.V2,
-        );
-      } catch (_error: any) {
-        assert.fail("Should not have thrown");
-      }
-      expect(credentialResponse.acceptance_token).not.to.be.undefined;
-      try {
-        credentialResponse = await vcIssuer.exchangeAcceptanceTokenForVc(
-          credentialResponse.acceptance_token!,
-          W3CDataModel.V2
-        );
-        expect(credentialResponse.credential).not.to.be.undefined;
-      } catch (_error: any) {
-        assert.fail("Should not have thrown");
-      }
+      const accessToken = await vcIssuer.verifyAccessToken(
+        tokenResponse.access_token,
+        issuerJWK
+      );
+      credentialResponse = await vcIssuer.generateCredentialResponse(
+        accessToken,
+        credentialRequest,
+        W3CDataModel.V2,
+      );
+      expect(credentialResponse.acceptance_token).not.toBeUndefined;
+      credentialResponse = await vcIssuer.exchangeAcceptanceTokenForVc(
+        credentialResponse.acceptance_token!,
+        W3CDataModel.V2
+      );
+      expect(credentialResponse.credential).not.toBeUndefined;
     });
   });
 });

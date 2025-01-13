@@ -1,4 +1,3 @@
-import { assert, expect } from "chai";
 import {
   AuthzDetailsBuilder,
   AuthzRequestBuilder,
@@ -27,10 +26,11 @@ import {
 import { getResolver } from "@cef-ebsi/key-did-resolver";
 import { Resolver } from "did-resolver";
 import { SignJWT, importJWK } from "jose";
-import { OpenIdRPStepBuilder } from "../src/core/rp/builder.js";
-import { Result } from "../src/common/classes/result.js";
-import { MemoryStateManager } from "../src/core/state/index.js";
+import { OpenIdRPStepBuilder } from "@/core/rp/builder.js";
+import { Result } from "@/classes";
+import { MemoryStateManager } from "@/core/state/index.js";
 import { JwtPayload } from "jsonwebtoken";
+import { expect, test, describe } from '@jest/globals';
 
 const memoryManager = new MemoryStateManager();
 const codeVerifier = "test";
@@ -76,7 +76,7 @@ const signCallback = async (payload: JwtPayload, _supportedAlgs?: JWA_ALGS[]) =>
     .sign(keyLike);
 };
 
-describe("VP Verification tests", async () => {
+describe("VP Verification tests", () => {
   const rp = new OpenIdRPStepBuilder(
     generateDefaultAuthorisationServerMetadata("https://issuer")
   )
@@ -110,7 +110,7 @@ describe("VP Verification tests", async () => {
     .build();
   let firstVc: string | W3CVerifiableCredentialV2;
   let secondVc: string | W3CVerifiableCredentialV2;
-  before(async () => {
+  beforeAll(async () => {
     // Generate some credentials to include in the VP
     const credentialSupported = [
       new CredentialSupportedBuilder().withTypes(["VcTestOne"]).build(),
@@ -213,8 +213,8 @@ describe("VP Verification tests", async () => {
     secondVc = credentialResponse.credential!;
   });
 
-  context("Succesfull responses", async () => {
-    it("Should successfully verify an VP", async () => {
+  describe("Succesfull responses", () => {
+    test("Should successfully verify an VP", async () => {
       const presentationDefinition = getPresentationDefinition();
       const presentationSubmission = getPresentationSubmission();
 
@@ -256,7 +256,7 @@ describe("VP Verification tests", async () => {
         presentationDefinition,
       );
     });
-    it("Should successfully verify an VP if more credentials are provided", async () => {
+    test("Should successfully verify an VP if more credentials are provided", async () => {
       const presentationDefinition = getPresentationDefinition();
       const presentationSubmission = getPresentationSubmission();
       const authzRequest = AuthzRequestBuilder.holderAuthzRequestBuilder(
@@ -339,7 +339,7 @@ describe("VP Verification tests", async () => {
         presentationDefinition,
       );
     });
-    it("Should accept a direct VP Request", async () => {
+    test("Should accept a direct VP Request", async () => {
       const presentationDefinition = getPresentationDefinition();
       const presentationSubmission = getPresentationSubmission();
       const vpTokenRequest = await rp.directVpTokenRequestForVerification(
@@ -360,12 +360,12 @@ describe("VP Verification tests", async () => {
         vpResponse,
         presentationDefinition,
       );
-      expect(response.authzCode).to.be.undefined;
-      expect(response.redirectUri).to.be.undefined;
+      expect(response.authzCode).toBeUndefined();
+      expect(response.redirectUri).toBeUndefined();
     });
   });
-  context("Error responses", async () => {
-    it("Should reject an invalid VP if the definition ID of the submission is invalid", async () => {
+  describe("Error responses", () => {
+    test("Should reject an invalid VP if the definition ID of the submission is invalid", async () => {
       const presentationDefinition = getPresentationDefinition();
       const presentationSubmission = getPresentationSubmission();
       presentationSubmission.definition_id = "OtherId";
@@ -402,17 +402,12 @@ describe("VP Verification tests", async () => {
           vpTokenRequest.requestParams.nonce!
         )
       }
-      try {
-        await rp.verifyVpTokenResponse(
-          vpResponse,
-          presentationDefinition,
-        );
-      } catch (error: any) {
-        return;
-      }
-      assert.fail(`It should have failed`);
+      await expect(rp.verifyVpTokenResponse(
+        vpResponse,
+        presentationDefinition,
+      )).rejects.toThrow();
     });
-    it("Should reject a VP if definition has no descriptors and submission does", async () => {
+    test("Should reject a VP if definition has no descriptors and submission does", async () => {
       const presentationDefinition = getPresentationDefinition();
       presentationDefinition.input_descriptors = [];
       const presentationSubmission = getPresentationSubmission();
@@ -449,17 +444,12 @@ describe("VP Verification tests", async () => {
           vpTokenRequest.requestParams.nonce!
         )
       }
-      try {
-        await rp.verifyVpTokenResponse(
-          vpResponse,
-          presentationDefinition,
-        );
-      } catch (error: any) {
-        return;
-      }
-      assert.fail(`It should have failed`);
+      await expect(rp.verifyVpTokenResponse(
+        vpResponse,
+        presentationDefinition,
+      )).rejects.toThrow();
     });
-    it("Should reject an invalid VP if the input descriptor ID is invalid", async () => {
+    test("Should reject an invalid VP if the input descriptor ID is invalid", async () => {
       const presentationDefinition = getPresentationDefinition();
       const presentationSubmission = getPresentationSubmission();
       presentationSubmission.descriptor_map[1].id = "other-id";
@@ -497,17 +487,12 @@ describe("VP Verification tests", async () => {
           vpTokenRequest.requestParams.nonce!
         )
       }
-      try {
-        await rp.verifyVpTokenResponse(
-          vpResponse,
-          presentationDefinition,
-        );
-      } catch (error: any) {
-        return;
-      }
-      assert.fail(`It should have failed`);
+      await expect(rp.verifyVpTokenResponse(
+        vpResponse,
+        presentationDefinition,
+      )).rejects.toThrow();
     });
-    it("Should reject an invalid VP if not all descriptor are provided", async () => {
+    test("Should reject an invalid VP if not all descriptor are provided", async () => {
       const presentationDefinition = getPresentationDefinition();
       const presentationSubmission = getPresentationSubmission();
       presentationSubmission.descriptor_map.pop();
@@ -544,17 +529,12 @@ describe("VP Verification tests", async () => {
           secondVc as string],
           vpTokenRequest.requestParams.nonce!)
       }
-      try {
-        await rp.verifyVpTokenResponse(
-          vpResponse,
-          presentationDefinition,
-        );
-      } catch (error: any) {
-        return;
-      }
-      assert.fail(`It should have failed`);
+      await expect(rp.verifyVpTokenResponse(
+        vpResponse,
+        presentationDefinition,
+      )).rejects.toThrow();
     });
-    it("Should reject an invalid VP if not all credentials are provided", async () => {
+    test("Should reject an invalid VP if not all credentials are provided", async () => {
       const presentationDefinition = getPresentationDefinition();
       const presentationSubmission = getPresentationSubmission();
       const authzRequest = AuthzRequestBuilder.holderAuthzRequestBuilder(
@@ -587,17 +567,12 @@ describe("VP Verification tests", async () => {
         presentation_submission: presentationSubmission,
         vp_token: await generateVpToken([firstVc as string], vpTokenRequest.requestParams.nonce!)
       }
-      try {
-        await rp.verifyVpTokenResponse(
-          vpResponse,
-          presentationDefinition,
-        );
-      } catch (error: any) {
-        return;
-      }
-      assert.fail(`It should have failed`);
+      await expect(rp.verifyVpTokenResponse(
+        vpResponse,
+        presentationDefinition,
+      )).rejects.toThrow();
     });
-    it("Should reject an invalid VP if claim schema is not satisfied", async () => {
+    test("Should reject an invalid VP if claim schema is not satisfied", async () => {
       const presentationDefinition = getPresentationDefinition();
       presentationDefinition.input_descriptors[1].constraints.fields![1].filter = {
         type: 'string',
@@ -636,17 +611,12 @@ describe("VP Verification tests", async () => {
           vpTokenRequest.requestParams.nonce!
         )
       };
-      try {
-        await rp.verifyVpTokenResponse(
-          vpResponse,
-          presentationDefinition,
-        );
-      } catch (error: any) {
-        return;
-      }
-      assert.fail(`It should have failed`);
+      await expect(rp.verifyVpTokenResponse(
+        vpResponse,
+        presentationDefinition,
+      )).rejects.toThrow();
     });
-    it("Should reject an invalid VP if nonce is invalid", async () => {
+    test("Should reject an invalid VP if nonce is invalid", async () => {
       const presentationDefinition = getPresentationDefinition();
       presentationDefinition.input_descriptors[1].constraints.fields![1].filter = {
         type: 'string',
@@ -685,17 +655,12 @@ describe("VP Verification tests", async () => {
           secondVc as string],
           vpTokenRequest.requestParams.nonce!)
       };
-      try {
-        await rp.verifyVpTokenResponse(
-          vpResponse,
-          presentationDefinition,
-        );
-      } catch (error: any) {
-        return;
-      }
-      assert.fail(`It should have failed`);
+      await expect(rp.verifyVpTokenResponse(
+        vpResponse,
+        presentationDefinition,
+      )).rejects.toThrow();
     });
-    it("Should reject an invalid VP verification callback fail", async () => {
+    test("Should reject an invalid VP verification callback fail", async () => {
       const rp = new OpenIdRPStepBuilder(
         generateDefaultAuthorisationServerMetadata("https://issuer")
       )
@@ -765,15 +730,10 @@ describe("VP Verification tests", async () => {
           vpTokenRequest.requestParams.nonce!
         )
       };
-      try {
-        await rp.verifyVpTokenResponse(
-          vpResponse,
-          presentationDefinition,
-        );
-      } catch (error: any) {
-        return;
-      }
-      assert.fail(`It should have failed`);
+      await expect(rp.verifyVpTokenResponse(
+        vpResponse,
+        presentationDefinition,
+      )).rejects.toThrow();
     });
   });
 });

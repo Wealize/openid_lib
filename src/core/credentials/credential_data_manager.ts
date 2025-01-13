@@ -1,10 +1,10 @@
-import { W3CVerifiableCredentialFormats } from "../../common";
-import { Result } from "../../common/classes/result";
+import {Result} from '@/classes';
 import {
   CredentialDataResponse,
   DeferredCredentialData,
-  InTimeCredentialData
-} from "./types";
+  InTimeCredentialData,
+} from './types.js';
+import {W3CVerifiableCredentialFormats} from '@/formats';
 
 /**
  * Abstract class that provided an interface to a VC Issuer
@@ -19,7 +19,7 @@ export abstract class CredentialDataManager {
    */
   abstract getCredentialData(
     types: string[],
-    holder: string
+    holder: string,
   ): Promise<CredentialDataResponse>;
 
   // TODO: Set VC format. This callback could fail if the acceptance token is wrong
@@ -28,12 +28,14 @@ export abstract class CredentialDataManager {
    * a VC if it is already available
    * @param acceptanceToken The token to exchange
    */
-  abstract deferredExchange(
-    acceptanceToken: string
-  ): Promise<
+  abstract deferredExchange(acceptanceToken: string): Promise<
     Result<
-      InTimeCredentialData & { format: W3CVerifiableCredentialFormats, types: string[] }
-      | DeferredCredentialData, Error
+      | (InTimeCredentialData & {
+          format: W3CVerifiableCredentialFormats;
+          types: string[];
+        })
+      | DeferredCredentialData,
+      Error
     >
   >;
 
@@ -42,11 +44,11 @@ export abstract class CredentialDataManager {
    * can be overwritten if needed and can be useful when working with DID URL syntax
    * @param _accessTokenSubject The subject ID contained in an Access Token
    * @param proofIssuer The subject ID contained in a control proof
-   * @returns 
+   * @returns
    */
   async resolveCredentialSubject(
     _accessTokenSubject: string,
-    proofIssuer: string
+    proofIssuer: string,
   ): Promise<string> {
     return proofIssuer;
   }

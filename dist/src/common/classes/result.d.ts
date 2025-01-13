@@ -1,4 +1,4 @@
-export declare class Result<S extends unknown, E extends Error | unknown> {
+export declare class Result<S, E extends Error | unknown> {
     protected ok: S | undefined;
     protected error: E | undefined;
     protected constructor(ok: S | undefined, error: E | undefined);
