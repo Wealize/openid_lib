@@ -21,8 +21,7 @@
     "check": "npm-check --skip-unused",
     "update": "npm-check -u",
     "clean": "rimraf dist",
-    "copy-files": "copyfiles -u 1 src/**/*.yaml src/**/*.json src/**/*.js dist/src/",
-    "compile": "tsc && tsc-alias && npm run copy-files",
+    "compile": "tsc && tsc-alias",
     "build": "npm run clean && npm run compile",
     "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest"
   },

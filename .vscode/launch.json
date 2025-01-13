@@ -5,21 +5,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "App",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start"
-      ],
-      "runtimeExecutable": "npm",
-      "type": "node",
-      "skipFiles": [
-        "<node_internals>/**",
-        "**/node_modules/**"
-      ],
-      "console": "integratedTerminal"
-    },
-    {
       "type": "node",
       "env": {
         "NODE_OPTIONS": "--experimental-vm-modules --no-warnings=ExperimentalWarning"

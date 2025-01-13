@@ -8,6 +8,12 @@ const jestConfig: JestConfigWithTsJest = {
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   extensionsToTreatAsEsm: ['.ts'],
   testTimeout: 500000, // Set to a higher value for debug
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: 'tsconfig.test.json',
+      useESM: true
+    }],
+  },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.[jt]s$': '$1',
     ...pathsToModuleNameMapper(compilerOptions.paths, {

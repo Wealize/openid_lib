@@ -1,4 +1,3 @@
-// import { assert, expect } from "chai";
 import {
   AuthzDetailsBuilder,
   AuthzRequestBuilder,

@@ -1,5 +1,4 @@
 import { IssuerMetadataBuilder } from "@/common/builders/index.js";
-// import { expect } from "chai";
 import { expect, test, describe } from '@jest/globals';
 
 describe("Issuer Metadata", () => {
